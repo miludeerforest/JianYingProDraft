@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "JianYingDraft.PY"
+version = "1.0.3"
+description = "帮助剪映快速生成草稿的方案"
+authors = ["解大劦 <develope@163.com>"]
+readme = "README.md"
+packages = [{ include = "JianYingDraft" }]
+include = ["README.md", "LICENSE"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pymediainfo = "^6.1.0"
+basiclibrary-py = "^0.6.10"
+pytest = "^8.1.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+pylint = "^3.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
