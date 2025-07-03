@@ -27,7 +27,7 @@ class MediaText(Media):
         subtitle = self.kwargs.get("text", "")
         color = self.kwargs.get("color", "#000000")
         texts=self.__generate_text()
-        texts["content"] = texts["content"].replace("[默认文本]",f"[{subtitle}]")
+        texts["content"] = texts["content"].replace("[默认文本]", subtitle)
 
         self.material_data_for_content["texts"] = texts
         # self.change_color(color)

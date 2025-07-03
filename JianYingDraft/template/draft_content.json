@@ -1,8 +1,8 @@
 {
   "canvas_config": {
-    "height": 1080,
-    "ratio": "original",
-    "width": 1920
+    "height": 1920,
+    "ratio": "9:16",
+    "width": 1080
   },
   "color_space": -1,
   "config": {

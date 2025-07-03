@@ -105,14 +105,37 @@ class Draft:
 
         # # 效果的媒体信息不需要添加到draft的元数据库
         # self.__add_media_to_meta_info(media)
-        
+
+    def add_transition(self, transition_name_or_resource_id: str | int, start=0, duration=500000, **kwargs):
+        """
+        添加转场到草稿
+        @param transition_name_or_resource_id: 转场的名称或资源ID
+        @param start: 开始时间
+        @param duration: 持续时间（微秒）
+        """
+        from JianYingDraft.core.mediaTransition import MediaTransition
+
+        media = MediaTransition(
+            transition_name_or_resource_id=transition_name_or_resource_id,
+            start=start,
+            duration=duration,
+            **kwargs
+        )
+
+        # 将媒体信息添加到draft的素材库
+        self.__add_media_to_content_materials(media)
+
+        # 将媒体信息添加到draft的轨道库
+        self.__add_media_to_content_tracks(media, start=start)
+
     def add_subtitle(self, subtitle: str,color="#000000", start_at_track=0, duration=0, index=0, **kwargs):
         """
         添加字幕到草稿
         """
         _index = index
+        start_time = kwargs.get('start', 0)  # 获取开始时间
         media= MediaText(text=subtitle,color=color,duration=duration,**kwargs)
-        
+
         if media is None:
             return
         pass
@@ -120,8 +143,8 @@ class Draft:
         # 将媒体信息添加到draft的素材库
         self.__add_media_to_content_materials(media)
 
-        # 将媒体信息添加到draft的轨道库
-        self.__add_media_to_content_tracks(media, start=start_at_track)
+        # 将媒体信息添加到draft的轨道库 - 确保字幕在同一轨道
+        self.__add_subtitle_to_track(media, start_time=start_time)
 
         # 将媒体信息添加到draft的元数据库
         self.__add_media_to_meta_info(media)
@@ -192,6 +215,30 @@ class Draft:
         segment_target_timerange = media.segment_data_for_content["target_timerange"]
         segment_target_timerange["start"] = start
         target_track["segments"].append(media.segment_data_for_content)
+
+    def __add_subtitle_to_track(self, media: Media, start_time=0):
+        """
+        添加字幕到指定轨道，确保所有字幕在同一轨道
+        """
+        all_tracks = self._tracks_in_draft_content
+        subtitle_track = None
+
+        # 查找现有的字幕轨道
+        for _track in all_tracks:
+            if _track["type"] == "text":
+                subtitle_track = _track
+                break
+
+        # 如果没有字幕轨道，创建一个
+        if subtitle_track is None:
+            subtitle_track = template.get_track()
+            subtitle_track["type"] = "text"
+            self._tracks_in_draft_content.append(subtitle_track)
+
+        # 设置字幕片段的开始时间
+        segment_target_timerange = media.segment_data_for_content["target_timerange"]
+        segment_target_timerange["start"] = start_time
+        subtitle_track["segments"].append(media.segment_data_for_content)
 
     def __add_media_to_meta_info(self, media: Media):
         """

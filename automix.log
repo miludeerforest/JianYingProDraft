@@ -1,0 +1,11 @@
+2025-07-02 21:33:38,428 - ERROR - 生成数量必须大于0
+2025-07-02 21:33:38,888 - ERROR - 最小时长必须小于最大时长
+2025-07-02 21:33:39,210 - ERROR - effect_probability必须在0.0-1.0范围内
+2025-07-02 21:33:39,677 - ERROR - 程序异常: 'gbk' codec can't encode character '\U0001f3ac' in position 0: illegal multibyte sequence
+2025-07-02 21:33:43,494 - ERROR - 预览失败: 'gbk' codec can't encode character '\U0001f4c1' in position 2: illegal multibyte sequence
+2025-07-02 21:34:45,003 - INFO - === 预览模式 ===
+2025-07-02 21:40:20,412 - ERROR - 程序异常: 'gbk' codec can't encode character '\U0001f3ac' in position 0: illegal multibyte sequence
+2025-07-02 21:41:43,985 - ERROR - 程序异常: 'gbk' codec can't encode character '\U0001f3ac' in position 0: illegal multibyte sequence
+2025-07-02 21:43:15,597 - ERROR - 程序异常: 'gbk' codec can't encode character '\U0001f3ac' in position 0: illegal multibyte sequence
+2025-07-03 11:54:52,468 - ERROR - ❌ 第 1 个视频生成失败: 自动混剪失败: 扫描和选择素材失败: 产品型号 A69 中没有找到可用的视频文件
+2025-07-03 12:22:19,578 - ERROR - ❌ 第 1 个视频生成失败: 自动混剪失败: 扫描和选择素材失败: 产品型号 a84 中没有找到可用的视频文件
