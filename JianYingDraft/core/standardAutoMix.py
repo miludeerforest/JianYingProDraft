@@ -508,7 +508,9 @@ class StandardAutoMix:
                 filter_type = getattr(Filter_type, clean_name, None)
 
                 if filter_type is not None:
-                    intensity = random.randint(50, 80)
+                    # 从配置管理器获取滤镜强度范围
+                    min_intensity, max_intensity = self.config_manager.get_filter_intensity_range()
+                    intensity = random.randint(min_intensity, max_intensity)
                     try:
                         # 使用script.add_filter()方法添加滤镜到滤镜轨道
                         self.script.add_filter(
@@ -532,7 +534,9 @@ class StandardAutoMix:
                 for fallback_name in fallback_filters:
                     filter_type = getattr(Filter_type, fallback_name, None)
                     if filter_type is not None:
-                        intensity = random.randint(50, 80)
+                        # 从配置管理器获取滤镜强度范围
+                        min_intensity, max_intensity = self.config_manager.get_filter_intensity_range()
+                        intensity = random.randint(min_intensity, max_intensity)
                         try:
                             self.script.add_filter(
                                 filter_type,

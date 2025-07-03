@@ -90,6 +90,8 @@ class AutoMixConfigManager:
         'brightness_range_max': 1.1,
         'min_video_duration': 5000000,   # 5秒
         'max_video_duration': 300000000, # 300秒
+        'filter_intensity_min': 20,      # 滤镜强度最小值 (20%)
+        'filter_intensity_max': 30,      # 滤镜强度最大值 (30%)
         'pexels_api_key': 'rwDQTKgarldHRe2MUQGbtUB95E59p7csmYSSIis1qRxOqVpHjAOadPTD',  # Pexels API密钥 (内置默认)
         'pexels_overlay_opacity': 0.05,     # 防审核覆盖层不透明度 (5%)
         'enable_pexels_overlay': True       # 是否启用Pexels防审核覆盖层
@@ -172,6 +174,13 @@ class AutoMixConfigManager:
         min_duration = int(cls._get_config_value('min_video_duration', cls.DEFAULT_CONFIG['min_video_duration']))
         max_duration = int(cls._get_config_value('max_video_duration', cls.DEFAULT_CONFIG['max_video_duration']))
         return min_duration, max_duration
+
+    @classmethod
+    def get_filter_intensity_range(cls) -> tuple[int, int]:
+        """获取滤镜强度范围（百分比）"""
+        min_intensity = int(cls._get_config_value('filter_intensity_min', cls.DEFAULT_CONFIG['filter_intensity_min']))
+        max_intensity = int(cls._get_config_value('filter_intensity_max', cls.DEFAULT_CONFIG['filter_intensity_max']))
+        return min_intensity, max_intensity
     
     @classmethod
     def get_all_config(cls) -> Dict[str, Any]:
@@ -300,7 +309,10 @@ class AutoMixConfigManager:
         
         narration_vol, background_vol = cls.get_audio_volumes()
         print(f"音频音量: 解说{narration_vol:.1%}, 背景{background_vol:.1%}")
-        
+
+        min_intensity, max_intensity = cls.get_filter_intensity_range()
+        print(f"滤镜强度: {min_intensity}% - {max_intensity}%")
+
         print(f"批量生成数量: {cls.get_batch_count()}")
         print(f"使用VIP特效: {'是' if cls.get_use_vip_effects() else '否'}")
         print(f"视频缩放比例: {cls.get_video_scale_factor():.2f}")
