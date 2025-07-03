@@ -90,7 +90,7 @@ class AutoMixConfigManager:
         'brightness_range_max': 1.1,
         'min_video_duration': 5000000,   # 5秒
         'max_video_duration': 300000000, # 300秒
-        'pexels_api_key': 'rwDQTKgarldHRe2MUQGbtUB95E59p7csmYSSIis1qRxOqVpHjAOadPTD',  # Pexels API密钥
+        'pexels_api_key': 'rwDQTKgarldHRe2MUQGbtUB95E59p7csmYSSIis1qRxOqVpHjAOadPTD',  # Pexels API密钥 (内置默认)
         'pexels_overlay_opacity': 0.05,     # 防审核覆盖层不透明度 (5%)
         'enable_pexels_overlay': True       # 是否启用Pexels防审核覆盖层
     }

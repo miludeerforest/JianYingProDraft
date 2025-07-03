@@ -187,15 +187,24 @@ python interactive_automix.py
 ```ini
 [JianYingDraft.automix]
 # Pexels API配置
-pexels_api_key=rwDQTKgarldHRe2MUQGbtUB95E59p7csmYSSIis1qRxOqVpHjAOadPTD
-pexels_overlay_opacity=0.05  # 5%不透明度
-enable_pexels_overlay=true   # 启用防审核覆盖层
+pexels_api_key=your_pexels_api_key_here  # 请替换为你的Pexels API密钥
+pexels_overlay_opacity=0.05              # 5%不透明度
+enable_pexels_overlay=true               # 启用防审核覆盖层
 
 # 音频配置
 narration_volume=1.0         # 解说音量100%
 background_volume=0.1        # 背景音量10%
 video_volume=0.0            # 视频静音
 ```
+
+#### 🔑 Pexels API密钥获取
+
+1. **访问Pexels官网**: https://www.pexels.com/api/
+2. **注册账户**: 免费注册Pexels开发者账户
+3. **申请API密钥**: 在开发者控制台申请免费API密钥
+4. **配置密钥**: 将获取的密钥替换配置文件中的 `your_pexels_api_key_here`
+
+> **💡 提示**: 工具内置了默认API密钥，可以直接使用。如需自定义或遇到限制，请申请个人密钥。
 
 ### 🎨 特效配置
 

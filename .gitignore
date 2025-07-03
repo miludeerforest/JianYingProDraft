@@ -1,4 +1,94 @@
-__pycache__
-poetry.lock
-.venv/
+# 剪映自动混剪工具 - Git忽略文件
+
+# Python相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+poetry.lock
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统相关
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 项目特定 - 敏感配置文件
+_projectConfig.ini
+config.ini
+*.config
+api_keys.txt
+secrets.txt
+.env
+.env.local
+.env.production
+
+# 日志和缓存
+*.log
+logs/
+automix.log
+cache/
+temp/
+tmp/
+*.tmp
+
+# 媒体文件（通常较大）
+downloads/
+pexels_cache/
+fallback_videos/*.mp4
+fallback_videos/*.avi
+fallback_videos/*.mov
+
+# 生成的文件
+drafts/
+output/
+generated/
+test_output/
+test_results/
+
+# 备份文件
+*.bak
+*.backup
+backup/
+config_backup/
+excluded_effects_backup.json
+
+# 临时和锁文件
+*.temp
+*.swp
+*.lock
