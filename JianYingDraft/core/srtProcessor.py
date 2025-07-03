@@ -8,11 +8,16 @@
 """
 import os
 import re
-import chardet
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from JianYingDraft.core.mediaText import MediaText
-from JianYingDraft.core import template
-from JianYingDraft.utils import tools
+
+# 尝试导入chardet，如果没有则使用内置方法
+try:
+    import chardet
+    HAS_CHARDET = True
+except ImportError:
+    HAS_CHARDET = False
+    print("⚠️  chardet库未安装，将使用内置编码检测方法")
 
 
 class SRTProcessor:
@@ -44,24 +49,8 @@ class SRTProcessor:
         if not os.path.exists(srt_path):
             raise FileNotFoundError(f"SRT文件不存在: {srt_path}")
         
-        # 检测文件编码
-        self.encoding = self._detect_encoding(srt_path)
-        
-        try:
-            with open(srt_path, 'r', encoding=self.encoding) as f:
-                content = f.read()
-        except UnicodeDecodeError:
-            # 如果检测的编码失败，尝试常见编码
-            for encoding in ['utf-8', 'gbk', 'gb2312', 'utf-8-sig']:
-                try:
-                    with open(srt_path, 'r', encoding=encoding) as f:
-                        content = f.read()
-                    self.encoding = encoding
-                    break
-                except UnicodeDecodeError:
-                    continue
-            else:
-                raise ValueError(f"无法解码SRT文件: {srt_path}")
+        # 智能检测和读取文件编码
+        content = self._read_file_with_encoding_detection(srt_path)
         
         # 自动修复SRT格式错误
         content = self._auto_fix_srt_format(content)
@@ -134,7 +123,7 @@ class SRTProcessor:
 
     def _auto_fix_srt_format(self, content: str) -> str:
         """
-        自动修复SRT格式错误
+        自动修复SRT格式错误 - 只修复时间戳，不修改字幕文本内容
 
         Args:
             content: 原始SRT内容
@@ -142,7 +131,7 @@ class SRTProcessor:
         Returns:
             str: 修复后的SRT内容
         """
-        print("🔧 开始SRT格式自动修复...")
+        print("🔧 开始SRT时间戳修复（保留原始字幕内容）...")
 
         # 记录修复的问题
         fixes_applied = []
@@ -156,23 +145,14 @@ class SRTProcessor:
             content = content[1:]
             fixes_applied.append("移除BOM标记")
 
-        # 3. 修复时间戳格式
-        content = self._fix_timestamp_format(content, fixes_applied)
+        # 3. 只修复时间戳格式，不修改字幕文本
+        content = self._fix_timestamp_only(content, fixes_applied)
 
-        # 4. 修复序号问题
+        # 4. 修复序号问题（不涉及文本内容）
         content = self._fix_subtitle_numbering(content, fixes_applied)
 
-        # 5. 修复空行问题
+        # 5. 修复空行问题（不涉及文本内容）
         content = self._fix_empty_lines(content, fixes_applied)
-
-        # 6. 修复文本编码问题
-        content = self._fix_text_encoding(content, fixes_applied)
-
-        # 7. 修复时间重叠问题
-        content = self._fix_time_overlaps(content, fixes_applied)
-
-        # 8. 移除无效字符
-        content = self._remove_invalid_characters(content, fixes_applied)
 
         # 输出修复报告
         if fixes_applied:
@@ -183,6 +163,128 @@ class SRTProcessor:
             print("  ✅ SRT格式正常，无需修复")
 
         return content
+
+    def _fix_timestamp_only(self, content: str, fixes_applied: List[str]) -> str:
+        """
+        只修复时间戳格式，完全不修改字幕文本内容
+
+        Args:
+            content: 原始SRT内容
+            fixes_applied: 修复记录列表
+
+        Returns:
+            str: 只修复时间戳的SRT内容
+        """
+        lines = content.split('\n')
+        fixed_lines = []
+        timestamp_fixes = 0
+
+        for line in lines:
+            # 只处理包含时间戳的行（包含 --> 的行）
+            if '-->' in line:
+                original_line = line
+                fixed_line = self._fix_single_timestamp_line(line)
+
+                if fixed_line != original_line:
+                    timestamp_fixes += 1
+                    print(f"    🕐 时间戳修复: {original_line.strip()} → {fixed_line.strip()}")
+
+                fixed_lines.append(fixed_line)
+            else:
+                # 非时间戳行完全保持原样，不做任何修改
+                fixed_lines.append(line)
+
+        if timestamp_fixes > 0:
+            fixes_applied.append(f"修复时间戳格式 ({timestamp_fixes}处)")
+
+        return '\n'.join(fixed_lines)
+
+    def _fix_single_timestamp_line(self, line: str) -> str:
+        """
+        修复单行时间戳格式
+
+        Args:
+            line: 时间戳行
+
+        Returns:
+            str: 修复后的时间戳行
+        """
+        # 保存行首和行尾的空白字符
+        leading_space = len(line) - len(line.lstrip())
+        trailing_space = len(line) - len(line.rstrip())
+
+        # 获取核心内容
+        core_content = line.strip()
+
+        # 1. 修复时间单位错误（秒被错写成分钟）
+        # 例如：00:03:00,800 → 00:00:03,800
+        core_content = self._fix_time_unit_in_line(core_content)
+
+        # 2. 修复时间戳分隔符（统一使用逗号）
+        # 例如：00:00:03.800 → 00:00:03,800
+        core_content = re.sub(r'(\d{2}):(\d{2}):(\d{2})\.(\d{3})', r'\1:\2:\3,\4', core_content)
+
+        # 3. 修复箭头格式（统一使用 --> ）
+        # 例如：00:00:03,800 -> 00:00:06,800 → 00:00:03,800 --> 00:00:06,800
+        core_content = re.sub(r'(\d{2}:\d{2}:\d{2},\d{3})\s*[-=]+>\s*(\d{2}:\d{2}:\d{2},\d{3})', r'\1 --> \2', core_content)
+
+        # 4. 修复单位数小时（补零）
+        # 例如：1:00:03,800 → 01:00:03,800
+        core_content = re.sub(r'^(\d):(\d{2}:\d{2},\d{3})', r'0\1:\2', core_content)
+        core_content = re.sub(r'-->\s*(\d):(\d{2}:\d{2},\d{3})', r'--> 0\1:\2', core_content)
+
+        # 5. 修复缺失毫秒的时间戳
+        # 例如：00:00:03 --> 00:00:06 → 00:00:03,000 --> 00:00:06,000
+        core_content = re.sub(r'(\d{2}:\d{2}:\d{2})\s*-->\s*(\d{2}:\d{2}:\d{2})(?!\d)', r'\1,000 --> \2,000', core_content)
+
+        # 6. 确保箭头前后有空格
+        core_content = re.sub(r'(\d{2}:\d{2}:\d{2},\d{3})-->', r'\1 -->', core_content)
+        core_content = re.sub(r'-->(\d{2}:\d{2}:\d{2},\d{3})', r'--> \1', core_content)
+
+        # 恢复原始的空白字符
+        return ' ' * leading_space + core_content + ' ' * trailing_space
+
+    def _fix_time_unit_in_line(self, line: str) -> str:
+        """
+        修复时间单位错误（秒被错写成分钟）
+
+        Args:
+            line: 时间戳行
+
+        Returns:
+            str: 修复后的时间戳行
+        """
+        # 匹配时间戳格式：HH:MM:SS,mmm
+        timestamp_pattern = r'(\d{2}):(\d{2}):(\d{2}),(\d{3})'
+
+        def fix_timestamp(match):
+            hours, minutes, seconds, milliseconds = match.groups()
+            hours, minutes, seconds = int(hours), int(minutes), int(seconds)
+
+            # 检查是否存在时间单位错误
+            # 如果秒数大于59，可能是被错写成分钟了
+            if seconds > 59:
+                # 将秒数转换为分钟和秒
+                extra_minutes = seconds // 60
+                actual_seconds = seconds % 60
+
+                # 将额外的分钟加到分钟位
+                minutes += extra_minutes
+
+                # 如果分钟数大于59，转换为小时
+                if minutes > 59:
+                    extra_hours = minutes // 60
+                    minutes = minutes % 60
+                    hours += extra_hours
+
+                # 确保小时不超过23
+                hours = min(hours, 23)
+
+                return f"{hours:02d}:{minutes:02d}:{actual_seconds:02d},{milliseconds}"
+
+            return match.group(0)  # 无需修复，返回原始内容
+
+        return re.sub(timestamp_pattern, fix_timestamp, line)
 
     def _fix_timestamp_format(self, content: str, fixes_applied: List[str]) -> str:
         """修复时间戳格式问题"""
@@ -738,29 +840,293 @@ class SRTProcessor:
     
     def _detect_encoding(self, file_path: str) -> str:
         """
-        检测文件编码
-        
+        智能检测文件编码，优先级：BOM检测 > chardet检测 > 实际测试
+
         Args:
             file_path: 文件路径
-            
+
         Returns:
             str: 检测到的编码
         """
         try:
+            # 读取文件的前几个字节检测BOM
             with open(file_path, 'rb') as f:
                 raw_data = f.read(10000)  # 读取前10KB
+
+            # 检测BOM标记
+            if raw_data.startswith(b'\xef\xbb\xbf'):
+                print(f"  📝 检测到UTF-8 BOM编码")
+                return 'utf-8-sig'
+            elif raw_data.startswith(b'\xff\xfe'):
+                print(f"  📝 检测到UTF-16 LE编码")
+                return 'utf-16-le'
+            elif raw_data.startswith(b'\xfe\xff'):
+                print(f"  📝 检测到UTF-16 BE编码")
+                return 'utf-16-be'
+
+            # 使用chardet检测编码（如果可用）
+            if HAS_CHARDET:
                 result = chardet.detect(raw_data)
-                encoding = result.get('encoding', 'utf-8')
-                
-                # 处理一些特殊情况
-                if encoding and encoding.lower().startswith('gb'):
-                    return 'gbk'
-                elif encoding and 'utf' in encoding.lower():
-                    return 'utf-8'
+                detected_encoding = result.get('encoding', '').lower()
+                confidence = result.get('confidence', 0)
+
+                print(f"  📝 chardet检测结果: {detected_encoding} (置信度: {confidence:.2f})")
+
+                # 根据检测结果和置信度选择编码
+                if confidence > 0.8:
+                    # 高置信度，使用检测结果
+                    if 'utf-8' in detected_encoding:
+                        return 'utf-8'
+                    elif detected_encoding.startswith('gb') or 'chinese' in detected_encoding:
+                        return 'gbk'
+                    elif 'big5' in detected_encoding:
+                        return 'big5'
+                    elif detected_encoding.startswith('iso-8859'):
+                        return 'latin1'
+                    else:
+                        return detected_encoding
                 else:
-                    return encoding or 'utf-8'
-        except Exception:
+                    # 低置信度，使用实际测试方法
+                    return self._test_encoding_by_trial(raw_data)
+            else:
+                # 没有chardet，直接使用实际测试方法
+                print(f"  📝 使用内置编码检测方法")
+                return self._test_encoding_by_trial(raw_data)
+
+        except Exception as e:
+            print(f"  ⚠️  编码检测异常: {str(e)}")
             return 'utf-8'
+
+    def _test_encoding_by_trial(self, raw_data: bytes) -> str:
+        """
+        通过实际尝试解码来确定最佳编码
+
+        Args:
+            raw_data: 原始字节数据
+
+        Returns:
+            str: 最佳编码
+        """
+        # 常见编码优先级列表
+        encodings_to_try = [
+            'utf-8',           # 最常见的现代编码
+            'utf-8-sig',       # 带BOM的UTF-8
+            'gbk',             # 中文Windows默认编码
+            'gb2312',          # 简体中文编码
+            'big5',            # 繁体中文编码
+            'latin1',          # 西欧编码
+            'cp1252',          # Windows西欧编码
+            'iso-8859-1',      # ISO西欧编码
+        ]
+
+        best_encoding = 'utf-8'
+        best_score = 0
+
+        for encoding in encodings_to_try:
+            try:
+                # 尝试解码
+                decoded_text = raw_data.decode(encoding)
+
+                # 计算解码质量分数
+                score = self._calculate_text_quality_score(decoded_text)
+
+                print(f"    🔍 测试编码 {encoding}: 分数 {score:.2f}")
+
+                if score > best_score:
+                    best_score = score
+                    best_encoding = encoding
+
+                # 如果分数很高，直接使用
+                if score > 0.9:
+                    break
+
+            except (UnicodeDecodeError, UnicodeError):
+                print(f"    ❌ 编码 {encoding} 解码失败")
+                continue
+
+        print(f"  ✅ 选择最佳编码: {best_encoding} (分数: {best_score:.2f})")
+        return best_encoding
+
+    def _calculate_text_quality_score(self, text: str) -> float:
+        """
+        计算文本质量分数，用于判断编码是否正确
+
+        Args:
+            text: 解码后的文本
+
+        Returns:
+            float: 质量分数 (0-1)
+        """
+        if not text:
+            return 0.0
+
+        score = 0.0
+        total_chars = len(text)
+
+        # 统计各种字符类型
+        chinese_chars = sum(1 for c in text if '\u4e00' <= c <= '\u9fff')
+        ascii_chars = sum(1 for c in text if ord(c) < 128)
+        printable_chars = sum(1 for c in text if c.isprintable() or c.isspace())
+        control_chars = sum(1 for c in text if ord(c) < 32 and c not in '\n\r\t')
+        replacement_chars = text.count('\ufffd')  # 替换字符，表示解码错误
+
+        # 计算分数
+        if total_chars > 0:
+            # 可打印字符比例
+            printable_ratio = printable_chars / total_chars
+            score += printable_ratio * 0.4
+
+            # 控制字符惩罚
+            control_ratio = control_chars / total_chars
+            score -= control_ratio * 0.3
+
+            # 替换字符惩罚（严重）
+            replacement_ratio = replacement_chars / total_chars
+            score -= replacement_ratio * 0.5
+
+            # 中文字符加分
+            chinese_ratio = chinese_chars / total_chars
+            if chinese_ratio > 0.1:  # 如果有较多中文字符
+                score += chinese_ratio * 0.2
+
+            # ASCII字符适度加分
+            ascii_ratio = ascii_chars / total_chars
+            if 0.1 < ascii_ratio < 0.9:  # 适度的ASCII字符
+                score += 0.1
+
+        return max(0.0, min(1.0, score))
+
+    def _read_file_with_encoding_detection(self, file_path: str) -> str:
+        """
+        使用智能编码检测读取文件，确保不出现乱码
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            str: 文件内容
+        """
+        print(f"  📖 读取SRT文件: {os.path.basename(file_path)}")
+
+        # 检测文件编码
+        self.encoding = self._detect_encoding(file_path)
+        print(f"  📝 使用编码: {self.encoding}")
+
+        # 尝试用检测到的编码读取
+        try:
+            with open(file_path, 'r', encoding=self.encoding, errors='strict') as f:
+                content = f.read()
+            print(f"  ✅ 编码 {self.encoding} 读取成功")
+            return content
+        except UnicodeDecodeError as e:
+            print(f"  ⚠️  编码 {self.encoding} 读取失败: {str(e)}")
+
+        # 如果失败，尝试多种编码的容错读取
+        fallback_encodings = [
+            ('utf-8', 'replace'),
+            ('utf-8-sig', 'replace'),
+            ('gbk', 'replace'),
+            ('gb2312', 'replace'),
+            ('big5', 'replace'),
+            ('latin1', 'ignore'),
+            ('cp1252', 'replace'),
+        ]
+
+        for encoding, error_handling in fallback_encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding, errors=error_handling) as f:
+                    content = f.read()
+
+                # 检查内容质量
+                quality_score = self._calculate_text_quality_score(content)
+                print(f"  🔍 编码 {encoding} (错误处理: {error_handling}) 质量分数: {quality_score:.2f}")
+
+                if quality_score > 0.7:  # 质量足够好
+                    self.encoding = encoding
+                    print(f"  ✅ 使用编码 {encoding} 读取成功")
+
+                    # 如果使用了错误处理，进行后处理清理
+                    if error_handling != 'strict':
+                        content = self._clean_decoded_content(content)
+
+                    return content
+
+            except (UnicodeDecodeError, UnicodeError) as e:
+                print(f"  ❌ 编码 {encoding} 失败: {str(e)}")
+                continue
+
+        # 最后的备用方案：二进制读取并尝试修复
+        print(f"  🚨 所有编码都失败，使用二进制读取备用方案")
+        return self._binary_fallback_read(file_path)
+
+    def _clean_decoded_content(self, content: str) -> str:
+        """
+        清理解码后的内容，移除替换字符和其他问题
+
+        Args:
+            content: 解码后的内容
+
+        Returns:
+            str: 清理后的内容
+        """
+        # 移除Unicode替换字符
+        content = content.replace('\ufffd', '')
+
+        # 移除其他控制字符（保留换行、回车、制表符）
+        cleaned_chars = []
+        for char in content:
+            if char.isprintable() or char in '\n\r\t':
+                cleaned_chars.append(char)
+            elif ord(char) < 32:
+                # 跳过其他控制字符
+                continue
+            else:
+                cleaned_chars.append(char)
+
+        return ''.join(cleaned_chars)
+
+    def _binary_fallback_read(self, file_path: str) -> str:
+        """
+        二进制读取备用方案，尽最大努力恢复文本
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            str: 恢复的文本内容
+        """
+        try:
+            with open(file_path, 'rb') as f:
+                raw_data = f.read()
+
+            # 尝试多种编码的组合解码
+            for encoding in ['utf-8', 'gbk', 'latin1']:
+                try:
+                    # 使用ignore错误处理，跳过无法解码的字节
+                    content = raw_data.decode(encoding, errors='ignore')
+                    if content.strip():  # 如果有有效内容
+                        print(f"  🔧 二进制备用方案使用编码: {encoding}")
+                        self.encoding = encoding
+                        return self._clean_decoded_content(content)
+                except:
+                    continue
+
+            # 最终备用：逐字节处理
+            print(f"  🆘 使用逐字节处理备用方案")
+            chars = []
+            for byte in raw_data:
+                if 32 <= byte <= 126:  # ASCII可打印字符
+                    chars.append(chr(byte))
+                elif byte in [10, 13, 9]:  # 换行、回车、制表符
+                    chars.append(chr(byte))
+                # 跳过其他字节
+
+            self.encoding = 'ascii-fallback'
+            return ''.join(chars)
+
+        except Exception as e:
+            print(f"  💥 二进制备用方案也失败: {str(e)}")
+            raise ValueError(f"无法读取SRT文件: {file_path}")
     
     def get_processing_summary(self) -> Dict[str, Any]:
         """

@@ -7,8 +7,57 @@
  * @company: HiLand & RainyTop
 """
 import os
-from typing import Union, Any, Dict
-from BasicLibrary.configHelper import ConfigHelper
+import configparser
+from typing import Any, Dict
+
+
+class SimpleConfigHelper:
+    """简单的配置文件助手类"""
+
+    _config = None
+    _config_file = "_projectConfig.ini"
+
+    @classmethod
+    def _load_config(cls):
+        """加载配置文件"""
+        if cls._config is None:
+            cls._config = configparser.ConfigParser()
+            if os.path.exists(cls._config_file):
+                cls._config.read(cls._config_file, encoding='utf-8')
+
+    @classmethod
+    def get_item(cls, section: str, key: str, default_value: Any = None) -> Any:
+        """获取配置项"""
+        cls._load_config()
+        try:
+            if cls._config.has_section(section) and cls._config.has_option(section, key):
+                value = cls._config.get(section, key)
+                # 尝试转换为适当的类型
+                if isinstance(default_value, bool):
+                    return value.lower() in ('true', '1', 'yes', 'on')
+                elif isinstance(default_value, int):
+                    return int(value)
+                elif isinstance(default_value, float):
+                    return float(value)
+                else:
+                    return value
+            return default_value
+        except Exception:
+            return default_value
+
+    @classmethod
+    def set_item(cls, section: str, key: str, value: Any) -> bool:
+        """设置配置项"""
+        cls._load_config()
+        try:
+            if not cls._config.has_section(section):
+                cls._config.add_section(section)
+            cls._config.set(section, key, str(value))
+            with open(cls._config_file, 'w', encoding='utf-8') as f:
+                cls._config.write(f)
+            return True
+        except Exception:
+            return False
 
 
 class AutoMixConfigManager:
@@ -209,7 +258,7 @@ class AutoMixConfigManager:
             配置值
         """
         try:
-            return ConfigHelper.get_item(cls.SECTION_NAME, key, default_value)
+            return SimpleConfigHelper.get_item(cls.SECTION_NAME, key, default_value)
         except Exception as e:
             print(f"读取配置项 {cls.SECTION_NAME}.{key} 失败: {str(e)}")
             return default_value
@@ -227,9 +276,10 @@ class AutoMixConfigManager:
             bool: 设置是否成功
         """
         try:
-            # 简化实现：直接返回True，实际项目中应该实现真正的配置保存
-            print(f"设置配置项 {cls.SECTION_NAME}.{key} = {value}")
-            return True
+            result = SimpleConfigHelper.set_item(cls.SECTION_NAME, key, value)
+            if result:
+                print(f"设置配置项 {cls.SECTION_NAME}.{key} = {value}")
+            return result
         except Exception as e:
             print(f"设置配置项 {cls.SECTION_NAME}.{key} 失败: {str(e)}")
             return False
