@@ -15,9 +15,10 @@
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             background-attachment: fixed;
-            min-height: 100vh;
+            height: 100vh;
             color: #333;
             overflow-x: hidden;
+            overflow-y: auto;
         }
 
         /* 动态背景粒子效果 */
@@ -95,73 +96,85 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 10px 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 40px;
-            padding: 20px 0;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 3em;
-            margin-bottom: 15px;
+            font-size: 2.2em;
+            margin-bottom: 8px;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
             font-weight: 700;
             letter-spacing: -1px;
         }
 
         .header p {
-            font-size: 1.3em;
+            font-size: 1.1em;
             opacity: 0.9;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             font-weight: 300;
         }
 
         .header .subtitle {
-            font-size: 1em;
+            font-size: 0.9em;
             opacity: 0.7;
             font-weight: 300;
-            margin-top: 5px;
+            margin-top: 3px;
         }
         
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 40px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            flex: 1;
+            overflow: hidden;
         }
 
         .content-section {
-            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .section-title {
-            font-size: 1.8em;
+            font-size: 1.3em;
             color: white;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 10px;
             font-weight: 600;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+            flex-shrink: 0;
         }
         
         .card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px;
+            border-radius: 15px;
+            padding: 15px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
-            overflow: hidden;
+            overflow-y: auto;
             opacity: 0;
             transform: translateY(30px);
             animation: slideInUp 0.8s ease forwards;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .card::before {
@@ -197,12 +210,13 @@
         
         .card h2 {
             color: #667eea;
-            margin-bottom: 25px;
-            font-size: 1.6em;
+            margin-bottom: 15px;
+            font-size: 1.3em;
             font-weight: 600;
-            border-bottom: 3px solid #f0f0f0;
-            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .card h2::after {
@@ -218,45 +232,45 @@
         
         .config-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 25px;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .config-item {
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
 
         .config-item label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             font-weight: 600;
             color: #444;
-            font-size: 14px;
+            font-size: 12px;
             letter-spacing: 0.5px;
         }
 
         .config-section {
-            margin-bottom: 30px;
-            padding: 20px;
+            margin-bottom: 15px;
+            padding: 12px;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
         }
 
         .config-section h3 {
             color: #667eea;
-            font-size: 1.2em;
-            margin-bottom: 15px;
+            font-size: 1em;
+            margin-bottom: 10px;
             font-weight: 600;
         }
         
         .config-item input, .config-item select {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 14px;
+            padding: 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 12px;
             background: rgba(255, 255, 255, 0.9);
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
@@ -279,16 +293,16 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 12px;
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 12px;
             font-weight: bold;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin: 5px;
+            margin: 3px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
         .btn::before {
@@ -333,34 +347,34 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 25px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .stats-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .stats-title {
-            font-size: 1.1em;
+            font-size: 0.9em;
             color: #667eea;
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .stats-subtitle {
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: #888;
             font-weight: 400;
         }
         
         .stat-item {
             text-align: center;
-            padding: 20px;
+            padding: 10px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 15px;
-            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
             position: relative;
@@ -400,17 +414,21 @@
         }
         
         .exclusion-list {
-            max-height: 220px;
+            max-height: 120px;
             overflow-y: auto;
-            border: 2px solid #e8e8e8;
-            border-radius: 12px;
-            padding: 15px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 8px;
             background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            flex: 1;
         }
 
         .exclusion-section {
-            margin-bottom: 25px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         .exclusion-header {
@@ -460,13 +478,12 @@
 
         .control-section {
             display: grid;
-            grid-template-columns: 1fr auto auto;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 25px;
-            padding: 20px;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 12px;
             background: rgba(102, 126, 234, 0.05);
-            border-radius: 12px;
+            border-radius: 8px;
             border: 1px solid rgba(102, 126, 234, 0.1);
         }
 
@@ -587,16 +604,17 @@
 
         .log-area {
             background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            padding: 20px;
-            height: 180px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            height: 120px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
-            line-height: 1.4;
+            font-size: 11px;
+            line-height: 1.3;
             white-space: pre-wrap;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            flex: 1;
         }
         
         .alert {
@@ -664,54 +682,65 @@
             60% { transform: translateY(-5px); }
         }
         
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 10px;
             }
 
-            .config-grid {
-                grid-template-columns: 1fr;
+            .container {
+                padding: 5px 10px;
+            }
+
+            .header {
+                margin-bottom: 10px;
+                padding: 5px 0;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+                margin-bottom: 5px;
+            }
+
+            .section-title {
+                font-size: 1.1em;
+                margin-bottom: 8px;
+            }
+
+            .card {
+                padding: 10px;
+            }
+
+            .card h2 {
+                font-size: 1.1em;
+                margin-bottom: 10px;
+            }
+
+            .btn {
+                padding: 6px 12px;
+                font-size: 11px;
+                margin: 2px;
             }
 
             .stats-grid {
                 grid-template-columns: 1fr;
+                gap: 5px;
             }
 
-            .container {
-                padding: 15px;
+            .config-grid {
+                grid-template-columns: 1fr;
+                gap: 5px;
             }
 
-            .card {
-                padding: 20px;
-                margin-bottom: 15px;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .btn {
-                padding: 10px 20px;
-                font-size: 14px;
-                margin: 3px;
-            }
-
-            .alert {
-                margin: 10px;
-                min-width: auto;
-                right: 10px;
-                left: 10px;
-            }
-
-            /* 移动端触摸优化 */
-            .btn, .config-item input, .config-item select {
-                min-height: 44px; /* iOS推荐的最小触摸目标 */
-            }
-
-            /* 移动端卡片悬停效果调整 */
-            .card:hover {
-                transform: translateY(-5px) scale(1.01);
+            .control-section {
+                grid-template-columns: 1fr;
+                text-align: center;
             }
         }
 
@@ -817,10 +846,10 @@
             <div class="subtitle">基于原有代码，无任何修改 • 现代化动效体验</div>
         </div>
         
-        <div class="content-section">
-            <h2 class="section-title">⚙️ 系统配置</h2>
-            <div class="main-content">
-                <!-- 配置管理 -->
+        <div class="main-content">
+            <!-- 配置管理 -->
+            <div class="content-section">
+                <h2 class="section-title">⚙️ 系统配置</h2>
                 <div class="card">
                     <h2>📁 路径配置</h2>
                     <div class="config-section">
@@ -866,33 +895,33 @@
                         </div>
                     </div>
 
-                    <div style="text-align: center; margin-top: 25px;">
-                        <button class="btn" onclick="loadConfig()">🔄 刷新配置</button>
-                        <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button class="btn" onclick="loadConfig()">🔄 刷新</button>
+                        <button class="btn btn-success" onclick="saveConfig()">💾 保存</button>
                     </div>
                 </div>
+            </div>
             
-                <!-- 排除管理 -->
+            <!-- 排除管理 -->
+            <div class="content-section">
+                <h2 class="section-title">🚫 排除管理</h2>
                 <div class="card">
-                    <h2>🚫 排除管理</h2>
-
                     <div class="stats-header">
-                        <div class="stats-title">📊 效果统计总览</div>
-                        <div class="stats-subtitle">查看所有可用效果的数量统计</div>
+                        <div class="stats-title">📊 效果统计</div>
                     </div>
 
                     <div class="stats-grid">
                         <div class="stat-item">
                             <div class="stat-number" id="filters-total">0</div>
-                            <div class="stat-label">总滤镜</div>
+                            <div class="stat-label">滤镜</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number" id="effects-total">0</div>
-                            <div class="stat-label">总特效</div>
+                            <div class="stat-label">特效</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-number" id="transitions-total">0</div>
-                            <div class="stat-label">总转场</div>
+                            <div class="stat-label">转场</div>
                         </div>
                     </div>
 
@@ -920,46 +949,46 @@
                         <div class="exclusion-list" id="transitions-list"></div>
                     </div>
 
-                    <div style="text-align: center; margin-top: 25px;">
-                        <button class="btn" onclick="loadExclusions()">🔄 刷新排除列表</button>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn" onclick="loadExclusions()">🔄 刷新</button>
                     </div>
                 </div>
             </div>
-        </div>
         
-        <!-- 自动混剪控制 -->
-        <div class="content-section">
-            <h2 class="section-title">🎬 自动混剪控制</h2>
-            <div class="status-panel">
-                <h2>🚀 混剪操作</h2>
+            <!-- 自动混剪控制 -->
+            <div class="content-section">
+                <h2 class="section-title">🎬 混剪控制</h2>
+                <div class="card">
+                    <h2>🚀 混剪操作</h2>
 
-                <div class="control-section">
-                    <label class="control-label">📦 选择产品:</label>
-                    <select id="product_select" class="product-select">
-                        <option value="">自动选择</option>
-                    </select>
-                    <div>
-                        <button class="btn btn-success" onclick="startAutomix()" id="start-btn">🚀 开始混剪</button>
-                        <button class="btn" onclick="loadProducts()">🔄 刷新产品列表</button>
-                    </div>
-                </div>
-
-                <div class="status-section">
-                    <h3>📊 混剪进度</h3>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill">
-                            <div class="progress-text" id="progress-text">0%</div>
+                    <div class="control-section">
+                        <label class="control-label">📦 选择产品:</label>
+                        <select id="product_select" class="product-select">
+                            <option value="">自动选择</option>
+                        </select>
+                        <div>
+                            <button class="btn btn-success" onclick="startAutomix()" id="start-btn">🚀 开始</button>
+                            <button class="btn" onclick="loadProducts()">🔄 刷新</button>
                         </div>
                     </div>
-                    <div class="status-display">
-                        <span class="status-label">当前状态:</span>
-                        <span id="status-text" class="status-value">就绪</span>
-                    </div>
-                </div>
 
-                <div class="log-section">
-                    <h3>📋 运行日志</h3>
-                    <div class="log-area" id="log-area">等待开始混剪...</div>
+                    <div class="status-section">
+                        <h3>📊 混剪进度</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill">
+                                <div class="progress-text" id="progress-text">0%</div>
+                            </div>
+                        </div>
+                        <div class="status-display">
+                            <span class="status-label">状态:</span>
+                            <span id="status-text" class="status-value">就绪</span>
+                        </div>
+                    </div>
+
+                    <div class="log-section">
+                        <h3>📋 运行日志</h3>
+                        <div class="log-area" id="log-area">等待开始混剪...</div>
+                    </div>
                 </div>
             </div>
         </div>
