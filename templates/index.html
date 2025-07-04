@@ -10,12 +10,88 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
             min-height: 100vh;
             color: #333;
+            overflow-x: hidden;
+        }
+
+        /* 动态背景粒子效果 */
+        .background-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+
+        /* 页面加载动画 */
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .page-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-size: 18px;
+            font-weight: bold;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
         }
         
         .container {
@@ -49,16 +125,50 @@
         }
         
         .card {
-            background: white;
-            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: slideInUp 0.8s ease forwards;
         }
-        
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
         }
+
+        @keyframes slideInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
         
         .card h2 {
             color: #667eea;
@@ -87,16 +197,26 @@
         
         .config-item input, .config-item select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 12px 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
-            transition: border-color 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
         }
-        
+
         .config-item input:focus, .config-item select:focus {
             outline: none;
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+            background: white;
+        }
+
+        .config-item input:hover, .config-item select:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
         }
         
         .btn {
@@ -104,17 +224,42 @@
             color: white;
             border: none;
             padding: 12px 25px;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             margin: 5px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
-        
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-1px) scale(1.02);
         }
         
         .btn-success {
@@ -138,10 +283,35 @@
         
         .stat-item {
             text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
             border-left: 4px solid #667eea;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-item:hover::before {
+            opacity: 1;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
         }
         
         .stat-number {
@@ -186,18 +356,50 @@
         
         .progress-bar {
             width: 100%;
-            height: 20px;
-            background: #e0e0e0;
-            border-radius: 10px;
+            height: 25px;
+            background: rgba(224, 224, 224, 0.3);
+            border-radius: 15px;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 15px 0;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
-        
+
         .progress-fill {
             height: 100%;
             background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .progress-fill::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
         
         .log-area {
@@ -213,45 +415,156 @@
         }
         
         .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin: 10px 20px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            min-width: 300px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-weight: 500;
         }
-        
+
         .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
+            background: linear-gradient(135deg, rgba(212, 237, 218, 0.9) 0%, rgba(195, 230, 203, 0.9) 100%);
             color: #155724;
+            border-left: 4px solid #28a745;
         }
-        
+
         .alert-error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
+            background: linear-gradient(135deg, rgba(248, 215, 218, 0.9) 0%, rgba(245, 198, 203, 0.9) 100%);
             color: #721c24;
+            border-left: 4px solid #dc3545;
         }
-        
+
         .alert-info {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
+            background: linear-gradient(135deg, rgba(209, 236, 241, 0.9) 0%, rgba(190, 229, 235, 0.9) 100%);
             color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        /* 脉冲动画 */
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 摇摆动画 */
+        .shake {
+            animation: shake-animation 0.5s ease-in-out;
+        }
+
+        @keyframes shake-animation {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* 弹跳动画 */
+        .bounce {
+            animation: bounce-animation 0.6s ease;
+        }
+
+        @keyframes bounce-animation {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
         }
         
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
+                gap: 15px;
             }
-            
+
             .config-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+                margin: 3px;
+            }
+
+            .alert {
+                margin: 10px;
+                min-width: auto;
+                right: 10px;
+                left: 10px;
+            }
+
+            /* 移动端触摸优化 */
+            .btn, .config-item input, .config-item select {
+                min-height: 44px; /* iOS推荐的最小触摸目标 */
+            }
+
+            /* 移动端卡片悬停效果调整 */
+            .card:hover {
+                transform: translateY(-5px) scale(1.01);
+            }
+        }
+
+        /* 平板端适配 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .config-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 大屏幕优化 */
+        @media (min-width: 1400px) {
+            .container {
+                max-width: 1400px;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr 1fr 1fr;
             }
         }
     </style>
 </head>
 <body>
+    <!-- 页面加载器 -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <div class="loader-text">🎬 加载剪映自动混剪工具...</div>
+        </div>
+    </div>
+
+    <!-- 动态背景粒子 -->
+    <div class="background-particles" id="backgroundParticles"></div>
+
     <div class="container">
         <div class="header">
             <h1>🎬 剪映自动混剪工具</h1>
@@ -357,7 +670,9 @@
             <div style="margin-bottom: 20px;">
                 <label>📊 混剪状态:</label>
                 <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill"></div>
+                    <div class="progress-fill" id="progress-fill">
+                        <div class="progress-text" id="progress-text">0%</div>
+                    </div>
                 </div>
                 <div id="status-text">就绪</div>
             </div>
@@ -375,11 +690,92 @@
         let statusInterval = null;
         
         // 页面加载时初始化
-        window.onload = function() {
-            loadConfig();
-            loadExclusions();
-            loadProducts();
-        };
+        window.addEventListener('load', function() {
+            // 初始化背景粒子
+            initBackgroundParticles();
+
+            // 延迟隐藏加载器
+            setTimeout(() => {
+                document.getElementById('pageLoader').classList.add('hidden');
+
+                // 初始化页面内容
+                setTimeout(() => {
+                    loadConfig();
+                    loadExclusions();
+                    loadProducts();
+                    initInteractiveEffects();
+                }, 500);
+            }, 1500);
+        });
+
+        // 初始化背景粒子效果
+        function initBackgroundParticles() {
+            const container = document.getElementById('backgroundParticles');
+            const particleCount = 20;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                // 随机大小和位置
+                const size = Math.random() * 6 + 2;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+
+                container.appendChild(particle);
+            }
+        }
+
+        // 初始化交互效果
+        function initInteractiveEffects() {
+            // 为所有卡片添加鼠标跟踪效果
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', handleCardMouseMove);
+                card.addEventListener('mouseleave', handleCardMouseLeave);
+            });
+
+            // 为统计项添加点击动画
+            const statItems = document.querySelectorAll('.stat-item');
+            statItems.forEach(item => {
+                item.addEventListener('click', handleStatItemClick);
+            });
+        }
+
+        // 卡片鼠标跟踪效果
+        function handleCardMouseMove(e) {
+            const card = e.currentTarget;
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = (y - centerY) / 10;
+            const rotateY = (centerX - x) / 10;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px) scale(1.02)`;
+        }
+
+        // 卡片鼠标离开效果
+        function handleCardMouseLeave(e) {
+            const card = e.currentTarget;
+            card.style.transform = '';
+        }
+
+        // 统计项点击动画
+        function handleStatItemClick(e) {
+            const item = e.currentTarget;
+            item.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                item.style.transform = '';
+            }, 150);
+        }
         
         // 加载配置
         async function loadConfig() {
@@ -408,9 +804,17 @@
             }
         }
         
-        // 保存配置
+        // 保存配置（增强版）
         async function saveConfig() {
+            const saveBtn = document.querySelector('button[onclick="saveConfig()"]');
+            const originalText = saveBtn.textContent;
+
             try {
+                // 按钮动画
+                saveBtn.textContent = '💾 保存中...';
+                saveBtn.disabled = true;
+                saveBtn.classList.add('pulse');
+
                 const config = {
                     material_path: document.getElementById('material_path').value,
                     draft_output_path: document.getElementById('draft_output_path').value,
@@ -421,7 +825,7 @@
                     transition_probability: parseFloat(document.getElementById('transition_probability').value) / 100,
                     batch_count: parseInt(document.getElementById('batch_count').value)
                 };
-                
+
                 const response = await fetch('/api/config', {
                     method: 'POST',
                     headers: {
@@ -429,16 +833,29 @@
                     },
                     body: JSON.stringify(config)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert('配置保存成功', 'success');
+                    saveBtn.classList.add('bounce');
+                    saveBtn.textContent = '✅ 保存成功';
                 } else {
                     showAlert('配置保存失败: ' + result.errors.join(', '), 'error');
+                    saveBtn.classList.add('shake');
+                    saveBtn.textContent = '❌ 保存失败';
                 }
             } catch (error) {
                 showAlert('保存配置失败: ' + error.message, 'error');
+                saveBtn.classList.add('shake');
+                saveBtn.textContent = '❌ 保存失败';
+            } finally {
+                // 恢复按钮状态
+                setTimeout(() => {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = originalText;
+                    saveBtn.classList.remove('pulse', 'bounce', 'shake');
+                }, 2000);
             }
         }
         
@@ -590,9 +1007,11 @@
                 if (status.running) {
                     // 更新进度条（模拟进度）
                     const progressFill = document.getElementById('progress-fill');
+                    const progressText = document.getElementById('progress-text');
                     let currentWidth = parseInt(progressFill.style.width) || 0;
                     if (currentWidth < 90) {
-                        progressFill.style.width = (currentWidth + 2) + '%';
+                        currentWidth += 2;
+                        updateProgressBar(currentWidth);
                     }
                 } else {
                     // 混剪完成
@@ -601,19 +1020,23 @@
                     
                     document.getElementById('start-btn').disabled = false;
                     document.getElementById('start-btn').textContent = '🚀 开始混剪';
-                    document.getElementById('progress-fill').style.width = '100%';
-                    
+                    updateProgressBar(100);
+
                     if (status.error) {
                         showAlert('混剪失败: ' + status.error, 'error');
                         appendLog('❌ 错误: ' + status.error);
+                        // 错误时进度条变红
+                        document.getElementById('progress-fill').style.background = 'linear-gradient(135deg, #f44336 0%, #da190b 100%)';
                     } else if (status.result) {
                         showAlert('混剪完成！', 'success');
                         appendLog('✅ 混剪完成: ' + JSON.stringify(status.result));
+                        // 成功时添加完成动画
+                        celebrateSuccess();
                     }
-                    
+
                     // 重置进度条
                     setTimeout(() => {
-                        document.getElementById('progress-fill').style.width = '0%';
+                        resetProgressBar();
                     }, 3000);
                 }
                 
@@ -635,26 +1058,107 @@
             logArea.scrollTop = logArea.scrollHeight;
         }
         
-        // 显示提示信息
+        // 更新进度条
+        function updateProgressBar(percentage) {
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+
+            progressFill.style.width = percentage + '%';
+            progressText.textContent = Math.round(percentage) + '%';
+
+            // 根据进度改变颜色
+            if (percentage < 30) {
+                progressFill.style.background = 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)';
+            } else if (percentage < 70) {
+                progressFill.style.background = 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)';
+            } else {
+                progressFill.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+            }
+        }
+
+        // 重置进度条
+        function resetProgressBar() {
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-text');
+
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            progressFill.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+        }
+
+        // 成功庆祝动画
+        function celebrateSuccess() {
+            // 创建彩带效果
+            for (let i = 0; i < 50; i++) {
+                createConfetti();
+            }
+
+            // 添加成功音效（如果需要）
+            // playSuccessSound();
+        }
+
+        // 创建彩带粒子
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.style.position = 'fixed';
+            confetti.style.width = '10px';
+            confetti.style.height = '10px';
+            confetti.style.backgroundColor = getRandomColor();
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.top = '-10px';
+            confetti.style.zIndex = '10000';
+            confetti.style.borderRadius = '50%';
+            confetti.style.pointerEvents = 'none';
+
+            document.body.appendChild(confetti);
+
+            // 动画
+            const animation = confetti.animate([
+                { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                { transform: `translateY(${window.innerHeight + 100}px) rotate(720deg)`, opacity: 0 }
+            ], {
+                duration: Math.random() * 2000 + 1000,
+                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            });
+
+            animation.onfinish = () => confetti.remove();
+        }
+
+        // 获取随机颜色
+        function getRandomColor() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // 显示提示信息（增强版）
         function showAlert(message, type = 'info') {
             // 移除现有的提示
             const existingAlert = document.querySelector('.alert');
             if (existingAlert) {
-                existingAlert.remove();
+                existingAlert.style.transform = 'translateX(100%)';
+                setTimeout(() => existingAlert.remove(), 300);
             }
-            
+
             // 创建新提示
             const alert = document.createElement('div');
             alert.className = `alert alert-${type}`;
             alert.textContent = message;
-            
+            alert.style.transform = 'translateX(100%)';
+            alert.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+
             // 插入到页面顶部
             document.body.insertBefore(alert, document.body.firstChild);
-            
+
+            // 滑入动画
+            setTimeout(() => {
+                alert.style.transform = 'translateX(0)';
+            }, 100);
+
             // 3秒后自动移除
             setTimeout(() => {
                 if (alert.parentNode) {
-                    alert.remove();
+                    alert.style.transform = 'translateX(100%)';
+                    setTimeout(() => alert.remove(), 300);
                 }
             }, 3000);
         }
