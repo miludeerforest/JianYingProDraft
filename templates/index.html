@@ -1232,14 +1232,26 @@
                 document.getElementById('status-text').textContent = status.progress || '运行中...';
                 
                 if (status.running) {
-                    // 更新进度条（模拟进度）
-                    const progressFill = document.getElementById('progress-fill');
-                    const progressText = document.getElementById('progress-text');
-                    let currentWidth = parseInt(progressFill.style.width) || 0;
-                    if (currentWidth < 90) {
-                        currentWidth += 2;
-                        updateProgressBar(currentWidth);
+                    // 更新进度条
+                    let progress = 0;
+
+                    // 尝试从进度文本中提取进度信息
+                    const progressMatch = status.progress.match(/第\s*(\d+)\/(\d+)/);
+                    if (progressMatch) {
+                        const current = parseInt(progressMatch[1]);
+                        const total = parseInt(progressMatch[2]);
+                        progress = Math.round((current / total) * 100);
+                    } else {
+                        // 模拟进度
+                        const progressFill = document.getElementById('progress-fill');
+                        let currentWidth = parseInt(progressFill.style.width) || 0;
+                        if (currentWidth < 90) {
+                            currentWidth += 2;
+                            progress = currentWidth;
+                        }
                     }
+
+                    updateProgressBar(progress);
                 } else {
                     // 混剪完成
                     isRunning = false;
@@ -1255,8 +1267,25 @@
                         // 错误时进度条变红
                         document.getElementById('progress-fill').style.background = 'linear-gradient(135deg, #f44336 0%, #da190b 100%)';
                     } else if (status.result) {
-                        showAlert('混剪完成！', 'success');
-                        appendLog('✅ 混剪完成: ' + JSON.stringify(status.result));
+                        // 检查是否是批量生成结果
+                        if (status.result.batch_results) {
+                            const successCount = status.result.success_count;
+                            const totalCount = status.result.total_count;
+                            showAlert(`批量生成完成！成功: ${successCount}/${totalCount}`, 'success');
+                            appendLog(`✅ 批量生成完成: 成功 ${successCount}/${totalCount} 个视频`);
+
+                            // 显示每个结果的详细信息
+                            status.result.batch_results.forEach((result, index) => {
+                                if (result.success) {
+                                    appendLog(`  ${index + 1}. ✅ ${result.draft_name} - ${(result.duration/1000000).toFixed(1)}s`);
+                                } else {
+                                    appendLog(`  ${index + 1}. ❌ ${result.draft_name} - ${result.error}`);
+                                }
+                            });
+                        } else {
+                            showAlert('混剪完成！', 'success');
+                            appendLog('✅ 混剪完成: ' + JSON.stringify(status.result));
+                        }
                         // 成功时添加完成动画
                         celebrateSuccess();
                     }

@@ -173,45 +173,78 @@ class WebInterface:
         """启动自动混剪（异步）"""
         if self.automix_status['running']:
             return {'success': False, 'message': '混剪正在进行中'}
-        
+
         def run_automix():
             try:
                 self.automix_status['running'] = True
                 self.automix_status['progress'] = '正在初始化...'
                 self.automix_status['error'] = None
                 self.automix_status['result'] = None
-                
-                # 创建StandardAutoMix实例
-                draft_name = f"WebAutoMix_{int(time.time())}"
-                self.automix_instance = StandardAutoMix(draft_name)
-                
-                self.automix_status['progress'] = '正在扫描素材...'
-                
-                # 执行混剪
-                # 获取目标时长（默认35秒）
-                target_duration = 35000000  # 35秒，单位微秒
 
-                # 调用正确的方法
-                result = self.automix_instance.auto_mix(
-                    target_duration=target_duration,
-                    product_model=product_name
-                )
-                
-                self.automix_status['progress'] = '混剪完成'
-                self.automix_status['result'] = result
-                
+                # 获取批量生成数量
+                batch_count = self.config_manager.get_batch_count()
+
+                # 获取目标时长范围
+                min_duration = self.config_manager.get_video_duration_min()
+                max_duration = self.config_manager.get_video_duration_max()
+
+                self.automix_status['progress'] = f'开始批量生成 {batch_count} 个视频...'
+
+                results = []
+                import random
+
+                for i in range(batch_count):
+                    try:
+                        self.automix_status['progress'] = f'正在生成第 {i+1}/{batch_count} 个视频...'
+
+                        # 随机选择时长
+                        target_duration = random.randint(min_duration, max_duration)
+
+                        # 创建StandardAutoMix实例
+                        draft_name = f"WebAutoMix_{int(time.time())}_{i+1}"
+                        self.automix_instance = StandardAutoMix(draft_name)
+
+                        # 执行混剪
+                        result = self.automix_instance.auto_mix(
+                            target_duration=target_duration,
+                            product_model=product_name
+                        )
+
+                        results.append({
+                            'success': True,
+                            'draft_name': draft_name,
+                            'duration': target_duration,
+                            'result': result
+                        })
+
+                    except Exception as e:
+                        results.append({
+                            'success': False,
+                            'draft_name': f"WebAutoMix_{int(time.time())}_{i+1}",
+                            'error': str(e)
+                        })
+
+                # 统计结果
+                success_count = sum(1 for r in results if r['success'])
+                self.automix_status['progress'] = f'批量生成完成！成功: {success_count}/{batch_count}'
+                self.automix_status['result'] = {
+                    'batch_results': results,
+                    'success_count': success_count,
+                    'total_count': batch_count
+                }
+
             except Exception as e:
                 self.automix_status['error'] = str(e)
                 self.automix_status['progress'] = f'错误: {str(e)}'
             finally:
                 self.automix_status['running'] = False
-        
+
         # 在新线程中运行
         thread = threading.Thread(target=run_automix)
         thread.daemon = True
         thread.start()
-        
-        return {'success': True, 'message': '混剪已开始'}
+
+        return {'success': True, 'message': '批量混剪已开始'}
     
     def get_automix_status(self):
         """获取混剪状态"""
