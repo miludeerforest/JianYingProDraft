@@ -812,7 +812,8 @@ class StandardAutoMix:
                 material=overlay_material,
                 target_timerange=trange(0, target_duration),
                 source_timerange=trange(0, target_duration),
-                clip_settings=clip_settings
+                clip_settings=clip_settings,
+                volume=0.0  # 静音处理
             )
         else:
             # 目标时长超过素材时长，使用慢速播放来拉伸时长
@@ -828,7 +829,8 @@ class StandardAutoMix:
                 target_timerange=trange(0, target_duration),
                 source_timerange=trange(0, material_duration),
                 speed=speed_factor,
-                clip_settings=clip_settings
+                clip_settings=clip_settings,
+                volume=0.0  # 静音处理
             )
 
         print(f"  🌫️  设置不透明度: {opacity:.1%}")
@@ -860,6 +862,7 @@ class StandardAutoMix:
             # 创建视频素材
             overlay_material = Video_material(overlay_video_path)
 
+            print(f"  🔇 覆盖层音频将在片段中静音处理")
             print(f"  📊 覆盖层视频时长: {overlay_material.duration/1000000:.1f}s, 目标时长: {target_duration/1000000:.1f}s")
 
             # 智能调整覆盖层时长以匹配目标时长（包含不透明度设置）
@@ -876,7 +879,8 @@ class StandardAutoMix:
             self.statistics['anti_detection_overlay'] = {
                 'enabled': True,
                 'opacity': opacity,
-                'video_file': os.path.basename(overlay_video_path)
+                'video_file': os.path.basename(overlay_video_path),
+                'audio_muted': True  # 记录音频已静音
             }
 
         except Exception as e:
