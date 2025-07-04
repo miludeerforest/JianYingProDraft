@@ -189,15 +189,14 @@ class WebInterface:
                 self.automix_status['progress'] = '正在扫描素材...'
                 
                 # 执行混剪
-                if product_name:
-                    result = self.automix_instance.create_automix_draft(product_name)
-                else:
-                    # 获取可用产品列表
-                    products = self.automix_instance.get_available_products()
-                    if products:
-                        result = self.automix_instance.create_automix_draft(products[0])
-                    else:
-                        raise Exception("没有找到可用的产品素材")
+                # 获取目标时长（默认35秒）
+                target_duration = 35000000  # 35秒，单位微秒
+
+                # 调用正确的方法
+                result = self.automix_instance.auto_mix(
+                    target_duration=target_duration,
+                    product_model=product_name
+                )
                 
                 self.automix_status['progress'] = '混剪完成'
                 self.automix_status['result'] = result
