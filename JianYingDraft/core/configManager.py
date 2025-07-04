@@ -113,6 +113,16 @@ class AutoMixConfigManager:
         min_duration = cls._get_config_value('video_duration_min', cls.DEFAULT_CONFIG['video_duration_min'])
         max_duration = cls._get_config_value('video_duration_max', cls.DEFAULT_CONFIG['video_duration_max'])
         return int(min_duration), int(max_duration)
+
+    @classmethod
+    def get_video_duration_min(cls) -> int:
+        """获取视频最小时长（微秒）"""
+        return int(cls._get_config_value('video_duration_min', cls.DEFAULT_CONFIG['video_duration_min']))
+
+    @classmethod
+    def get_video_duration_max(cls) -> int:
+        """获取视频最大时长（微秒）"""
+        return int(cls._get_config_value('video_duration_max', cls.DEFAULT_CONFIG['video_duration_max']))
     
     @classmethod
     def get_effect_probability(cls) -> float:
