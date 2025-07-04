@@ -15,10 +15,9 @@
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             background-attachment: fixed;
-            height: 100vh;
+            min-height: 100vh;
             color: #333;
             overflow-x: hidden;
-            overflow-y: auto;
         }
 
         /* 动态背景粒子效果 */
@@ -96,85 +95,48 @@
         }
         
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 10px 20px;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            padding: 20px;
         }
         
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 15px;
-            padding: 10px 0;
-            flex-shrink: 0;
+            margin-bottom: 30px;
         }
 
         .header h1 {
-            font-size: 2.2em;
-            margin-bottom: 8px;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-            font-weight: 700;
-            letter-spacing: -1px;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .header p {
-            font-size: 1.1em;
+            font-size: 1.2em;
             opacity: 0.9;
-            margin-bottom: 5px;
-            font-weight: 300;
-        }
-
-        .header .subtitle {
-            font-size: 0.9em;
-            opacity: 0.7;
-            font-weight: 300;
-            margin-top: 3px;
         }
         
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .content-section {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .section-title {
-            font-size: 1.3em;
-            color: white;
-            text-align: center;
-            margin-bottom: 10px;
-            font-weight: 600;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-            flex-shrink: 0;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
         }
         
         .card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 15px;
+            border-radius: 20px;
+            padding: 25px;
             box-shadow: 0 15px 35px rgba(0,0,0,0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
-            overflow-y: auto;
+            overflow: hidden;
             opacity: 0;
             transform: translateY(30px);
             animation: slideInUp 0.8s ease forwards;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
         }
 
         .card::before {
@@ -210,13 +172,10 @@
         
         .card h2 {
             color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 1.5em;
             border-bottom: 2px solid #f0f0f0;
             padding-bottom: 10px;
-            position: relative;
-            flex-shrink: 0;
         }
 
         .card h2::after {
@@ -232,22 +191,19 @@
         
         .config-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
 
         .config-item {
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
 
         .config-item label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 600;
-            color: #444;
-            font-size: 12px;
-            letter-spacing: 0.5px;
+            font-weight: bold;
+            color: #555;
         }
 
         .config-section {
@@ -267,10 +223,10 @@
         
         .config-item input, .config-item select {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 12px;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
             background: rgba(255, 255, 255, 0.9);
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
@@ -293,16 +249,16 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 12px 25px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 16px;
             font-weight: bold;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin: 3px;
+            margin: 5px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn::before {
@@ -347,8 +303,8 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .stats-header {
@@ -371,10 +327,10 @@
         
         .stat-item {
             text-align: center;
-            padding: 10px;
+            padding: 20px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 8px;
-            border-left: 3px solid #667eea;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
             position: relative;
@@ -414,14 +370,12 @@
         }
         
         .exclusion-list {
-            max-height: 120px;
+            max-height: 200px;
             overflow-y: auto;
-            border: 1px solid #e8e8e8;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
-            padding: 8px;
-            background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-            flex: 1;
+            padding: 10px;
+            background: #f9f9f9;
         }
 
         .exclusion-section {
@@ -429,6 +383,7 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
+            flex: 1;
         }
 
         .exclusion-header {
@@ -467,13 +422,10 @@
         
         .status-panel {
             grid-column: 1 / -1;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin-top: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         .control-section {
@@ -682,65 +634,54 @@
             60% { transform: translateY(-5px); }
         }
         
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .container {
-                padding: 5px 10px;
-            }
-
-            .header {
-                margin-bottom: 10px;
-                padding: 5px 0;
-            }
-
-            .header h1 {
-                font-size: 1.8em;
-                margin-bottom: 5px;
-            }
-
-            .section-title {
-                font-size: 1.1em;
-                margin-bottom: 8px;
-            }
-
-            .card {
-                padding: 10px;
-            }
-
-            .card h2 {
-                font-size: 1.1em;
-                margin-bottom: 10px;
-            }
-
-            .btn {
-                padding: 6px 12px;
-                font-size: 11px;
-                margin: 2px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 5px;
+                gap: 15px;
             }
 
             .config-grid {
                 grid-template-columns: 1fr;
-                gap: 5px;
             }
 
-            .control-section {
+            .stats-grid {
                 grid-template-columns: 1fr;
-                text-align: center;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 20px;
+                margin-bottom: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+                margin: 3px;
+            }
+
+            .alert {
+                margin: 10px;
+                min-width: auto;
+                right: 10px;
+                left: 10px;
+            }
+
+            /* 移动端触摸优化 */
+            .btn, .config-item input, .config-item select {
+                min-height: 44px; /* iOS推荐的最小触摸目标 */
+            }
+
+            /* 移动端卡片悬停效果调整 */
+            .card:hover {
+                transform: translateY(-5px) scale(1.01);
             }
         }
 
@@ -773,11 +714,20 @@
         /* 排版增强 */
         .card h3 {
             color: #667eea;
-            font-size: 1.1em;
-            margin: 20px 0 15px 0;
+            font-size: 1em;
+            margin: 15px 0 10px 0;
             font-weight: 600;
-            padding-left: 15px;
+            padding-left: 12px;
             border-left: 3px solid #667eea;
+            flex-shrink: 0;
+        }
+
+        /* 确保内容区域正确分配空间 */
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         .section-divider {
@@ -842,154 +792,118 @@
     <div class="container">
         <div class="header">
             <h1>🎬 剪映自动混剪工具</h1>
-            <p>Web交互界面</p>
-            <div class="subtitle">基于原有代码，无任何修改 • 现代化动效体验</div>
+            <p>Web交互界面 - 基于原有代码，无任何修改</p>
         </div>
         
         <div class="main-content">
             <!-- 配置管理 -->
-            <div class="content-section">
-                <h2 class="section-title">⚙️ 系统配置</h2>
-                <div class="card">
-                    <h2>📁 路径配置</h2>
-                    <div class="config-section">
-                        <div class="config-item">
-                            <label>📁 素材库路径:</label>
-                            <input type="text" id="material_path" placeholder="素材库路径">
-                        </div>
-                        <div class="config-item">
-                            <label>💾 草稿输出路径:</label>
-                            <input type="text" id="draft_output_path" placeholder="草稿输出路径">
-                        </div>
+            <div class="card">
+                <h2>⚙️ 配置管理</h2>
+                <div class="config-grid">
+                    <div class="config-item">
+                        <label>📁 素材库路径:</label>
+                        <input type="text" id="material_path" placeholder="素材库路径">
                     </div>
-
-                    <h3>⏱️ 视频参数</h3>
-                    <div class="config-grid">
-                        <div class="config-item">
-                            <label>⏱️ 最小时长(秒):</label>
-                            <input type="number" id="video_duration_min" min="5" max="300">
-                        </div>
-                        <div class="config-item">
-                            <label>⏱️ 最大时长(秒):</label>
-                            <input type="number" id="video_duration_max" min="5" max="300">
-                        </div>
+                    <div class="config-item">
+                        <label>💾 草稿输出路径:</label>
+                        <input type="text" id="draft_output_path" placeholder="草稿输出路径">
                     </div>
-
-                    <h3>🎨 特效概率</h3>
-                    <div class="config-grid">
-                        <div class="config-item">
-                            <label>✨ 特效概率(%):</label>
-                            <input type="number" id="effect_probability" min="0" max="100" step="5">
-                        </div>
-                        <div class="config-item">
-                            <label>🎨 滤镜概率(%):</label>
-                            <input type="number" id="filter_probability" min="0" max="100" step="5">
-                        </div>
-                        <div class="config-item">
-                            <label>🔄 转场概率(%):</label>
-                            <input type="number" id="transition_probability" min="0" max="100" step="5">
-                        </div>
-                        <div class="config-item">
-                            <label>📦 批量生成数量:</label>
-                            <input type="number" id="batch_count" min="1" max="100">
-                        </div>
+                    <div class="config-item">
+                        <label>⏱️ 最小时长(秒):</label>
+                        <input type="number" id="video_duration_min" min="5" max="300">
                     </div>
-
-                    <div style="text-align: center; margin-top: 15px;">
-                        <button class="btn" onclick="loadConfig()">🔄 刷新</button>
-                        <button class="btn btn-success" onclick="saveConfig()">💾 保存</button>
+                    <div class="config-item">
+                        <label>⏱️ 最大时长(秒):</label>
+                        <input type="number" id="video_duration_max" min="5" max="300">
                     </div>
+                    <div class="config-item">
+                        <label>✨ 特效概率(%):</label>
+                        <input type="number" id="effect_probability" min="0" max="100" step="5">
+                    </div>
+                    <div class="config-item">
+                        <label>🎨 滤镜概率(%):</label>
+                        <input type="number" id="filter_probability" min="0" max="100" step="5">
+                    </div>
+                    <div class="config-item">
+                        <label>🔄 转场概率(%):</label>
+                        <input type="number" id="transition_probability" min="0" max="100" step="5">
+                    </div>
+                    <div class="config-item">
+                        <label>📦 批量生成数量:</label>
+                        <input type="number" id="batch_count" min="1" max="100">
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn" onclick="loadConfig()">🔄 刷新配置</button>
+                    <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
                 </div>
             </div>
             
             <!-- 排除管理 -->
-            <div class="content-section">
-                <h2 class="section-title">🚫 排除管理</h2>
-                <div class="card">
-                    <div class="stats-header">
-                        <div class="stats-title">📊 效果统计</div>
+            <div class="card">
+                <h2>🚫 排除管理</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number" id="filters-total">0</div>
+                        <div class="stat-label">总滤镜</div>
                     </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="effects-total">0</div>
+                        <div class="stat-label">总特效</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="transitions-total">0</div>
+                        <div class="stat-label">总转场</div>
+                    </div>
+                </div>
 
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-number" id="filters-total">0</div>
-                            <div class="stat-label">滤镜</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="effects-total">0</div>
-                            <div class="stat-label">特效</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" id="transitions-total">0</div>
-                            <div class="stat-label">转场</div>
-                        </div>
-                    </div>
+                <div style="margin-bottom: 15px;">
+                    <label>🎨 已排除滤镜 (<span id="filters-excluded">0</span>个):</label>
+                    <div class="exclusion-list" id="filters-list"></div>
+                </div>
 
-                    <div class="exclusion-section">
-                        <div class="exclusion-header">
-                            <span class="exclusion-title">🎨 已排除滤镜</span>
-                            <span class="exclusion-count" id="filters-excluded">0</span>
-                        </div>
-                        <div class="exclusion-list" id="filters-list"></div>
-                    </div>
+                <div style="margin-bottom: 15px;">
+                    <label>✨ 已排除特效 (<span id="effects-excluded">0</span>个):</label>
+                    <div class="exclusion-list" id="effects-list"></div>
+                </div>
 
-                    <div class="exclusion-section">
-                        <div class="exclusion-header">
-                            <span class="exclusion-title">✨ 已排除特效</span>
-                            <span class="exclusion-count" id="effects-excluded">0</span>
-                        </div>
-                        <div class="exclusion-list" id="effects-list"></div>
-                    </div>
+                <div style="margin-bottom: 15px;">
+                    <label>🔄 已排除转场 (<span id="transitions-excluded">0</span>个):</label>
+                    <div class="exclusion-list" id="transitions-list"></div>
+                </div>
 
-                    <div class="exclusion-section">
-                        <div class="exclusion-header">
-                            <span class="exclusion-title">🔄 已排除转场</span>
-                            <span class="exclusion-count" id="transitions-excluded">0</span>
-                        </div>
-                        <div class="exclusion-list" id="transitions-list"></div>
-                    </div>
-
-                    <div style="text-align: center; margin-top: 10px;">
-                        <button class="btn" onclick="loadExclusions()">🔄 刷新</button>
-                    </div>
+                <div style="text-align: center;">
+                    <button class="btn" onclick="loadExclusions()">🔄 刷新排除列表</button>
                 </div>
             </div>
-        
-            <!-- 自动混剪控制 -->
-            <div class="content-section">
-                <h2 class="section-title">🎬 混剪控制</h2>
-                <div class="card">
-                    <h2>🚀 混剪操作</h2>
+        </div>
 
-                    <div class="control-section">
-                        <label class="control-label">📦 选择产品:</label>
-                        <select id="product_select" class="product-select">
-                            <option value="">自动选择</option>
-                        </select>
-                        <div>
-                            <button class="btn btn-success" onclick="startAutomix()" id="start-btn">🚀 开始</button>
-                            <button class="btn" onclick="loadProducts()">🔄 刷新</button>
-                        </div>
-                    </div>
+        <!-- 自动混剪控制 -->
+        <div class="status-panel">
+            <h2>🎬 自动混剪控制</h2>
 
-                    <div class="status-section">
-                        <h3>📊 混剪进度</h3>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progress-fill">
-                                <div class="progress-text" id="progress-text">0%</div>
-                            </div>
-                        </div>
-                        <div class="status-display">
-                            <span class="status-label">状态:</span>
-                            <span id="status-text" class="status-value">就绪</span>
-                        </div>
-                    </div>
+            <div style="margin-bottom: 20px;">
+                <label>📦 选择产品:</label>
+                <select id="product_select" style="width: 200px; margin-right: 10px;">
+                    <option value="">自动选择</option>
+                </select>
+                <button class="btn btn-success" onclick="startAutomix()" id="start-btn">🚀 开始混剪</button>
+                <button class="btn" onclick="loadProducts()">🔄 刷新产品列表</button>
+            </div>
 
-                    <div class="log-section">
-                        <h3>📋 运行日志</h3>
-                        <div class="log-area" id="log-area">等待开始混剪...</div>
+            <div style="margin-bottom: 20px;">
+                <label>📊 混剪状态:</label>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill">
+                        <div class="progress-text" id="progress-text">0%</div>
                     </div>
                 </div>
+                <div id="status-text">就绪</div>
+            </div>
+
+            <div>
+                <label>📋 运行日志:</label>
+                <div class="log-area" id="log-area">等待开始混剪...</div>
             </div>
         </div>
     </div>
