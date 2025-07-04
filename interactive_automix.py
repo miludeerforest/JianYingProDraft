@@ -82,28 +82,526 @@ class InteractiveAutoMix:
     def show_config_info(self):
         """显示配置信息"""
         print("\n⚙️  当前配置信息:")
-        print("-" * 40)
-        
+        print("=" * 60)
+
         try:
-            print(f"📁 素材库路径: {self.config_manager.get_material_path()}")
-            print(f"💾 草稿输出路径: {self.config_manager.get_draft_output_path()}")
-            
+            # 基础路径配置
+            print("📁 路径配置:")
+            print(f"  素材库路径: {self.config_manager.get_material_path()}")
+            print(f"  草稿输出路径: {self.config_manager.get_draft_output_path()}")
+
+            # 视频参数配置
+            print("\n🎬 视频参数:")
             min_dur, max_dur = self.config_manager.get_video_duration_range()
-            print(f"⏱️  视频时长范围: {min_dur//1000000}s - {max_dur//1000000}s")
-            
-            print(f"✨ 特效概率: {self.config_manager.get_effect_probability():.0%}")
-            print(f"🎨 滤镜概率: {self.config_manager.get_filter_probability():.0%}")
-            print(f"🔄 转场概率: {self.config_manager.get_transition_probability():.0%}")
-            
+            print(f"  视频时长范围: {min_dur//1000000}s - {max_dur//1000000}s")
+            print(f"  视频去前时长: {self.config_manager.get_trim_start_duration()//1000000}秒")
+            print(f"  画面缩放比例: {self.config_manager.get_video_scale_factor():.0%}")
+
+            # 特效概率配置
+            print("\n🎨 特效概率:")
+            print(f"  特效应用概率: {self.config_manager.get_effect_probability():.0%}")
+            print(f"  滤镜应用概率: {self.config_manager.get_filter_probability():.0%}")
+            print(f"  转场应用概率: {self.config_manager.get_transition_probability():.0%}")
+
+            # 滤镜强度配置
+            min_intensity, max_intensity = self.config_manager.get_filter_intensity_range()
+            print(f"  滤镜强度范围: {min_intensity}% - {max_intensity}%")
+
+            # 音频配置
+            print("\n🎵 音频配置:")
             narration_vol, background_vol = self.config_manager.get_audio_volumes()
-            print(f"🎵 音频音量: 解说{narration_vol:.0%}, 背景{background_vol:.0%}")
-            
-            print(f"🔇 视频去前: {self.config_manager.get_trim_start_duration()//1000000}秒")
-            print(f"🔍 画面缩放: {self.config_manager.get_video_scale_factor():.0%}")
-            
+            print(f"  解说音量: {narration_vol:.0%}")
+            print(f"  背景音量: {background_vol:.0%}")
+
+            # 色彩调整配置
+            print("\n🌈 色彩调整:")
+            (contrast_min, contrast_max), (brightness_min, brightness_max) = self.config_manager.get_color_adjustment_ranges()
+            print(f"  对比度范围: {contrast_min:.1f} - {contrast_max:.1f}")
+            print(f"  亮度范围: {brightness_min:.1f} - {brightness_max:.1f}")
+
+            # 批量生成配置
+            print("\n📦 批量生成:")
+            print(f"  批量生成数量: {self.config_manager.get_batch_count()}")
+            print(f"  使用VIP特效: {'是' if self.config_manager.get_use_vip_effects() else '否'}")
+
+            # Pexels防审核配置
+            print("\n🛡️  防审核配置:")
+            print(f"  Pexels覆盖层: {'启用' if self.config_manager.is_pexels_overlay_enabled() else '禁用'}")
+            print(f"  覆盖层不透明度: {self.config_manager.get_pexels_overlay_opacity():.1%}")
+            print(f"  API密钥状态: {'已配置' if self.config_manager.get_pexels_api_key() else '未配置'}")
+
+            # 时长过滤配置
+            print("\n⏱️  时长过滤:")
+            min_filter_dur, max_filter_dur = self.config_manager.get_video_duration_filter_range()
+            print(f"  最小视频时长: {min_filter_dur//1000000}秒")
+            print(f"  最大视频时长: {max_filter_dur//1000000}秒")
+
         except Exception as e:
             print(f"❌ 读取配置失败: {str(e)}")
-            
+
+        print("=" * 60)
+
+    def modify_config(self):
+        """修改配置"""
+        while True:
+            print("\n🔧 配置修改")
+            print("=" * 60)
+            print("📋 可修改的配置项:")
+            print("1. 📁 素材库路径")
+            print("2. 💾 草稿输出路径")
+            print("3. ⏱️  视频时长范围")
+            print("4. 🎨 特效概率设置")
+            print("5. 🎵 音频音量设置")
+            print("6. 🌈 色彩调整范围")
+            print("7. 📦 批量生成设置")
+            print("8. 🛡️  防审核设置")
+            print("9. ⚙️  高级设置")
+            print("0. 🔙 返回主菜单")
+            print("-" * 40)
+
+            try:
+                choice = int(input("请选择要修改的配置项 (默认: 0): ") or "0")
+
+                if choice == 0:
+                    break
+                elif choice == 1:
+                    self.modify_paths()
+                elif choice == 2:
+                    self.modify_draft_path()
+                elif choice == 3:
+                    self.modify_video_duration()
+                elif choice == 4:
+                    self.modify_effect_probabilities()
+                elif choice == 5:
+                    self.modify_audio_volumes()
+                elif choice == 6:
+                    self.modify_color_adjustment()
+                elif choice == 7:
+                    self.modify_batch_settings()
+                elif choice == 8:
+                    self.modify_pexels_settings()
+                elif choice == 9:
+                    self.modify_advanced_settings()
+                else:
+                    print("❌ 无效选择，请重新输入")
+
+            except ValueError:
+                print("❌ 请输入有效的数字")
+            except KeyboardInterrupt:
+                print("\n👋 操作已取消")
+                break
+
+            if choice != 0:
+                input("\n按回车键继续...")
+
+    def modify_paths(self):
+        """修改素材库路径"""
+        print("\n📁 修改素材库路径")
+        print("-" * 40)
+
+        current_path = self.config_manager.get_material_path()
+        print(f"当前路径: {current_path}")
+
+        new_path = input("请输入新的素材库路径 (留空保持不变): ").strip()
+        if not new_path:
+            print("⚠️  路径未修改")
+            return
+
+        # 验证路径
+        if not os.path.exists(new_path):
+            print(f"❌ 路径不存在: {new_path}")
+            create = input("是否创建该路径? (y/N): ").strip().lower()
+            if create == 'y':
+                try:
+                    os.makedirs(new_path, exist_ok=True)
+                    print(f"✅ 已创建路径: {new_path}")
+                except Exception as e:
+                    print(f"❌ 创建路径失败: {str(e)}")
+                    return
+            else:
+                return
+
+        # 保存配置
+        if self.config_manager._set_config_value('material_path', new_path):
+            print(f"✅ 素材库路径已更新: {new_path}")
+        else:
+            print("❌ 保存配置失败")
+
+    def modify_draft_path(self):
+        """修改草稿输出路径"""
+        print("\n💾 修改草稿输出路径")
+        print("-" * 40)
+
+        current_path = self.config_manager.get_draft_output_path()
+        print(f"当前路径: {current_path}")
+
+        new_path = input("请输入新的草稿输出路径 (留空保持不变): ").strip()
+        if not new_path:
+            print("⚠️  路径未修改")
+            return
+
+        # 验证路径
+        if not os.path.exists(new_path):
+            print(f"❌ 路径不存在: {new_path}")
+            create = input("是否创建该路径? (y/N): ").strip().lower()
+            if create == 'y':
+                try:
+                    os.makedirs(new_path, exist_ok=True)
+                    print(f"✅ 已创建路径: {new_path}")
+                except Exception as e:
+                    print(f"❌ 创建路径失败: {str(e)}")
+                    return
+            else:
+                return
+
+        # 保存配置
+        if self.config_manager._set_config_value('draft_output_path', new_path):
+            print(f"✅ 草稿输出路径已更新: {new_path}")
+        else:
+            print("❌ 保存配置失败")
+
+    def modify_video_duration(self):
+        """修改视频时长范围"""
+        print("\n⏱️  修改视频时长范围")
+        print("-" * 40)
+
+        min_dur, max_dur = self.config_manager.get_video_duration_range()
+        print(f"当前时长范围: {min_dur//1000000}s - {max_dur//1000000}s")
+
+        try:
+            min_input = input(f"请输入最小时长(秒) (当前: {min_dur//1000000}, 留空保持不变): ").strip()
+            max_input = input(f"请输入最大时长(秒) (当前: {max_dur//1000000}, 留空保持不变): ").strip()
+
+            new_min = int(min_input) * 1000000 if min_input else min_dur
+            new_max = int(max_input) * 1000000 if max_input else max_dur
+
+            # 验证范围
+            if new_min >= new_max:
+                print("❌ 最小时长必须小于最大时长")
+                return
+            if new_min < 5000000:  # 5秒
+                print("❌ 最小时长不能小于5秒")
+                return
+            if new_max > 300000000:  # 300秒
+                print("❌ 最大时长不能超过300秒")
+                return
+
+            # 保存配置
+            success = True
+            if new_min != min_dur:
+                success &= self.config_manager._set_config_value('video_duration_min', new_min)
+            if new_max != max_dur:
+                success &= self.config_manager._set_config_value('video_duration_max', new_max)
+
+            if success:
+                print(f"✅ 视频时长范围已更新: {new_min//1000000}s - {new_max//1000000}s")
+            else:
+                print("❌ 保存配置失败")
+
+        except ValueError:
+            print("❌ 请输入有效的数字")
+
+    def modify_effect_probabilities(self):
+        """修改特效概率设置"""
+        print("\n🎨 修改特效概率设置")
+        print("-" * 40)
+
+        current_effect = self.config_manager.get_effect_probability()
+        current_filter = self.config_manager.get_filter_probability()
+        current_transition = self.config_manager.get_transition_probability()
+
+        print(f"当前设置:")
+        print(f"  特效概率: {current_effect:.0%}")
+        print(f"  滤镜概率: {current_filter:.0%}")
+        print(f"  转场概率: {current_transition:.0%}")
+
+        try:
+            effect_input = input(f"请输入特效概率(0-100) (当前: {current_effect:.0%}, 留空保持不变): ").strip()
+            filter_input = input(f"请输入滤镜概率(0-100) (当前: {current_filter:.0%}, 留空保持不变): ").strip()
+            transition_input = input(f"请输入转场概率(0-100) (当前: {current_transition:.0%}, 留空保持不变): ").strip()
+
+            success = True
+
+            if effect_input:
+                effect_prob = float(effect_input) / 100
+                if 0 <= effect_prob <= 1:
+                    success &= self.config_manager._set_config_value('effect_probability', effect_prob)
+                else:
+                    print("❌ 特效概率必须在0-100之间")
+                    return
+
+            if filter_input:
+                filter_prob = float(filter_input) / 100
+                if 0 <= filter_prob <= 1:
+                    success &= self.config_manager._set_config_value('filter_probability', filter_prob)
+                else:
+                    print("❌ 滤镜概率必须在0-100之间")
+                    return
+
+            if transition_input:
+                transition_prob = float(transition_input) / 100
+                if 0 <= transition_prob <= 1:
+                    success &= self.config_manager._set_config_value('transition_probability', transition_prob)
+                else:
+                    print("❌ 转场概率必须在0-100之间")
+                    return
+
+            if success:
+                print("✅ 特效概率设置已更新")
+            else:
+                print("❌ 保存配置失败")
+
+        except ValueError:
+            print("❌ 请输入有效的数字")
+
+    def modify_audio_volumes(self):
+        """修改音频音量设置"""
+        print("\n🎵 修改音频音量设置")
+        print("-" * 40)
+
+        narration_vol, background_vol = self.config_manager.get_audio_volumes()
+        print(f"当前设置:")
+        print(f"  解说音量: {narration_vol:.0%}")
+        print(f"  背景音量: {background_vol:.0%}")
+
+        try:
+            narration_input = input(f"请输入解说音量(0-100) (当前: {narration_vol:.0%}, 留空保持不变): ").strip()
+            background_input = input(f"请输入背景音量(0-100) (当前: {background_vol:.0%}, 留空保持不变): ").strip()
+
+            success = True
+
+            if narration_input:
+                narration_volume = float(narration_input) / 100
+                if 0 <= narration_volume <= 1:
+                    success &= self.config_manager._set_config_value('narration_volume', narration_volume)
+                else:
+                    print("❌ 解说音量必须在0-100之间")
+                    return
+
+            if background_input:
+                background_volume = float(background_input) / 100
+                if 0 <= background_volume <= 1:
+                    success &= self.config_manager._set_config_value('background_volume', background_volume)
+                else:
+                    print("❌ 背景音量必须在0-100之间")
+                    return
+
+            if success:
+                print("✅ 音频音量设置已更新")
+            else:
+                print("❌ 保存配置失败")
+
+        except ValueError:
+            print("❌ 请输入有效的数字")
+
+    def modify_color_adjustment(self):
+        """修改色彩调整范围"""
+        print("\n🌈 修改色彩调整范围")
+        print("-" * 40)
+
+        (contrast_min, contrast_max), (brightness_min, brightness_max) = self.config_manager.get_color_adjustment_ranges()
+        print(f"当前设置:")
+        print(f"  对比度范围: {contrast_min:.1f} - {contrast_max:.1f}")
+        print(f"  亮度范围: {brightness_min:.1f} - {brightness_max:.1f}")
+
+        try:
+            print("\n对比度设置:")
+            contrast_min_input = input(f"请输入对比度最小值(0.1-2.0) (当前: {contrast_min:.1f}, 留空保持不变): ").strip()
+            contrast_max_input = input(f"请输入对比度最大值(0.1-2.0) (当前: {contrast_max:.1f}, 留空保持不变): ").strip()
+
+            print("\n亮度设置:")
+            brightness_min_input = input(f"请输入亮度最小值(0.1-2.0) (当前: {brightness_min:.1f}, 留空保持不变): ").strip()
+            brightness_max_input = input(f"请输入亮度最大值(0.1-2.0) (当前: {brightness_max:.1f}, 留空保持不变): ").strip()
+
+            success = True
+
+            # 处理对比度设置
+            new_contrast_min = float(contrast_min_input) if contrast_min_input else contrast_min
+            new_contrast_max = float(contrast_max_input) if contrast_max_input else contrast_max
+
+            if contrast_min_input or contrast_max_input:
+                if new_contrast_min >= new_contrast_max:
+                    print("❌ 对比度最小值必须小于最大值")
+                    return
+                if not (0.1 <= new_contrast_min <= 2.0) or not (0.1 <= new_contrast_max <= 2.0):
+                    print("❌ 对比度值必须在0.1-2.0之间")
+                    return
+
+                success &= self.config_manager._set_config_value('contrast_range_min', new_contrast_min)
+                success &= self.config_manager._set_config_value('contrast_range_max', new_contrast_max)
+
+            # 处理亮度设置
+            new_brightness_min = float(brightness_min_input) if brightness_min_input else brightness_min
+            new_brightness_max = float(brightness_max_input) if brightness_max_input else brightness_max
+
+            if brightness_min_input or brightness_max_input:
+                if new_brightness_min >= new_brightness_max:
+                    print("❌ 亮度最小值必须小于最大值")
+                    return
+                if not (0.1 <= new_brightness_min <= 2.0) or not (0.1 <= new_brightness_max <= 2.0):
+                    print("❌ 亮度值必须在0.1-2.0之间")
+                    return
+
+                success &= self.config_manager._set_config_value('brightness_range_min', new_brightness_min)
+                success &= self.config_manager._set_config_value('brightness_range_max', new_brightness_max)
+
+            if success:
+                print("✅ 色彩调整范围已更新")
+            else:
+                print("❌ 保存配置失败")
+
+        except ValueError:
+            print("❌ 请输入有效的数字")
+
+    def modify_batch_settings(self):
+        """修改批量生成设置"""
+        print("\n📦 修改批量生成设置")
+        print("-" * 40)
+
+        current_batch = self.config_manager.get_batch_count()
+        current_vip = self.config_manager.get_use_vip_effects()
+
+        print(f"当前设置:")
+        print(f"  批量生成数量: {current_batch}")
+        print(f"  使用VIP特效: {'是' if current_vip else '否'}")
+
+        try:
+            batch_input = input(f"请输入批量生成数量(1-100) (当前: {current_batch}, 留空保持不变): ").strip()
+            vip_input = input(f"是否使用VIP特效? (y/n) (当前: {'y' if current_vip else 'n'}, 留空保持不变): ").strip().lower()
+
+            success = True
+
+            if batch_input:
+                batch_count = int(batch_input)
+                if 1 <= batch_count <= 100:
+                    success &= self.config_manager._set_config_value('batch_count', batch_count)
+                else:
+                    print("❌ 批量生成数量必须在1-100之间")
+                    return
+
+            if vip_input:
+                if vip_input in ['y', 'yes', '1', 'true']:
+                    success &= self.config_manager._set_config_value('use_vip_effects', True)
+                elif vip_input in ['n', 'no', '0', 'false']:
+                    success &= self.config_manager._set_config_value('use_vip_effects', False)
+                else:
+                    print("❌ 请输入 y 或 n")
+                    return
+
+            if success:
+                print("✅ 批量生成设置已更新")
+            else:
+                print("❌ 保存配置失败")
+
+        except ValueError:
+            print("❌ 请输入有效的数字")
+
+    def modify_pexels_settings(self):
+        """修改防审核设置"""
+        print("\n🛡️  修改防审核设置")
+        print("-" * 40)
+
+        current_enabled = self.config_manager.is_pexels_overlay_enabled()
+        current_opacity = self.config_manager.get_pexels_overlay_opacity()
+
+        print(f"当前设置:")
+        print(f"  Pexels覆盖层: {'启用' if current_enabled else '禁用'}")
+        print(f"  覆盖层不透明度: {current_opacity:.1%}")
+
+        try:
+            enabled_input = input(f"是否启用Pexels覆盖层? (y/n) (当前: {'y' if current_enabled else 'n'}, 留空保持不变): ").strip().lower()
+            opacity_input = input(f"请输入覆盖层不透明度(1-20) (当前: {current_opacity*100:.0f}%, 留空保持不变): ").strip()
+
+            success = True
+
+            if enabled_input:
+                if enabled_input in ['y', 'yes', '1', 'true']:
+                    success &= self.config_manager._set_config_value('enable_pexels_overlay', True)
+                elif enabled_input in ['n', 'no', '0', 'false']:
+                    success &= self.config_manager._set_config_value('enable_pexels_overlay', False)
+                else:
+                    print("❌ 请输入 y 或 n")
+                    return
+
+            if opacity_input:
+                opacity = float(opacity_input) / 100
+                if 0.01 <= opacity <= 0.2:  # 1%-20%
+                    success &= self.config_manager._set_config_value('pexels_overlay_opacity', opacity)
+                else:
+                    print("❌ 不透明度必须在1-20%之间")
+                    return
+
+            if success:
+                print("✅ 防审核设置已更新")
+            else:
+                print("❌ 保存配置失败")
+
+        except ValueError:
+            print("❌ 请输入有效的数字")
+
+    def modify_advanced_settings(self):
+        """修改高级设置"""
+        print("\n⚙️  修改高级设置")
+        print("-" * 40)
+
+        current_scale = self.config_manager.get_video_scale_factor()
+        current_trim = self.config_manager.get_trim_start_duration()
+        min_intensity, max_intensity = self.config_manager.get_filter_intensity_range()
+
+        print(f"当前设置:")
+        print(f"  视频缩放比例: {current_scale:.0%}")
+        print(f"  视频去前时长: {current_trim//1000000}秒")
+        print(f"  滤镜强度范围: {min_intensity}% - {max_intensity}%")
+
+        try:
+            scale_input = input(f"请输入视频缩放比例(50-200) (当前: {current_scale:.0%}, 留空保持不变): ").strip()
+            trim_input = input(f"请输入视频去前时长(0-10秒) (当前: {current_trim//1000000}秒, 留空保持不变): ").strip()
+
+            print("\n滤镜强度设置:")
+            intensity_min_input = input(f"请输入滤镜强度最小值(1-50) (当前: {min_intensity}%, 留空保持不变): ").strip()
+            intensity_max_input = input(f"请输入滤镜强度最大值(1-50) (当前: {max_intensity}%, 留空保持不变): ").strip()
+
+            success = True
+
+            if scale_input:
+                scale_factor = float(scale_input) / 100
+                if 0.5 <= scale_factor <= 2.0:
+                    success &= self.config_manager._set_config_value('video_scale_factor', scale_factor)
+                else:
+                    print("❌ 缩放比例必须在50-200%之间")
+                    return
+
+            if trim_input:
+                trim_duration = int(trim_input) * 1000000
+                if 0 <= trim_duration <= 10000000:  # 0-10秒
+                    success &= self.config_manager._set_config_value('trim_start_duration', trim_duration)
+                else:
+                    print("❌ 去前时长必须在0-10秒之间")
+                    return
+
+            # 处理滤镜强度设置
+            new_min_intensity = int(intensity_min_input) if intensity_min_input else min_intensity
+            new_max_intensity = int(intensity_max_input) if intensity_max_input else max_intensity
+
+            if intensity_min_input or intensity_max_input:
+                if new_min_intensity >= new_max_intensity:
+                    print("❌ 滤镜强度最小值必须小于最大值")
+                    return
+                if not (1 <= new_min_intensity <= 50) or not (1 <= new_max_intensity <= 50):
+                    print("❌ 滤镜强度必须在1-50%之间")
+                    return
+
+                success &= self.config_manager._set_config_value('filter_intensity_min', new_min_intensity)
+                success &= self.config_manager._set_config_value('filter_intensity_max', new_max_intensity)
+
+            if success:
+                print("✅ 高级设置已更新")
+            else:
+                print("❌ 保存配置失败")
+
+        except ValueError:
+            print("❌ 请输入有效的数字")
+
     def get_available_products(self) -> list:
         """获取可用的产品型号"""
         try:
@@ -1087,7 +1585,7 @@ class InteractiveAutoMix:
                 elif choice == 5:
                     self.show_config_info()
                 elif choice == 6:
-                    print("\n🔧 配置修改功能开发中...")
+                    self.modify_config()
                 elif choice == 7:
                     self.show_help()
                 else:
