@@ -799,6 +799,9 @@
             <!-- 配置管理 -->
             <div class="card">
                 <h2>⚙️ 配置管理</h2>
+                <div class="info-tip">
+                    💡 特效、滤镜、转场默认100%添加，无需设置概率
+                </div>
                 <div class="config-grid">
                     <div class="config-item">
                         <label>📁 素材库路径:</label>
@@ -817,16 +820,16 @@
                         <input type="number" id="video_duration_max" min="5" max="300">
                     </div>
                     <div class="config-item">
-                        <label>✨ 特效概率(%):</label>
-                        <input type="number" id="effect_probability" min="0" max="100" step="5">
+                        <label>🎬 视频缩放(%):</label>
+                        <input type="number" id="video_scale_factor" min="100" max="120" step="1" value="105">
                     </div>
                     <div class="config-item">
-                        <label>🎨 滤镜概率(%):</label>
-                        <input type="number" id="filter_probability" min="0" max="100" step="5">
+                        <label>🔊 旁白音量(%):</label>
+                        <input type="number" id="narration_volume" min="0" max="100" step="5" value="100">
                     </div>
                     <div class="config-item">
-                        <label>🔄 转场概率(%):</label>
-                        <input type="number" id="transition_probability" min="0" max="100" step="5">
+                        <label>🎵 背景音量(%):</label>
+                        <input type="number" id="background_volume" min="0" max="50" step="1" value="10">
                     </div>
                     <div class="config-item">
                         <label>📦 批量生成数量:</label>
@@ -1017,9 +1020,9 @@
                 document.getElementById('draft_output_path').value = config.draft_output_path || '';
                 document.getElementById('video_duration_min').value = config.video_duration_min || 30;
                 document.getElementById('video_duration_max').value = config.video_duration_max || 40;
-                document.getElementById('effect_probability').value = Math.round((config.effect_probability || 0.8) * 100);
-                document.getElementById('filter_probability').value = Math.round((config.filter_probability || 0.9) * 100);
-                document.getElementById('transition_probability').value = Math.round((config.transition_probability || 1.0) * 100);
+                document.getElementById('video_scale_factor').value = Math.round((config.video_scale_factor || 1.05) * 100);
+                document.getElementById('narration_volume').value = Math.round((config.narration_volume || 1.0) * 100);
+                document.getElementById('background_volume').value = Math.round((config.background_volume || 0.1) * 100);
                 document.getElementById('batch_count').value = config.batch_count || 5;
                 
                 showAlert('配置加载成功', 'success');
@@ -1044,9 +1047,9 @@
                     draft_output_path: document.getElementById('draft_output_path').value,
                     video_duration_min: parseInt(document.getElementById('video_duration_min').value),
                     video_duration_max: parseInt(document.getElementById('video_duration_max').value),
-                    effect_probability: parseFloat(document.getElementById('effect_probability').value) / 100,
-                    filter_probability: parseFloat(document.getElementById('filter_probability').value) / 100,
-                    transition_probability: parseFloat(document.getElementById('transition_probability').value) / 100,
+                    video_scale_factor: parseFloat(document.getElementById('video_scale_factor').value) / 100,
+                    narration_volume: parseFloat(document.getElementById('narration_volume').value) / 100,
+                    background_volume: parseFloat(document.getElementById('background_volume').value) / 100,
                     batch_count: parseInt(document.getElementById('batch_count').value)
                 };
 

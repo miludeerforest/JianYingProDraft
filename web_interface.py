@@ -51,10 +51,9 @@ class WebInterface:
             config['trim_start_duration'] = self.config_manager.get_trim_start_duration() // 1000000
             config['video_scale_factor'] = self.config_manager.get_video_scale_factor()
             
-            # 特效概率
-            config['effect_probability'] = self.config_manager.get_effect_probability()
-            config['filter_probability'] = self.config_manager.get_filter_probability()
-            config['transition_probability'] = self.config_manager.get_transition_probability()
+            # 音频设置
+            config['narration_volume'] = self.config_manager.get_narration_volume()
+            config['background_volume'] = self.config_manager.get_background_volume()
             
             # 滤镜强度
             min_intensity, max_intensity = self.config_manager.get_filter_intensity_range()
@@ -141,12 +140,12 @@ class WebInterface:
                         success &= self.config_manager._set_config_value('video_duration_min', int(value) * 1000000)
                     elif key == 'video_duration_max':
                         success &= self.config_manager._set_config_value('video_duration_max', int(value) * 1000000)
-                    elif key == 'effect_probability':
-                        success &= self.config_manager._set_config_value('effect_probability', float(value))
-                    elif key == 'filter_probability':
-                        success &= self.config_manager._set_config_value('filter_probability', float(value))
-                    elif key == 'transition_probability':
-                        success &= self.config_manager._set_config_value('transition_probability', float(value))
+                    elif key == 'video_scale_factor':
+                        success &= self.config_manager._set_config_value('video_scale_factor', float(value))
+                    elif key == 'narration_volume':
+                        success &= self.config_manager._set_config_value('narration_volume', float(value))
+                    elif key == 'background_volume':
+                        success &= self.config_manager._set_config_value('background_volume', float(value))
                     elif key == 'filter_intensity_min':
                         success &= self.config_manager._set_config_value('filter_intensity_min', int(value))
                     elif key == 'filter_intensity_max':

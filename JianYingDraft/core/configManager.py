@@ -135,6 +135,16 @@ class AutoMixConfigManager:
         narration_volume = float(cls._get_config_value('narration_volume', cls.DEFAULT_CONFIG['narration_volume']))
         background_volume = float(cls._get_config_value('background_volume', cls.DEFAULT_CONFIG['background_volume']))
         return narration_volume, background_volume
+
+    @classmethod
+    def get_narration_volume(cls) -> float:
+        """获取解说音量"""
+        return float(cls._get_config_value('narration_volume', cls.DEFAULT_CONFIG['narration_volume']))
+
+    @classmethod
+    def get_background_volume(cls) -> float:
+        """获取背景音量"""
+        return float(cls._get_config_value('background_volume', cls.DEFAULT_CONFIG['background_volume']))
     
     @classmethod
     def get_batch_count(cls) -> int:
