@@ -1222,70 +1222,164 @@ class InteractiveAutoMix:
             print("❌ 请输入有效数字")
 
     def add_excluded_effect(self):
-        """添加排除特效（简化版本）"""
+        """添加排除特效"""
         print("\n➕ 添加排除特效")
         print("-" * 40)
-        effect_name = self.get_user_input("请输入特效名称")
-        if effect_name and self.exclusion_manager.add_excluded_effect(effect_name):
-            print(f"✅ 已添加排除特效: {effect_name}")
-        else:
-            print("❌ 添加失败或特效已存在")
+
+        # 获取可用特效
+        all_effects = self.exclusion_manager.metadata_manager.get_available_effects()
+        excludable_effects = [e for e in all_effects if e.name not in self.exclusion_manager.excluded_effects]
+
+        if not excludable_effects:
+            print("❌ 没有可排除的特效")
+            return
+
+        print("📋 可用特效列表 (输入序号选择):")
+        for i, effect_meta in enumerate(excludable_effects[:20], 1):
+            print(f"  {i}. {effect_meta.name}")
+
+        if len(excludable_effects) > 20:
+            print(f"  ... 还有{len(excludable_effects) - 20}个特效")
+            print("💡 提示: 也可以直接输入特效名称")
+
+        choice = self.get_user_input("请输入序号或特效名称")
+        if not choice:
+            return
+
+        # 尝试按序号选择
+        try:
+            index = int(choice) - 1
+            if 0 <= index < min(20, len(excludable_effects)):
+                selected_effect = excludable_effects[index]
+                if self.exclusion_manager.add_excluded_effect(selected_effect.name):
+                    print(f"✅ 已添加排除特效: {selected_effect.name}")
+                else:
+                    print(f"⚠️  特效已在排除列表中: {selected_effect.name}")
+                return
+        except ValueError:
+            pass
+
+        # 尝试按名称选择
+        for effect_meta in excludable_effects:
+            if choice.lower() in effect_meta.name.lower():
+                if self.exclusion_manager.add_excluded_effect(effect_meta.name):
+                    print(f"✅ 已添加排除特效: {effect_meta.name}")
+                else:
+                    print(f"⚠️  特效已在排除列表中: {effect_meta.name}")
+                return
+
+        print("❌ 未找到匹配的特效")
 
     def remove_excluded_effect(self):
-        """移除排除特效（简化版本）"""
+        """移除排除特效"""
         print("\n➖ 移除排除特效")
         print("-" * 40)
+
         if not self.exclusion_manager.excluded_effects:
             print("❌ 没有已排除的特效")
             return
 
         excluded_list = list(self.exclusion_manager.excluded_effects)
+        print("📋 已排除特效列表:")
         for i, effect_name in enumerate(excluded_list, 1):
             print(f"  {i}. {effect_name}")
 
         choice = self.get_user_input("请输入序号")
-        if choice:
-            try:
-                index = int(choice) - 1
-                if 0 <= index < len(excluded_list):
-                    removed_effect = excluded_list[index]
-                    if self.exclusion_manager.remove_excluded_effect(removed_effect):
-                        print(f"✅ 已移除排除特效: {removed_effect}")
-            except ValueError:
-                print("❌ 请输入有效数字")
+        if not choice:
+            return
+
+        try:
+            index = int(choice) - 1
+            if 0 <= index < len(excluded_list):
+                removed_effect = excluded_list[index]
+                if self.exclusion_manager.remove_excluded_effect(removed_effect):
+                    print(f"✅ 已移除排除特效: {removed_effect}")
+                else:
+                    print(f"⚠️  移除失败: {removed_effect}")
+            else:
+                print("❌ 无效序号")
+        except ValueError:
+            print("❌ 请输入有效数字")
 
     def add_excluded_transition(self):
-        """添加排除转场（简化版本）"""
+        """添加排除转场"""
         print("\n➕ 添加排除转场")
         print("-" * 40)
-        transition_name = self.get_user_input("请输入转场名称")
-        if transition_name and self.exclusion_manager.add_excluded_transition(transition_name):
-            print(f"✅ 已添加排除转场: {transition_name}")
-        else:
-            print("❌ 添加失败或转场已存在")
+
+        # 获取可用转场
+        all_transitions = self.exclusion_manager.metadata_manager.get_available_transitions()
+        excludable_transitions = [t for t in all_transitions if t.name not in self.exclusion_manager.excluded_transitions]
+
+        if not excludable_transitions:
+            print("❌ 没有可排除的转场")
+            return
+
+        print("📋 可用转场列表 (输入序号选择):")
+        for i, transition_meta in enumerate(excludable_transitions[:20], 1):
+            print(f"  {i}. {transition_meta.name}")
+
+        if len(excludable_transitions) > 20:
+            print(f"  ... 还有{len(excludable_transitions) - 20}个转场")
+            print("💡 提示: 也可以直接输入转场名称")
+
+        choice = self.get_user_input("请输入序号或转场名称")
+        if not choice:
+            return
+
+        # 尝试按序号选择
+        try:
+            index = int(choice) - 1
+            if 0 <= index < min(20, len(excludable_transitions)):
+                selected_transition = excludable_transitions[index]
+                if self.exclusion_manager.add_excluded_transition(selected_transition.name):
+                    print(f"✅ 已添加排除转场: {selected_transition.name}")
+                else:
+                    print(f"⚠️  转场已在排除列表中: {selected_transition.name}")
+                return
+        except ValueError:
+            pass
+
+        # 尝试按名称选择
+        for transition_meta in excludable_transitions:
+            if choice.lower() in transition_meta.name.lower():
+                if self.exclusion_manager.add_excluded_transition(transition_meta.name):
+                    print(f"✅ 已添加排除转场: {transition_meta.name}")
+                else:
+                    print(f"⚠️  转场已在排除列表中: {transition_meta.name}")
+                return
+
+        print("❌ 未找到匹配的转场")
 
     def remove_excluded_transition(self):
-        """移除排除转场（简化版本）"""
+        """移除排除转场"""
         print("\n➖ 移除排除转场")
         print("-" * 40)
+
         if not self.exclusion_manager.excluded_transitions:
             print("❌ 没有已排除的转场")
             return
 
         excluded_list = list(self.exclusion_manager.excluded_transitions)
+        print("📋 已排除转场列表:")
         for i, transition_name in enumerate(excluded_list, 1):
             print(f"  {i}. {transition_name}")
 
         choice = self.get_user_input("请输入序号")
-        if choice:
-            try:
-                index = int(choice) - 1
-                if 0 <= index < len(excluded_list):
-                    removed_transition = excluded_list[index]
-                    if self.exclusion_manager.remove_excluded_transition(removed_transition):
-                        print(f"✅ 已移除排除转场: {removed_transition}")
-            except ValueError:
-                print("❌ 请输入有效数字")
+        if not choice:
+            return
+
+        try:
+            index = int(choice) - 1
+            if 0 <= index < len(excluded_list):
+                removed_transition = excluded_list[index]
+                if self.exclusion_manager.remove_excluded_transition(removed_transition):
+                    print(f"✅ 已移除排除转场: {removed_transition}")
+                else:
+                    print(f"⚠️  移除失败: {removed_transition}")
+            else:
+                print("❌ 无效序号")
+        except ValueError:
+            print("❌ 请输入有效数字")
 
     def show_exclusion_lists(self):
         """显示所有排除列表"""
@@ -1330,27 +1424,235 @@ class InteractiveAutoMix:
         else:
             print("❌ 操作已取消")
 
-    # 添加占位方法
+    def import_export_exclusions(self):
+        """导入导出排除列表"""
+        print("\n📁 导入导出排除列表")
+        print("-" * 40)
+        print("1. 📤 导出排除列表")
+        print("2. 📥 导入排除列表")
+        print("0. 🔙 返回")
+
+        choice = self.get_user_input("请选择操作", "0", int)
+        if choice == 1:
+            self.export_exclusions()
+        elif choice == 2:
+            self.import_exclusions()
+
+    def export_exclusions(self):
+        """导出排除列表"""
+        try:
+            export_file = f"exclusions_backup_{self.get_current_time_str()}.json"
+            data = {
+                'filters': list(self.exclusion_manager.excluded_filters),
+                'effects': list(self.exclusion_manager.excluded_effects),
+                'transitions': list(self.exclusion_manager.excluded_transitions),
+                'export_time': self.get_current_time_str()
+            }
+
+            with open(export_file, 'w', encoding='utf-8') as f:
+                import json
+                json.dump(data, f, ensure_ascii=False, indent=2)
+
+            print(f"✅ 排除列表已导出到: {export_file}")
+        except Exception as e:
+            print(f"❌ 导出失败: {str(e)}")
+
+    def import_exclusions(self):
+        """导入排除列表"""
+        import_file = self.get_user_input("请输入导入文件名")
+        if not import_file:
+            return
+
+        try:
+            with open(import_file, 'r', encoding='utf-8') as f:
+                import json
+                data = json.load(f)
+
+            # 备份当前设置
+            backup_filters = self.exclusion_manager.excluded_filters.copy()
+            backup_effects = self.exclusion_manager.excluded_effects.copy()
+            backup_transitions = self.exclusion_manager.excluded_transitions.copy()
+
+            # 导入新设置
+            self.exclusion_manager.excluded_filters = set(data.get('filters', []))
+            self.exclusion_manager.excluded_effects = set(data.get('effects', []))
+            self.exclusion_manager.excluded_transitions = set(data.get('transitions', []))
+            self.exclusion_manager.save_exclusions()
+
+            print(f"✅ 排除列表已导入")
+            print(f"📊 导入统计:")
+            print(f"  滤镜: {len(self.exclusion_manager.excluded_filters)}个")
+            print(f"  特效: {len(self.exclusion_manager.excluded_effects)}个")
+            print(f"  转场: {len(self.exclusion_manager.excluded_transitions)}个")
+
+        except Exception as e:
+            print(f"❌ 导入失败: {str(e)}")
+
+    def get_current_time_str(self):
+        """获取当前时间字符串"""
+        from datetime import datetime
+        return datetime.now().strftime("%Y%m%d_%H%M%S")
+
     def show_available_filters(self):
-        print("📋 可用滤镜功能开发中...")
+        """显示可用滤镜"""
+        print("\n📋 可用滤镜列表")
+        print("-" * 60)
+
+        try:
+            available_filters = self.exclusion_manager.get_filtered_filters()
+            all_filters = self.exclusion_manager.metadata_manager.get_available_filters()
+
+            print(f"📊 滤镜统计:")
+            print(f"  总滤镜数量: {len(all_filters)}")
+            print(f"  已排除数量: {len(self.exclusion_manager.excluded_filters)}")
+            print(f"  可用数量: {len(available_filters)}")
+
+            if not available_filters:
+                print("\n❌ 没有可用的滤镜")
+                return
+
+            print(f"\n🎨 可用滤镜 (显示前50个):")
+            for i, filter_meta in enumerate(available_filters[:50], 1):
+                print(f"  {i:2d}. {filter_meta.name}")
+
+            if len(available_filters) > 50:
+                print(f"  ... 还有{len(available_filters) - 50}个滤镜")
+
+        except Exception as e:
+            print(f"❌ 获取滤镜列表失败: {str(e)}")
 
     def show_excluded_filters(self):
-        print("📋 已排除滤镜功能开发中...")
+        """显示已排除滤镜"""
+        print("\n📋 已排除滤镜列表")
+        print("-" * 60)
+
+        try:
+            excluded_filters = self.exclusion_manager.excluded_filters
+
+            if not excluded_filters:
+                print("✅ 当前没有排除任何滤镜")
+                print("💡 所有滤镜都可以在混剪中使用")
+                return
+
+            print(f"🚫 已排除滤镜数量: {len(excluded_filters)}")
+            print(f"📋 排除列表:")
+
+            for i, filter_name in enumerate(sorted(excluded_filters), 1):
+                print(f"  {i:2d}. {filter_name}")
+
+            print(f"\n💡 提示: 这些滤镜不会在自动混剪中使用")
+            print(f"🔧 可以通过'移除排除滤镜'功能恢复使用")
+
+        except Exception as e:
+            print(f"❌ 获取排除列表失败: {str(e)}")
 
     def show_available_effects(self):
-        print("📋 可用特效功能开发中...")
+        """显示可用特效"""
+        print("\n📋 可用特效列表")
+        print("-" * 60)
+
+        try:
+            available_effects = self.exclusion_manager.get_filtered_effects()
+            all_effects = self.exclusion_manager.metadata_manager.get_available_effects()
+
+            print(f"📊 特效统计:")
+            print(f"  总特效数量: {len(all_effects)}")
+            print(f"  已排除数量: {len(self.exclusion_manager.excluded_effects)}")
+            print(f"  可用数量: {len(available_effects)}")
+
+            if not available_effects:
+                print("\n❌ 没有可用的特效")
+                return
+
+            print(f"\n✨ 可用特效 (显示前50个):")
+            for i, effect_meta in enumerate(available_effects[:50], 1):
+                print(f"  {i:2d}. {effect_meta.name}")
+
+            if len(available_effects) > 50:
+                print(f"  ... 还有{len(available_effects) - 50}个特效")
+
+        except Exception as e:
+            print(f"❌ 获取特效列表失败: {str(e)}")
 
     def show_excluded_effects(self):
-        print("📋 已排除特效功能开发中...")
+        """显示已排除特效"""
+        print("\n📋 已排除特效列表")
+        print("-" * 60)
+
+        try:
+            excluded_effects = self.exclusion_manager.excluded_effects
+
+            if not excluded_effects:
+                print("✅ 当前没有排除任何特效")
+                print("💡 所有特效都可以在混剪中使用")
+                return
+
+            print(f"🚫 已排除特效数量: {len(excluded_effects)}")
+            print(f"📋 排除列表:")
+
+            for i, effect_name in enumerate(sorted(excluded_effects), 1):
+                print(f"  {i:2d}. {effect_name}")
+
+            print(f"\n💡 提示: 这些特效不会在自动混剪中使用")
+            print(f"🔧 可以通过'移除排除特效'功能恢复使用")
+
+        except Exception as e:
+            print(f"❌ 获取排除列表失败: {str(e)}")
 
     def show_available_transitions(self):
-        print("📋 可用转场功能开发中...")
+        """显示可用转场"""
+        print("\n📋 可用转场列表")
+        print("-" * 60)
+
+        try:
+            available_transitions = self.exclusion_manager.get_filtered_transitions()
+            all_transitions = self.exclusion_manager.metadata_manager.get_available_transitions()
+
+            print(f"📊 转场统计:")
+            print(f"  总转场数量: {len(all_transitions)}")
+            print(f"  已排除数量: {len(self.exclusion_manager.excluded_transitions)}")
+            print(f"  弹幕转场过滤: 已自动排除")
+            print(f"  可用数量: {len(available_transitions)}")
+
+            if not available_transitions:
+                print("\n❌ 没有可用的转场")
+                return
+
+            print(f"\n🔄 可用转场 (显示前50个):")
+            for i, transition_meta in enumerate(available_transitions[:50], 1):
+                print(f"  {i:2d}. {transition_meta.name}")
+
+            if len(available_transitions) > 50:
+                print(f"  ... 还有{len(available_transitions) - 50}个转场")
+
+        except Exception as e:
+            print(f"❌ 获取转场列表失败: {str(e)}")
 
     def show_excluded_transitions(self):
-        print("📋 已排除转场功能开发中...")
+        """显示已排除转场"""
+        print("\n📋 已排除转场列表")
+        print("-" * 60)
 
-    def import_export_exclusions(self):
-        print("💾 导入/导出功能开发中...")
+        try:
+            excluded_transitions = self.exclusion_manager.excluded_transitions
+
+            if not excluded_transitions:
+                print("✅ 当前没有手动排除任何转场")
+                print("💡 注意: 弹幕类转场已被自动过滤")
+                return
+
+            print(f"🚫 已排除转场数量: {len(excluded_transitions)}")
+            print(f"📋 排除列表:")
+
+            for i, transition_name in enumerate(sorted(excluded_transitions), 1):
+                print(f"  {i:2d}. {transition_name}")
+
+            print(f"\n💡 提示: 这些转场不会在自动混剪中使用")
+            print(f"🔧 可以通过'移除排除转场'功能恢复使用")
+            print(f"⚠️  注意: 弹幕类转场会被自动过滤，无需手动排除")
+
+        except Exception as e:
+            print(f"❌ 获取排除列表失败: {str(e)}")
 
     def pexels_overlay_management(self):
         """Pexels防审核覆盖层管理"""
