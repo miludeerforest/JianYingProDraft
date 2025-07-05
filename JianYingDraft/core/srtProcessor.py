@@ -1278,8 +1278,14 @@ class SRTProcessor:
         if hint_encoding:
             hint_lower = hint_encoding.lower()
 
-            # 添加提示编码本身
-            priority_encodings.append(hint_encoding)
+            # 特殊处理windows-1252编码问题
+            if 'windows-1252' in hint_lower:
+                # windows-1252经常被误检测，优先尝试相关的更通用编码
+                priority_encodings.extend(['latin1', 'cp1252', 'iso-8859-1', 'utf-8'])
+                print(f"    🔧 检测到windows-1252，优先尝试相关编码")
+            else:
+                # 添加提示编码本身
+                priority_encodings.append(hint_encoding)
 
             # 根据提示编码添加相关编码族
             if 'utf' in hint_lower:
@@ -1300,7 +1306,7 @@ class SRTProcessor:
                     priority_encodings.extend(['iso-8859-5', 'cp1251', 'koi8-r'])
             elif 'cp874' in hint_lower or 'tis' in hint_lower:
                 priority_encodings.extend(['cp874', 'iso-8859-11', 'tis-620'])
-            elif 'cp1252' in hint_lower:
+            elif 'cp1252' in hint_lower and 'windows-1252' not in hint_lower:
                 priority_encodings.extend(['cp1252', 'latin1', 'iso-8859-1'])
             elif 'cp1251' in hint_lower:
                 priority_encodings.extend(['cp1251', 'iso-8859-5', 'koi8-r'])
@@ -1329,6 +1335,11 @@ class SRTProcessor:
         print(f"  🎯 基于提示 '{hint_encoding}' 进行优先测试")
 
         for encoding in all_encodings:
+            # 验证编码是否可用
+            if not self._is_encoding_available(encoding):
+                print(f"    ⚠️  编码 {encoding} 在当前系统不可用，跳过")
+                continue
+
             try:
                 decoded_text = raw_data.decode(encoding)
                 score = self._calculate_text_quality_score(decoded_text)
@@ -1343,12 +1354,29 @@ class SRTProcessor:
                 if score > 0.85:
                     break
 
-            except (UnicodeDecodeError, UnicodeError):
+            except (UnicodeDecodeError, UnicodeError, LookupError):
                 print(f"    ❌ 编码 {encoding} 解码失败")
                 continue
 
         print(f"  ✅ 基于提示选择编码: {best_encoding} (分数: {best_score:.2f})")
         return best_encoding
+
+    def _is_encoding_available(self, encoding: str) -> bool:
+        """
+        检查编码是否在当前系统可用
+
+        Args:
+            encoding: 编码名称
+
+        Returns:
+            bool: 编码是否可用
+        """
+        try:
+            import codecs
+            codecs.lookup(encoding)
+            return True
+        except (LookupError, TypeError):
+            return False
 
     def _calculate_text_quality_score(self, text: str) -> float:
         """
@@ -1405,11 +1433,11 @@ class SRTProcessor:
             # 语言字符加分（更全面的语言支持）
             language_ratio = non_ascii_language_chars / total_chars
             if language_ratio > 0.05:  # 如果有语言特定字符
-                score += language_ratio * 0.3
+                score += language_ratio * 0.4  # 提高语言字符权重
 
                 # 特定语言额外加分
                 if chinese_chars > 0:
-                    score += min(chinese_chars / total_chars, 0.2) * 0.2
+                    score += min(chinese_chars / total_chars, 0.3) * 0.3  # 提高中文权重
                 if thai_chars > 0:  # 泰语特别处理
                     score += min(thai_chars / total_chars, 0.3) * 0.25
                 if arabic_chars > 0:  # 阿拉伯语特别处理
@@ -1434,7 +1462,77 @@ class SRTProcessor:
             if numbered_lines > 0:
                 score += min(numbered_lines / len(lines), 0.1) * 0.1
 
+            # 检查UTF-8错误解码模式（严重惩罚）
+            if self._has_utf8_decode_error_pattern(text):
+                score *= 0.2  # 大幅降低分数
+
+            # 检查常见的乱码字符组合
+            if self._has_common_mojibake_patterns(text):
+                score *= 0.3  # 降低乱码文本分数
+
         return max(0.0, min(1.0, score))
+
+    def _has_utf8_decode_error_pattern(self, text: str) -> bool:
+        """
+        检查是否包含UTF-8被错误解码的模式
+
+        Args:
+            text: 文本内容
+
+        Returns:
+            bool: 是否包含错误解码模式
+        """
+        # 常见的UTF-8中文被错误解码的模式
+        utf8_error_patterns = [
+            'è¿™',  # "这" 被错误解码
+            'æ˜¯',  # "是" 被错误解码
+            'æµ‹',  # "测" 被错误解码
+            'è¯•',  # "试" 被错误解码
+            'æ–‡',  # "文" 被错误解码
+            'æœ¬',  # "本" 被错误解码
+            'ä¸­',  # "中" 被错误解码
+            'å›½',  # "国" 被错误解码
+            'äººº',  # "人" 被错误解码
+            'å¤§',  # "大" 被错误解码
+            'å°',   # "小" 被错误解码
+            'æ—¶',  # "时" 被错误解码
+            'é—´',  # "间" 被错误解码
+        ]
+
+        # 如果包含多个错误解码模式，很可能是编码错误
+        error_count = sum(1 for pattern in utf8_error_patterns if pattern in text)
+        return error_count >= 2
+
+    def _has_common_mojibake_patterns(self, text: str) -> bool:
+        """
+        检查是否包含常见的乱码模式
+
+        Args:
+            text: 文本内容
+
+        Returns:
+            bool: 是否包含乱码模式
+        """
+        # 常见的乱码字符组合
+        mojibake_patterns = [
+            'è¿',   # UTF-8中文被latin1解码的常见模式
+            'æ˜',   # UTF-8中文被latin1解码的常见模式
+            'æµ',   # UTF-8中文被latin1解码的常见模式
+            'è¯',   # UTF-8中文被latin1解码的常见模式
+            'æ–',   # UTF-8中文被latin1解码的常见模式
+            'æœ',   # UTF-8中文被latin1解码的常见模式
+            'ä¸',   # UTF-8中文被latin1解码的常见模式
+            'å›',   # UTF-8中文被latin1解码的常见模式
+            'äº',   # UTF-8中文被latin1解码的常见模式
+            'å¤',   # UTF-8中文被latin1解码的常见模式
+            'å°',   # UTF-8中文被latin1解码的常见模式
+            'æ—',   # UTF-8中文被latin1解码的常见模式
+            'é—',   # UTF-8中文被latin1解码的常见模式
+        ]
+
+        # 如果包含多个乱码模式，很可能是编码错误
+        mojibake_count = sum(1 for pattern in mojibake_patterns if pattern in text)
+        return mojibake_count >= 3
 
     def _read_file_with_encoding_detection(self, file_path: str) -> str:
         """
