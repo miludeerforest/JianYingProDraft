@@ -801,6 +801,11 @@
                     this.loadConfigData(section);
                 }
 
+                // 如果是混剪相关页面，加载产品列表
+                if (section.startsWith('automix-')) {
+                    this.loadProductsForAutomix(section);
+                }
+
                 return sectionElement;
             }
 
@@ -1857,6 +1862,249 @@
                 this.updateRangeValue('frame_drop_probability', 1.0);
 
                 this.showAlert('已设置为强制执行模式（100%执行）', 'success');
+            }
+
+            // 混剪操作功能
+            async startSingleAutomix() {
+                const selectedProduct = this.getInputValue('selected_product');
+                const targetDuration = this.getInputValue('target_duration');
+
+                if (!selectedProduct) {
+                    this.showAlert('请先选择产品', 'error');
+                    return;
+                }
+
+                if (!targetDuration || targetDuration < 10 || targetDuration > 300) {
+                    this.showAlert('请设置有效的目标时长 (10-300秒)', 'error');
+                    return;
+                }
+
+                try {
+                    // 显示进度
+                    this.showAutomixProgress();
+
+                    // 调用后端API开始混剪
+                    const response = await fetch('/api/automix/single', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            product: selectedProduct,
+                            duration: parseInt(targetDuration)
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('混剪任务已启动', 'success');
+                        this.pollAutomixStatus('single');
+                    } else {
+                        this.hideAutomixProgress();
+                        this.showAlert('启动混剪失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.hideAutomixProgress();
+                    this.showAlert('启动混剪失败: ' + error.message, 'error');
+                }
+            }
+
+            async startBatchAutomix() {
+                const selectedProduct = this.getInputValue('batch_selected_product');
+                const batchCount = this.getInputValue('batch_count_input');
+                const minDuration = this.getInputValue('batch_min_duration');
+                const maxDuration = this.getInputValue('batch_max_duration');
+
+                if (!selectedProduct) {
+                    this.showAlert('请先选择产品', 'error');
+                    return;
+                }
+
+                if (!batchCount || batchCount < 1 || batchCount > 50) {
+                    this.showAlert('请设置有效的生成数量 (1-50个)', 'error');
+                    return;
+                }
+
+                if (!minDuration || !maxDuration || minDuration >= maxDuration) {
+                    this.showAlert('请设置有效的时长范围', 'error');
+                    return;
+                }
+
+                try {
+                    // 显示批量进度
+                    this.showBatchProgress();
+
+                    // 调用后端API开始批量混剪
+                    const response = await fetch('/api/automix/batch', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            product: selectedProduct,
+                            count: parseInt(batchCount),
+                            min_duration: parseInt(minDuration),
+                            max_duration: parseInt(maxDuration)
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('批量混剪任务已启动', 'success');
+                        this.pollAutomixStatus('batch');
+                    } else {
+                        this.hideBatchProgress();
+                        this.showAlert('启动批量混剪失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.hideBatchProgress();
+                    this.showAlert('启动批量混剪失败: ' + error.message, 'error');
+                }
+            }
+
+            showAutomixProgress() {
+                const progressDiv = document.getElementById('automix-progress');
+                if (progressDiv) {
+                    progressDiv.style.display = 'block';
+                    this.setElementText('progress-text', '正在初始化...');
+                    this.updateProgressBar('progress-bar', 0);
+                }
+            }
+
+            hideAutomixProgress() {
+                const progressDiv = document.getElementById('automix-progress');
+                if (progressDiv) {
+                    progressDiv.style.display = 'none';
+                }
+            }
+
+            showBatchProgress() {
+                const progressDiv = document.getElementById('batch-progress');
+                if (progressDiv) {
+                    progressDiv.style.display = 'block';
+                    this.setElementText('batch-progress-text', '正在初始化批量任务...');
+                    this.setElementText('batch-progress-count', '0/' + this.getInputValue('batch_count_input'));
+                    this.updateProgressBar('batch-progress-bar', 0);
+                }
+            }
+
+            hideBatchProgress() {
+                const progressDiv = document.getElementById('batch-progress');
+                if (progressDiv) {
+                    progressDiv.style.display = 'none';
+                }
+            }
+
+            updateProgressBar(barId, percentage) {
+                const progressBar = document.getElementById(barId);
+                if (progressBar) {
+                    progressBar.style.width = percentage + '%';
+                }
+            }
+
+            async pollAutomixStatus(type) {
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch('/api/status');
+                        const status = await response.json();
+
+                        if (type === 'single') {
+                            this.setElementText('progress-text', status.progress || '处理中...');
+                            // 这里可以根据实际状态更新进度条
+
+                            if (!status.running) {
+                                clearInterval(pollInterval);
+                                this.hideAutomixProgress();
+                                if (status.result) {
+                                    this.showAlert('混剪完成！', 'success');
+                                } else if (status.error) {
+                                    this.showAlert('混剪失败: ' + status.error, 'error');
+                                }
+                            }
+                        } else if (type === 'batch') {
+                            this.setElementText('batch-progress-text', status.progress || '批量处理中...');
+
+                            if (!status.running) {
+                                clearInterval(pollInterval);
+                                this.hideBatchProgress();
+                                if (status.result) {
+                                    this.showAlert('批量混剪完成！', 'success');
+                                } else if (status.error) {
+                                    this.showAlert('批量混剪失败: ' + status.error, 'error');
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('轮询状态失败:', error);
+                    }
+                }, 2000); // 每2秒轮询一次
+            }
+
+            selectProduct(productName) {
+                // 更新单个混剪的产品选择
+                this.setInputValue('selected_product', productName);
+                // 更新批量混剪的产品选择
+                this.setInputValue('batch_selected_product', productName);
+                this.showAlert('已选择产品: ' + productName, 'success');
+            }
+
+            async loadProductsForAutomix(section) {
+                try {
+                    const response = await fetch('/api/products');
+                    const result = await response.json();
+
+                    if (!result.success) {
+                        this.showAlert('加载产品失败: ' + result.error, 'error');
+                        return;
+                    }
+
+                    // 更新单个混剪的产品选择下拉框
+                    const singleSelect = document.getElementById('selected_product');
+                    if (singleSelect) {
+                        singleSelect.innerHTML = '<option value="">请选择产品...</option>';
+                        result.products.forEach(product => {
+                            const option = document.createElement('option');
+                            option.value = product.name;
+                            option.textContent = product.name;
+                            singleSelect.appendChild(option);
+                        });
+                    }
+
+                    // 更新批量混剪的产品选择下拉框
+                    const batchSelect = document.getElementById('batch_selected_product');
+                    if (batchSelect) {
+                        batchSelect.innerHTML = '<option value="">请选择产品...</option>';
+                        result.products.forEach(product => {
+                            const option = document.createElement('option');
+                            option.value = product.name;
+                            option.textContent = product.name;
+                            batchSelect.appendChild(option);
+                        });
+                    }
+
+                    // 如果是产品选择页面，更新产品列表
+                    if (section === 'automix-products') {
+                        const productsList = document.getElementById('products-list');
+                        if (productsList) {
+                            if (result.products.length === 0) {
+                                productsList.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">未找到可用产品</div>';
+                            } else {
+                                productsList.innerHTML = result.products.map(product => `
+                                    <div class="card" style="padding: 15px; text-align: center;">
+                                        <div style="font-size: 18px; margin-bottom: 10px;">📦</div>
+                                        <div style="font-weight: 600; margin-bottom: 5px;">${product.name}</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; word-break: break-all;">${product.path}</div>
+                                        <button class="btn btn-primary" onclick="app.selectProduct('${product.name}')" style="width: 100%;">选择</button>
+                                    </div>
+                                `).join('');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    this.showAlert('加载产品失败: ' + error.message, 'error');
+                }
             }
         }
 

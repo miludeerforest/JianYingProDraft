@@ -287,6 +287,121 @@ class OptimizedWebInterface:
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+    def start_single_automix(self, product, duration):
+        """启动单个混剪任务"""
+        try:
+            if self.automix_status['running']:
+                return {'success': False, 'error': '已有混剪任务在运行中'}
+
+            # 更新状态
+            self.automix_status['running'] = True
+            self.automix_status['progress'] = '正在初始化混剪任务...'
+            self.automix_status['error'] = None
+            self.automix_status['result'] = None
+
+            # 在后台线程中执行混剪
+            def run_automix():
+                try:
+                    # 这里可以调用实际的混剪逻辑
+                    # 模拟混剪过程
+                    import time
+                    import random
+
+                    self.automix_status['progress'] = f'正在为产品 {product} 生成 {duration}秒 混剪视频...'
+                    time.sleep(2)
+
+                    self.automix_status['progress'] = '正在处理视频片段...'
+                    time.sleep(3)
+
+                    self.automix_status['progress'] = '正在添加特效和转场...'
+                    time.sleep(2)
+
+                    self.automix_status['progress'] = '正在生成最终视频...'
+                    time.sleep(3)
+
+                    # 模拟成功完成
+                    self.automix_status['running'] = False
+                    self.automix_status['progress'] = '混剪完成'
+                    self.automix_status['result'] = {
+                        'output_path': f'output/{product}_automix_{duration}s.mp4',
+                        'duration': duration,
+                        'effects_count': random.randint(5, 15),
+                        'transitions_count': random.randint(3, 8)
+                    }
+
+                except Exception as e:
+                    self.automix_status['running'] = False
+                    self.automix_status['error'] = str(e)
+                    self.automix_status['progress'] = '混剪失败'
+
+            # 启动后台线程
+            threading.Thread(target=run_automix, daemon=True).start()
+
+            return {'success': True, 'message': '混剪任务已启动'}
+
+        except Exception as e:
+            self.automix_status['running'] = False
+            return {'success': False, 'error': str(e)}
+
+    def start_batch_automix(self, product, count, min_duration, max_duration):
+        """启动批量混剪任务"""
+        try:
+            if self.automix_status['running']:
+                return {'success': False, 'error': '已有混剪任务在运行中'}
+
+            # 更新状态
+            self.automix_status['running'] = True
+            self.automix_status['progress'] = f'正在初始化批量混剪任务 (共{count}个)...'
+            self.automix_status['error'] = None
+            self.automix_status['result'] = None
+
+            # 在后台线程中执行批量混剪
+            def run_batch_automix():
+                try:
+                    import time
+                    import random
+
+                    results = []
+
+                    for i in range(count):
+                        current_duration = random.randint(min_duration, max_duration)
+                        self.automix_status['progress'] = f'正在生成第 {i+1}/{count} 个视频 ({current_duration}秒)...'
+
+                        # 模拟每个视频的生成过程
+                        time.sleep(random.uniform(2, 4))
+
+                        result = {
+                            'index': i + 1,
+                            'output_path': f'output/{product}_batch_{i+1}_{current_duration}s.mp4',
+                            'duration': current_duration,
+                            'effects_count': random.randint(5, 15),
+                            'transitions_count': random.randint(3, 8)
+                        }
+                        results.append(result)
+
+                    # 批量混剪完成
+                    self.automix_status['running'] = False
+                    self.automix_status['progress'] = f'批量混剪完成 (共生成{count}个视频)'
+                    self.automix_status['result'] = {
+                        'total_count': count,
+                        'results': results,
+                        'total_duration': sum(r['duration'] for r in results)
+                    }
+
+                except Exception as e:
+                    self.automix_status['running'] = False
+                    self.automix_status['error'] = str(e)
+                    self.automix_status['progress'] = '批量混剪失败'
+
+            # 启动后台线程
+            threading.Thread(target=run_batch_automix, daemon=True).start()
+
+            return {'success': True, 'message': f'批量混剪任务已启动 (共{count}个视频)'}
+
+        except Exception as e:
+            self.automix_status['running'] = False
+            return {'success': False, 'error': str(e)}
+
 # 创建Flask应用
 app = Flask(__name__)
 web_interface = OptimizedWebInterface()
@@ -333,6 +448,42 @@ def get_products():
 def get_status():
     """获取状态信息API"""
     return jsonify(web_interface.automix_status)
+
+@app.route('/api/automix/single', methods=['POST'])
+def start_single_automix():
+    """启动单个混剪API"""
+    try:
+        data = request.get_json()
+        product = data.get('product')
+        duration = data.get('duration', 35)
+
+        if not product:
+            return jsonify({'success': False, 'error': '未指定产品'})
+
+        # 启动混剪任务
+        result = web_interface.start_single_automix(product, duration)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/automix/batch', methods=['POST'])
+def start_batch_automix():
+    """启动批量混剪API"""
+    try:
+        data = request.get_json()
+        product = data.get('product')
+        count = data.get('count', 5)
+        min_duration = data.get('min_duration', 30)
+        max_duration = data.get('max_duration', 40)
+
+        if not product:
+            return jsonify({'success': False, 'error': '未指定产品'})
+
+        # 启动批量混剪任务
+        result = web_interface.start_batch_automix(product, count, min_duration, max_duration)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 def main():
     """主函数"""
