@@ -57,7 +57,7 @@ python interactive_automix.py
 #### 🌐 Web界面（推荐高级用户）
 
 ```bash
-python start_web_interface.py
+python web_interface.py
 ```
 
 然后在浏览器中访问：`http://localhost:5000`
@@ -91,7 +91,7 @@ Web界面提供更直观的可视化操作体验，特别适合：
 ### 🚀 启动Web界面
 
 ```bash
-python start_web_interface.py
+python web_interface.py
 ```
 
 启动成功后，在浏览器中访问：`http://localhost:5000`
@@ -543,7 +543,7 @@ cd JianYingProDraft
 python interactive_automix.py
 
 # 或启动Web界面（推荐高级用户）
-python start_web_interface.py
+python web_interface.py
 # 然后访问 http://localhost:5000
 ```
 

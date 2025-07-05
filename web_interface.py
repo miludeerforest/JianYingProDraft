@@ -8,6 +8,7 @@ import json
 import time
 import threading
 import webbrowser
+import subprocess
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 
@@ -440,18 +441,109 @@ def create_app():
     """创建Flask应用实例（用于生产部署）"""
     return app
 
-if __name__ == '__main__':
-    # 直接运行时的简单启动（仅用于开发调试）
-    print("🌐 剪映自动混剪工具 - Web界面 (开发模式)")
-    print("📱 访问: http://localhost:5000")
-    print("💡 推荐使用: python start_web_interface.py")
-    print()
+def check_dependencies():
+    """检查依赖包"""
+    required_packages = ['flask']
+    missing_packages = []
+
+    for package in required_packages:
+        try:
+            __import__(package)
+        except ImportError:
+            missing_packages.append(package)
+
+    if missing_packages:
+        print("❌ 缺少依赖包:", ', '.join(missing_packages))
+        print("📦 请安装依赖包:")
+        print(f"   pip install {' '.join(missing_packages)}")
+        return False
+
+    return True
+
+def check_project_structure():
+    """检查项目结构"""
+    required_files = [
+        'JianYingDraft/core/configManager.py',
+        'JianYingDraft/core/effectExclusionManager.py',
+        'JianYingDraft/core/standardAutoMix.py',
+        'templates/index.html'
+    ]
+
+    missing_files = []
+    for file_path in required_files:
+        if not os.path.exists(file_path):
+            missing_files.append(file_path)
+
+    if missing_files:
+        print("❌ 缺少必要文件:")
+        for file_path in missing_files:
+            print(f"   {file_path}")
+        return False
+
+    return True
+
+def start_web_interface():
+    """启动Web界面的主函数"""
+    print("🌐 剪映自动混剪工具 - Web界面")
+    print("=" * 50)
+
+    # 检查依赖
+    print("🔍 检查依赖包...")
+    if not check_dependencies():
+        print("\n❌ 依赖检查失败，请安装缺少的包后重试")
+        return False
+    print("✅ 依赖包检查通过")
+
+    # 检查项目结构
+    print("📁 检查项目结构...")
+    if not check_project_structure():
+        print("\n❌ 项目结构检查失败，请确保在正确的项目目录中运行")
+        return False
+    print("✅ 项目结构检查通过")
 
     # 创建templates目录
     if not os.path.exists('templates'):
         os.makedirs('templates')
+        print("📁 已创建templates目录")
 
+    print("\n🚀 启动Web服务器...")
+    print("📱 浏览器访问: http://localhost:5000")
+    print("⚙️  功能: 配置管理、排除设置、自动混剪、高级防审核技术")
+    print("🔧 基于原有代码，无任何修改")
+    print("🛡️  支持100%强制执行防审核技术")
+    print("\n💡 使用说明:")
+    print("  • 配置管理: 设置素材路径、输出路径等")
+    print("  • 特效排除: 管理不需要的特效、滤镜、转场")
+    print("  • 自动混剪: 一键生成视频草稿")
+    print("  • 高级防审核: 镜像翻转、模糊背景、抽帧处理")
+    print("  • 强制执行: 一键设置100%执行模式")
+    print("\n⌨️  按 Ctrl+C 停止服务器")
+    print("-" * 50)
+
+    # 自动打开浏览器
+    def open_browser():
+        time.sleep(1.5)
+        try:
+            webbrowser.open('http://localhost:5000')
+            print("🌐 已自动打开浏览器")
+        except:
+            print("⚠️  无法自动打开浏览器，请手动访问 http://localhost:5000")
+
+    browser_thread = threading.Thread(target=open_browser)
+    browser_thread.daemon = True
+    browser_thread.start()
+
+    # 启动Flask应用
     try:
-        app.run(host='0.0.0.0', port=5000, debug=True)
+        app.run(host='0.0.0.0', port=5000, debug=False)
     except KeyboardInterrupt:
-        print("\n👋 Web服务器已停止")
+        print("\n\n👋 Web服务器已停止")
+        print("感谢使用剪映自动混剪工具！")
+    except Exception as e:
+        print(f"\n❌ 启动失败: {e}")
+        return False
+
+    return True
+
+if __name__ == '__main__':
+    start_web_interface()
