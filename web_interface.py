@@ -294,7 +294,15 @@ web_interface = OptimizedWebInterface()
 @app.route('/')
 def index():
     """主页面"""
-    return render_template('index_new.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"<h1>模板错误</h1><p>错误信息: {str(e)}</p><p>请检查templates/index.html文件是否存在</p>"
+
+@app.route('/test')
+def test():
+    """测试页面"""
+    return "<h1>Flask服务器正常运行</h1><p>这是一个测试页面</p>"
 
 @app.route('/api/config')
 def get_config():
