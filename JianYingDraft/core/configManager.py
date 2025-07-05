@@ -94,7 +94,15 @@ class AutoMixConfigManager:
         'filter_intensity_max': 30,      # 滤镜强度最大值 (30%)
         'pexels_api_key': 'rwDQTKgarldHRe2MUQGbtUB95E59p7csmYSSIis1qRxOqVpHjAOadPTD',  # Pexels API密钥 (内置默认)
         'pexels_overlay_opacity': 0.05,     # 防审核覆盖层不透明度 (5%)
-        'enable_pexels_overlay': True       # 是否启用Pexels防审核覆盖层
+        'enable_pexels_overlay': True,      # 是否启用Pexels防审核覆盖层
+
+        # 新增防审核技术配置
+        'flip_probability': 0.4,            # 镜像翻转概率 (40%)
+        'enable_speed_variation': True,     # 启用变速处理
+        'speed_variation_min': 0.9,         # 最小变速比例
+        'speed_variation_max': 1.1,         # 最大变速比例
+        'enable_canvas_adjustment': False,  # 启用画幅调整（暂时禁用）
+        'canvas_ratio': '9:16'              # 默认画幅比例
     }
     
     @classmethod
@@ -369,6 +377,61 @@ class AutoMixConfigManager:
     def set_pexels_overlay_enabled(cls, enabled: bool) -> bool:
         """设置是否启用Pexels防审核覆盖层"""
         return cls._set_config_value('enable_pexels_overlay', enabled)
+
+    # 新增防审核技术配置方法
+    @classmethod
+    def get_flip_probability(cls) -> float:
+        """获取镜像翻转概率"""
+        return float(cls._get_config_value('flip_probability', cls.DEFAULT_CONFIG['flip_probability']))
+
+    @classmethod
+    def set_flip_probability(cls, probability: float) -> bool:
+        """设置镜像翻转概率"""
+        return cls._set_config_value('flip_probability', probability)
+
+    @classmethod
+    def is_speed_variation_enabled(cls) -> bool:
+        """检查是否启用变速处理"""
+        return cls._get_config_value('enable_speed_variation', cls.DEFAULT_CONFIG['enable_speed_variation'])
+
+    @classmethod
+    def set_speed_variation_enabled(cls, enabled: bool) -> bool:
+        """设置是否启用变速处理"""
+        return cls._set_config_value('enable_speed_variation', enabled)
+
+    @classmethod
+    def get_speed_variation_range(cls) -> tuple[float, float]:
+        """获取变速范围"""
+        min_speed = float(cls._get_config_value('speed_variation_min', cls.DEFAULT_CONFIG['speed_variation_min']))
+        max_speed = float(cls._get_config_value('speed_variation_max', cls.DEFAULT_CONFIG['speed_variation_max']))
+        return min_speed, max_speed
+
+    @classmethod
+    def set_speed_variation_range(cls, min_speed: float, max_speed: float) -> bool:
+        """设置变速范围"""
+        success1 = cls._set_config_value('speed_variation_min', min_speed)
+        success2 = cls._set_config_value('speed_variation_max', max_speed)
+        return success1 and success2
+
+    @classmethod
+    def is_canvas_adjustment_enabled(cls) -> bool:
+        """检查是否启用画幅调整"""
+        return cls._get_config_value('enable_canvas_adjustment', cls.DEFAULT_CONFIG['enable_canvas_adjustment'])
+
+    @classmethod
+    def set_canvas_adjustment_enabled(cls, enabled: bool) -> bool:
+        """设置是否启用画幅调整"""
+        return cls._set_config_value('enable_canvas_adjustment', enabled)
+
+    @classmethod
+    def get_canvas_ratio(cls) -> str:
+        """获取画幅比例"""
+        return cls._get_config_value('canvas_ratio', cls.DEFAULT_CONFIG['canvas_ratio'])
+
+    @classmethod
+    def set_canvas_ratio(cls, ratio: str) -> bool:
+        """设置画幅比例"""
+        return cls._set_config_value('canvas_ratio', ratio)
 
 
 # 为了向后兼容，提供一个简化的别名

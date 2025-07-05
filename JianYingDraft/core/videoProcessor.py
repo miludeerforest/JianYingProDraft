@@ -148,7 +148,84 @@ class VideoProcessor:
         }
 
         return segment
-    
+
+    def apply_random_flip(self, segment: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        随机应用镜像翻转（防审核技术）
+
+        Args:
+            segment: 视频片段字典
+
+        Returns:
+            Dict[str, Any]: 更新后的片段信息
+        """
+        import random
+
+        # 获取翻转概率配置
+        flip_probability = self.config_manager.get_flip_probability()
+
+        if random.random() < flip_probability:
+            # 确保clip结构存在
+            if 'clip' not in segment:
+                segment['clip'] = {
+                    "alpha": 1.0,
+                    "flip": {"horizontal": False, "vertical": False},
+                    "rotation": 0.0,
+                    "scale": {"x": 1.0, "y": 1.0},
+                    "transform": {"x": 0.0, "y": 0.0}
+                }
+
+            # 应用水平翻转（最有效的防审核手段）
+            segment['clip']['flip']['horizontal'] = True
+            print(f"  🔄 应用镜像翻转（防审核）")
+
+        return segment
+
+    def apply_random_speed(self, segment: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        应用随机变速处理（防审核技术）
+
+        Args:
+            segment: 视频片段字典
+
+        Returns:
+            Dict[str, Any]: 更新后的片段信息
+        """
+        import random
+
+        # 检查是否启用变速处理
+        if not self.config_manager.is_speed_variation_enabled():
+            return segment
+
+        # 获取变速范围配置
+        speed_range = self.config_manager.get_speed_variation_range()
+        min_speed, max_speed = speed_range
+
+        # 生成随机变速（避免1.0，确保有变化）
+        speed_options = []
+        current = min_speed
+        while current <= max_speed:
+            if abs(current - 1.0) > 0.05:  # 避免接近1.0的速度
+                speed_options.append(current)
+            current += 0.05
+
+        if speed_options:
+            speed = random.choice(speed_options)
+
+            # 创建Speed对象
+            from pyJianYingDraft.segment import Speed
+            speed_obj = Speed(speed)
+
+            # 添加到片段
+            if 'speed' not in segment:
+                segment['speed'] = speed_obj.export_json()
+            else:
+                segment['speed']['speed'] = speed
+
+            print(f"  ⚡ 应用变速: {speed:.2f}x（防审核）")
+
+        return segment
+
     def adjust_color_randomly(self, segment: Dict[str, Any]) -> Dict[str, Any]:
         """
         随机调整视频的对比度和亮度
@@ -279,7 +356,11 @@ class VideoProcessor:
 
             # 6. 应用随机色彩调整
             segment_info = self.adjust_color_randomly(segment_info)
-            
+
+            # 7. 应用防审核技术
+            segment_info = self.apply_random_flip(segment_info)
+            segment_info = self.apply_random_speed(segment_info)
+
             return processed_media_info, segment_info
             
         except Exception as e:

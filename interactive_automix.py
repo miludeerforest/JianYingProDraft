@@ -155,7 +155,8 @@ class InteractiveAutoMix:
             print("6. 🌈 色彩调整范围")
             print("7. 📦 批量生成设置")
             print("8. 🛡️  防审核设置")
-            print("9. ⚙️  高级设置")
+            print("9. 🔄 高级防审核技术")
+            print("10. ⚙️  高级设置")
             print("0. 🔙 返回主菜单")
             print("-" * 40)
 
@@ -181,6 +182,8 @@ class InteractiveAutoMix:
                 elif choice == 8:
                     self.modify_pexels_settings()
                 elif choice == 9:
+                    self.advanced_anti_detection_settings()
+                elif choice == 10:
                     self.modify_advanced_settings()
                 else:
                     print("❌ 无效选择，请重新输入")
@@ -1963,6 +1966,245 @@ class InteractiveAutoMix:
             except Exception as e:
                 print(f"\n❌ 程序错误: {str(e)}")
                 input("按回车键继续...")
+
+    def advanced_anti_detection_settings(self):
+        """高级防审核技术设置"""
+        while True:
+            print("\n🔄 高级防审核技术设置")
+            print("-" * 50)
+            print("💡 功能说明:")
+            print("  • 镜像翻转: 水平翻转画面，对机器识别极具欺骗性")
+            print("  • 变速处理: 0.9x-1.1x微调变速，打乱原始帧率")
+            print("  • 画幅调整: 改变视频比例，彻底改变画面构图")
+            print("-" * 50)
+
+            # 显示当前配置
+            flip_prob = self.config_manager.get_flip_probability()
+            speed_enabled = self.config_manager.is_speed_variation_enabled()
+            speed_range = self.config_manager.get_speed_variation_range()
+            canvas_enabled = self.config_manager.is_canvas_adjustment_enabled()
+            canvas_ratio = self.config_manager.get_canvas_ratio()
+
+            print("📊 当前配置:")
+            print(f"  🔄 镜像翻转概率: {flip_prob:.1%}")
+            print(f"  ⚡ 变速处理: {'启用' if speed_enabled else '禁用'}")
+            if speed_enabled:
+                print(f"  📈 变速范围: {speed_range[0]:.1f}x - {speed_range[1]:.1f}x")
+            print(f"  📐 画幅调整: {'启用' if canvas_enabled else '禁用'}")
+            print(f"  📏 画幅比例: {canvas_ratio}")
+            print("-" * 50)
+
+            print("🛠️  设置选项:")
+            print("1. 🔄 设置镜像翻转概率")
+            print("2. ⚡ 启用/禁用变速处理")
+            print("3. 📈 设置变速范围")
+            print("4. 📐 启用/禁用画幅调整")
+            print("5. 📏 设置画幅比例")
+            print("6. 🧪 测试防审核效果")
+            print("0. 🔙 返回上级菜单")
+            print("-" * 50)
+
+            choice = self.get_user_input("请选择功能", "0", int)
+            if choice is None or choice == 0:
+                break
+            elif choice == 1:
+                self.set_flip_probability()
+            elif choice == 2:
+                self.toggle_speed_variation()
+            elif choice == 3:
+                self.set_speed_variation_range()
+            elif choice == 4:
+                self.toggle_canvas_adjustment()
+            elif choice == 5:
+                self.set_canvas_ratio()
+            elif choice == 6:
+                self.test_anti_detection_effects()
+            else:
+                print("❌ 无效选择，请重新输入")
+
+    def set_flip_probability(self):
+        """设置镜像翻转概率"""
+        print("\n🔄 设置镜像翻转概率")
+        print("-" * 40)
+        print("💡 说明: 镜像翻转是对机器识别极具欺骗性的'大招'")
+        print("建议范围: 30% - 60% (过高可能影响观看体验)")
+
+        current_prob = self.config_manager.get_flip_probability()
+        print(f"当前概率: {current_prob:.1%}")
+
+        new_prob = self.get_user_input(
+            "请输入新的翻转概率 (0.0-1.0)",
+            str(current_prob),
+            float
+        )
+
+        if new_prob is not None:
+            if 0.0 <= new_prob <= 1.0:
+                if self.config_manager.set_flip_probability(new_prob):
+                    print(f"✅ 镜像翻转概率已设置为 {new_prob:.1%}")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 概率必须在 0.0 - 1.0 之间")
+        else:
+            print("❌ 输入无效")
+
+    def toggle_speed_variation(self):
+        """切换变速处理开关"""
+        current_enabled = self.config_manager.is_speed_variation_enabled()
+        new_enabled = not current_enabled
+
+        if self.config_manager.set_speed_variation_enabled(new_enabled):
+            status = "启用" if new_enabled else "禁用"
+            print(f"✅ 变速处理已{status}")
+        else:
+            print("❌ 设置失败")
+
+    def set_speed_variation_range(self):
+        """设置变速范围"""
+        print("\n⚡ 设置变速范围")
+        print("-" * 40)
+        print("💡 说明: 对视频片段进行微调变速，打乱原始帧率")
+        print("建议范围: 0.9x - 1.1x (避免音画不同步)")
+
+        current_range = self.config_manager.get_speed_variation_range()
+        print(f"当前范围: {current_range[0]:.1f}x - {current_range[1]:.1f}x")
+
+        min_speed = self.get_user_input(
+            "请输入最小变速比例 (0.5-1.0)",
+            str(current_range[0]),
+            float
+        )
+
+        if min_speed is None:
+            print("❌ 输入无效")
+            return
+
+        max_speed = self.get_user_input(
+            "请输入最大变速比例 (1.0-2.0)",
+            str(current_range[1]),
+            float
+        )
+
+        if max_speed is None:
+            print("❌ 输入无效")
+            return
+
+        if 0.5 <= min_speed <= 1.0 and 1.0 <= max_speed <= 2.0 and min_speed < max_speed:
+            if self.config_manager.set_speed_variation_range(min_speed, max_speed):
+                print(f"✅ 变速范围已设置为 {min_speed:.1f}x - {max_speed:.1f}x")
+            else:
+                print("❌ 设置失败")
+        else:
+            print("❌ 变速范围设置无效")
+
+    def toggle_canvas_adjustment(self):
+        """切换画幅调整开关"""
+        current_enabled = self.config_manager.is_canvas_adjustment_enabled()
+        new_enabled = not current_enabled
+
+        if self.config_manager.set_canvas_adjustment_enabled(new_enabled):
+            status = "启用" if new_enabled else "禁用"
+            print(f"✅ 画幅调整已{status}")
+            if new_enabled:
+                print("⚠️  注意: 画幅调整功能仍在开发中")
+        else:
+            print("❌ 设置失败")
+
+    def set_canvas_ratio(self):
+        """设置画幅比例"""
+        print("\n📏 设置画幅比例")
+        print("-" * 40)
+        print("💡 说明: 改变视频比例，彻底改变画面构图")
+        print("可选比例:")
+        print("  1. 9:16 (标准竖屏)")
+        print("  2. 4:5 (Instagram风格)")
+        print("  3. 3:4 (经典竖屏)")
+
+        current_ratio = self.config_manager.get_canvas_ratio()
+        print(f"当前比例: {current_ratio}")
+
+        ratio_choice = self.get_user_input("请选择画幅比例 (1-3)", "1", int)
+
+        ratio_map = {1: "9:16", 2: "4:5", 3: "3:4"}
+
+        if ratio_choice in ratio_map:
+            new_ratio = ratio_map[ratio_choice]
+            if self.config_manager.set_canvas_ratio(new_ratio):
+                print(f"✅ 画幅比例已设置为 {new_ratio}")
+            else:
+                print("❌ 设置失败")
+        else:
+            print("❌ 无效选择")
+
+    def test_anti_detection_effects(self):
+        """测试防审核效果"""
+        print("\n🧪 防审核技术测试")
+        print("-" * 40)
+        print("📊 当前防审核技术配置:")
+
+        # Pexels覆盖层
+        pexels_enabled = self.config_manager.is_pexels_overlay_enabled()
+        pexels_opacity = self.config_manager.get_pexels_overlay_opacity()
+        print(f"  🛡️  Pexels覆盖层: {'启用' if pexels_enabled else '禁用'}")
+        if pexels_enabled:
+            print(f"      不透明度: {pexels_opacity:.1%}")
+
+        # 镜像翻转
+        flip_prob = self.config_manager.get_flip_probability()
+        print(f"  🔄 镜像翻转概率: {flip_prob:.1%}")
+
+        # 变速处理
+        speed_enabled = self.config_manager.is_speed_variation_enabled()
+        print(f"  ⚡ 变速处理: {'启用' if speed_enabled else '禁用'}")
+        if speed_enabled:
+            speed_range = self.config_manager.get_speed_variation_range()
+            print(f"      变速范围: {speed_range[0]:.1f}x - {speed_range[1]:.1f}x")
+
+        # 其他技术
+        print(f"  📐 画面缩放: 110% (固定)")
+        print(f"  ✂️  掐头去尾: 前3秒 (固定)")
+        print(f"  🎨 随机调色: 启用 (固定)")
+
+        print("\n💡 防审核效果评估:")
+        total_score = 0
+
+        if pexels_enabled:
+            total_score += 40
+            print("  ✅ Pexels覆盖层 (+40分) - 最有效的防审核手段")
+
+        if flip_prob > 0.3:
+            total_score += 30
+            print("  ✅ 镜像翻转 (+30分) - 对机器识别极具欺骗性")
+        elif flip_prob > 0:
+            total_score += 15
+            print("  ⚠️  镜像翻转 (+15分) - 概率较低，效果有限")
+
+        if speed_enabled:
+            total_score += 20
+            print("  ✅ 变速处理 (+20分) - 打乱原始帧率")
+
+        total_score += 10  # 固定技术
+        print("  ✅ 其他技术 (+10分) - 缩放、掐头去尾、调色")
+
+        print(f"\n📊 总体防审核评分: {total_score}/100")
+
+        if total_score >= 80:
+            print("🎉 防审核能力: 优秀")
+        elif total_score >= 60:
+            print("👍 防审核能力: 良好")
+        elif total_score >= 40:
+            print("⚠️  防审核能力: 一般")
+        else:
+            print("❌ 防审核能力: 较弱")
+
+        print("\n💡 改进建议:")
+        if not pexels_enabled:
+            print("  🔧 建议启用Pexels覆盖层，这是最有效的防审核手段")
+        if flip_prob < 0.3:
+            print("  🔧 建议提高镜像翻转概率到30%以上")
+        if not speed_enabled:
+            print("  🔧 建议启用变速处理，增强防审核效果")
 
 
 if __name__ == "__main__":
