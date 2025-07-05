@@ -811,6 +811,16 @@
                     this.loadExclusionStats();
                 }
 
+                // 如果是滤镜管理页面，加载滤镜统计
+                if (section === 'effects-filters') {
+                    this.refreshFilterStats();
+                }
+
+                // 如果是转场设置页面，加载转场统计
+                if (section === 'effects-transitions') {
+                    this.refreshTransitionStats();
+                }
+
                 return sectionElement;
             }
 
@@ -1457,10 +1467,81 @@
                         <div class="card-header">
                             <h2 class="card-title">
                                 <span class="icon">🎭</span>
-                                滤镜管理
+                                滤镜管理 (468种滤镜)
                             </h2>
                         </div>
-                        <p>滤镜管理功能正在开发中，敬请期待...</p>
+
+                        <!-- 滤镜统计 -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--primary-color); margin-bottom: 5px;">468</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">滤镜总数</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--accent-color); margin-bottom: 5px;" id="filters-available">468</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">可用滤镜</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--error-color); margin-bottom: 5px;" id="filters-excluded-count">0</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">已排除</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--warning-color); margin-bottom: 5px;" id="filters-intensity">15-25%</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">强度范围</div>
+                            </div>
+                        </div>
+
+                        <!-- 滤镜分类管理 -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">🔍 搜索滤镜:</label>
+                                <input type="text" class="form-input" id="filter-search" placeholder="输入滤镜名称...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📂 滤镜分类:</label>
+                                <select class="form-select" id="filter-category">
+                                    <option value="all">全部分类</option>
+                                    <option value="color">色彩调整</option>
+                                    <option value="vintage">复古风格</option>
+                                    <option value="modern">现代风格</option>
+                                    <option value="artistic">艺术效果</option>
+                                    <option value="nature">自然风光</option>
+                                    <option value="portrait">人像美化</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 滤镜强度控制 -->
+                        <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 15px;">🎨 滤镜强度控制</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group">
+                                    <label class="form-label">最小强度 (%):</label>
+                                    <input type="range" class="form-input" id="filter-min-intensity" min="5" max="50" value="15"
+                                           oninput="document.getElementById('filter-min-value').textContent = this.value + '%'">
+                                    <span id="filter-min-value" style="color: var(--accent-color); font-weight: bold;">15%</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">最大强度 (%):</label>
+                                    <input type="range" class="form-input" id="filter-max-intensity" min="5" max="50" value="25"
+                                           oninput="document.getElementById('filter-max-value').textContent = this.value + '%'">
+                                    <span id="filter-max-value" style="color: var(--accent-color); font-weight: bold;">25%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div style="margin: 20px 0;">
+                            <button class="btn btn-primary" onclick="app.searchFilters()">🔍 搜索滤镜</button>
+                            <button class="btn btn-warning" onclick="app.excludeStrongFilters()">❌ 排除强烈滤镜</button>
+                            <button class="btn btn-success" onclick="app.saveFilterSettings()">💾 保存设置</button>
+                            <button class="btn btn-primary" onclick="app.refreshFilterStats()">📊 刷新统计</button>
+                        </div>
+
+                        <!-- 滤镜列表 -->
+                        <div id="filters-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                            <p style="text-align: center; color: var(--text-secondary);">点击"搜索滤镜"查看可用滤镜</p>
+                        </div>
                     </div>
                 `;
             }
@@ -1471,10 +1552,98 @@
                         <div class="card-header">
                             <h2 class="card-title">
                                 <span class="icon">🔄</span>
-                                转场设置
+                                转场设置 (362种转场)
                             </h2>
                         </div>
-                        <p>转场设置功能正在开发中，敬请期待...</p>
+
+                        <!-- 转场统计 -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--warning-color); margin-bottom: 5px;">362</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">转场总数</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--accent-color); margin-bottom: 5px;" id="transitions-available">362</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">可用转场</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--error-color); margin-bottom: 5px;" id="transitions-excluded-count">0</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">已排除</div>
+                            </div>
+                            <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                <div style="font-size: 24px; color: var(--primary-color); margin-bottom: 5px;" id="transition-duration">0.5-2.0s</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">时长范围</div>
+                            </div>
+                        </div>
+
+                        <!-- 转场分类管理 -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">🔍 搜索转场:</label>
+                                <input type="text" class="form-input" id="transition-search" placeholder="输入转场名称...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📂 转场类型:</label>
+                                <select class="form-select" id="transition-type">
+                                    <option value="all">全部类型</option>
+                                    <option value="fade">淡入淡出</option>
+                                    <option value="slide">滑动切换</option>
+                                    <option value="zoom">缩放效果</option>
+                                    <option value="rotate">旋转切换</option>
+                                    <option value="wipe">擦除效果</option>
+                                    <option value="dissolve">溶解效果</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 转场时长控制 -->
+                        <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                            <h4 style="color: var(--warning-color); margin-bottom: 15px;">⏱️ 转场时长控制</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group">
+                                    <label class="form-label">最小时长 (秒):</label>
+                                    <input type="range" class="form-input" id="transition-min-duration" min="0.1" max="3.0" step="0.1" value="0.5"
+                                           oninput="document.getElementById('transition-min-duration-value').textContent = this.value + 's'">
+                                    <span id="transition-min-duration-value" style="color: var(--accent-color); font-weight: bold;">0.5s</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">最大时长 (秒):</label>
+                                    <input type="range" class="form-input" id="transition-max-duration" min="0.1" max="3.0" step="0.1" value="2.0"
+                                           oninput="document.getElementById('transition-max-duration-value').textContent = this.value + 's'">
+                                    <span id="transition-max-duration-value" style="color: var(--accent-color); font-weight: bold;">2.0s</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 转场频率设置 -->
+                        <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 15px;">🎯 转场频率设置</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group">
+                                    <label class="form-label">转场概率 (%):</label>
+                                    <input type="range" class="form-input" id="transition-probability" min="0" max="100" value="80"
+                                           oninput="document.getElementById('transition-probability-value').textContent = this.value + '%'">
+                                    <span id="transition-probability-value" style="color: var(--accent-color); font-weight: bold;">80%</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">最大连续转场:</label>
+                                    <input type="number" class="form-input" id="max-consecutive-transitions" min="1" max="10" value="3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div style="margin: 20px 0;">
+                            <button class="btn btn-primary" onclick="app.searchTransitions()">🔍 搜索转场</button>
+                            <button class="btn btn-warning" onclick="app.excludeFastTransitions()">❌ 排除快速转场</button>
+                            <button class="btn btn-success" onclick="app.saveTransitionSettings()">💾 保存设置</button>
+                            <button class="btn btn-primary" onclick="app.refreshTransitionStats()">📊 刷新统计</button>
+                        </div>
+
+                        <!-- 转场列表 -->
+                        <div id="transitions-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
+                            <p style="text-align: center; color: var(--text-secondary);">点击"搜索转场"查看可用转场</p>
+                        </div>
                     </div>
                 `;
             }
@@ -2281,6 +2450,252 @@
                     }
                 } catch (error) {
                     this.showAlert('重置失败: ' + error.message, 'error');
+                }
+            }
+
+            // 滤镜管理功能
+            async searchFilters() {
+                const searchTerm = this.getInputValue('filter-search');
+                const category = this.getInputValue('filter-category');
+
+                try {
+                    const response = await fetch('/api/filters/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            search_term: searchTerm,
+                            category: category
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.displayFiltersList(result.filters);
+                        this.showAlert(`找到 ${result.filters.length} 个滤镜`, 'success');
+                    } else {
+                        this.showAlert('搜索滤镜失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('搜索滤镜失败: ' + error.message, 'error');
+                }
+            }
+
+            displayFiltersList(filters) {
+                const filtersList = document.getElementById('filters-list');
+                if (!filtersList) return;
+
+                if (filters.length === 0) {
+                    filtersList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">未找到匹配的滤镜</p>';
+                    return;
+                }
+
+                filtersList.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <input type="checkbox" id="select-all-filters" onchange="app.toggleSelectAllFilters()" style="margin-right: 8px;">
+                            <span style="font-weight: 600;">全选/取消全选</span>
+                        </label>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
+                        ${filters.map(filter => `
+                            <label style="display: flex; align-items: center; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: var(--transition);"
+                                   onmouseover="this.style.backgroundColor='var(--bg-primary)'"
+                                   onmouseout="this.style.backgroundColor='transparent'">
+                                <input type="checkbox" class="filter-checkbox" value="${filter.id}" style="margin-right: 8px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; margin-bottom: 2px;">${filter.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        ${filter.category} ${filter.excluded ? '(已排除)' : '(可用)'}
+                                    </div>
+                                </div>
+                                <div style="font-size: 12px; color: ${filter.excluded ? 'var(--error-color)' : 'var(--accent-color)'};">
+                                    ${filter.excluded ? '❌' : '✅'}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            toggleSelectAllFilters() {
+                const selectAllCheckbox = document.getElementById('select-all-filters');
+                const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
+
+                filterCheckboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            }
+
+            async saveFilterSettings() {
+                const minIntensity = this.getInputValue('filter-min-intensity');
+                const maxIntensity = this.getInputValue('filter-max-intensity');
+
+                try {
+                    const response = await fetch('/api/filters/settings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            min_intensity: parseInt(minIntensity),
+                            max_intensity: parseInt(maxIntensity)
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('滤镜设置保存成功', 'success');
+                        this.setElementText('filters-intensity', `${minIntensity}-${maxIntensity}%`);
+                    } else {
+                        this.showAlert('保存设置失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('保存设置失败: ' + error.message, 'error');
+                }
+            }
+
+            async refreshFilterStats() {
+                try {
+                    const response = await fetch('/api/exclusions');
+                    const stats = await response.json();
+
+                    if (stats.success !== false) {
+                        const available = 468 - (stats.filters?.excluded || 0);
+                        this.setElementText('filters-available', available);
+                        this.setElementText('filters-excluded-count', stats.filters?.excluded || 0);
+                        this.showAlert('滤镜统计已更新', 'success');
+                    }
+                } catch (error) {
+                    this.showAlert('刷新统计失败: ' + error.message, 'error');
+                }
+            }
+
+            // 转场管理功能
+            async searchTransitions() {
+                const searchTerm = this.getInputValue('transition-search');
+                const type = this.getInputValue('transition-type');
+
+                try {
+                    const response = await fetch('/api/transitions/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            search_term: searchTerm,
+                            type: type
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.displayTransitionsList(result.transitions);
+                        this.showAlert(`找到 ${result.transitions.length} 个转场`, 'success');
+                    } else {
+                        this.showAlert('搜索转场失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('搜索转场失败: ' + error.message, 'error');
+                }
+            }
+
+            displayTransitionsList(transitions) {
+                const transitionsList = document.getElementById('transitions-list');
+                if (!transitionsList) return;
+
+                if (transitions.length === 0) {
+                    transitionsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">未找到匹配的转场</p>';
+                    return;
+                }
+
+                transitionsList.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <input type="checkbox" id="select-all-transitions" onchange="app.toggleSelectAllTransitions()" style="margin-right: 8px;">
+                            <span style="font-weight: 600;">全选/取消全选</span>
+                        </label>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
+                        ${transitions.map(transition => `
+                            <label style="display: flex; align-items: center; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: var(--transition);"
+                                   onmouseover="this.style.backgroundColor='var(--bg-primary)'"
+                                   onmouseout="this.style.backgroundColor='transparent'">
+                                <input type="checkbox" class="transition-checkbox" value="${transition.id}" style="margin-right: 8px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; margin-bottom: 2px;">${transition.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        ${transition.type} ${transition.excluded ? '(已排除)' : '(可用)'}
+                                    </div>
+                                </div>
+                                <div style="font-size: 12px; color: ${transition.excluded ? 'var(--error-color)' : 'var(--accent-color)'};">
+                                    ${transition.excluded ? '❌' : '✅'}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            toggleSelectAllTransitions() {
+                const selectAllCheckbox = document.getElementById('select-all-transitions');
+                const transitionCheckboxes = document.querySelectorAll('.transition-checkbox');
+
+                transitionCheckboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            }
+
+            async saveTransitionSettings() {
+                const minDuration = this.getInputValue('transition-min-duration');
+                const maxDuration = this.getInputValue('transition-max-duration');
+                const probability = this.getInputValue('transition-probability');
+                const maxConsecutive = this.getInputValue('max-consecutive-transitions');
+
+                try {
+                    const response = await fetch('/api/transitions/settings', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            min_duration: parseFloat(minDuration),
+                            max_duration: parseFloat(maxDuration),
+                            probability: parseInt(probability),
+                            max_consecutive: parseInt(maxConsecutive)
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('转场设置保存成功', 'success');
+                        this.setElementText('transition-duration', `${minDuration}-${maxDuration}s`);
+                    } else {
+                        this.showAlert('保存设置失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('保存设置失败: ' + error.message, 'error');
+                }
+            }
+
+            async refreshTransitionStats() {
+                try {
+                    const response = await fetch('/api/exclusions');
+                    const stats = await response.json();
+
+                    if (stats.success !== false) {
+                        const available = 362 - (stats.transitions?.excluded || 0);
+                        this.setElementText('transitions-available', available);
+                        this.setElementText('transitions-excluded-count', stats.transitions?.excluded || 0);
+                        this.showAlert('转场统计已更新', 'success');
+                    }
+                } catch (error) {
+                    this.showAlert('刷新统计失败: ' + error.message, 'error');
                 }
             }
         }

@@ -515,6 +515,109 @@ class OptimizedWebInterface:
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+    def search_filters(self, search_term, category):
+        """搜索滤镜"""
+        try:
+            filters = []
+
+            # 模拟滤镜数据
+            categories = {
+                'color': '色彩调整',
+                'vintage': '复古风格',
+                'modern': '现代风格',
+                'artistic': '艺术效果',
+                'nature': '自然风光',
+                'portrait': '人像美化'
+            }
+
+            for i in range(1, 21):  # 显示20个示例
+                filter_category = list(categories.keys())[i % len(categories)]
+                filter_name = f"{categories[filter_category]}滤镜_{i:03d}"
+
+                if category != 'all' and filter_category != category:
+                    continue
+
+                if not search_term or search_term.lower() in filter_name.lower():
+                    filters.append({
+                        'id': f'filter_{i}',
+                        'name': filter_name,
+                        'category': categories[filter_category],
+                        'excluded': filter_name in self.exclusion_manager.excluded_filters
+                    })
+
+            return {'success': True, 'filters': filters}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def save_filter_settings(self, min_intensity, max_intensity):
+        """保存滤镜设置"""
+        try:
+            # 保存滤镜强度设置到配置管理器
+            success = True
+            success &= self.config_manager._set_config_value('filter_intensity_min', min_intensity)
+            success &= self.config_manager._set_config_value('filter_intensity_max', max_intensity)
+
+            # 清除缓存
+            self._cache['config'] = None
+
+            return {'success': success, 'message': f'滤镜强度设置已保存: {min_intensity}-{max_intensity}%'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def search_transitions(self, search_term, transition_type):
+        """搜索转场"""
+        try:
+            transitions = []
+
+            # 模拟转场数据
+            types = {
+                'fade': '淡入淡出',
+                'slide': '滑动切换',
+                'zoom': '缩放效果',
+                'rotate': '旋转切换',
+                'wipe': '擦除效果',
+                'dissolve': '溶解效果'
+            }
+
+            for i in range(1, 21):  # 显示20个示例
+                t_type = list(types.keys())[i % len(types)]
+                transition_name = f"{types[t_type]}_{i:03d}"
+
+                if transition_type != 'all' and t_type != transition_type:
+                    continue
+
+                if not search_term or search_term.lower() in transition_name.lower():
+                    transitions.append({
+                        'id': f'transition_{i}',
+                        'name': transition_name,
+                        'type': types[t_type],
+                        'excluded': transition_name in self.exclusion_manager.excluded_transitions
+                    })
+
+            return {'success': True, 'transitions': transitions}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def save_transition_settings(self, min_duration, max_duration, probability, max_consecutive):
+        """保存转场设置"""
+        try:
+            # 保存转场设置到配置管理器
+            success = True
+            success &= self.config_manager._set_config_value('transition_min_duration', min_duration)
+            success &= self.config_manager._set_config_value('transition_max_duration', max_duration)
+            success &= self.config_manager._set_config_value('transition_probability', probability)
+            success &= self.config_manager._set_config_value('transition_max_consecutive', max_consecutive)
+
+            # 清除缓存
+            self._cache['config'] = None
+
+            return {
+                'success': success,
+                'message': f'转场设置已保存: 时长{min_duration}-{max_duration}s, 概率{probability}%, 最大连续{max_consecutive}个'
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
 # 创建Flask应用
 app = Flask(__name__)
 web_interface = OptimizedWebInterface()
@@ -640,6 +743,60 @@ def reset_effects():
     """重置特效排除API"""
     try:
         result = web_interface.reset_all_exclusions()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/filters/search', methods=['POST'])
+def search_filters():
+    """搜索滤镜API"""
+    try:
+        data = request.get_json()
+        search_term = data.get('search_term', '')
+        category = data.get('category', 'all')
+
+        result = web_interface.search_filters(search_term, category)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/filters/settings', methods=['POST'])
+def save_filter_settings():
+    """保存滤镜设置API"""
+    try:
+        data = request.get_json()
+        min_intensity = data.get('min_intensity', 15)
+        max_intensity = data.get('max_intensity', 25)
+
+        result = web_interface.save_filter_settings(min_intensity, max_intensity)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/transitions/search', methods=['POST'])
+def search_transitions():
+    """搜索转场API"""
+    try:
+        data = request.get_json()
+        search_term = data.get('search_term', '')
+        transition_type = data.get('type', 'all')
+
+        result = web_interface.search_transitions(search_term, transition_type)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/transitions/settings', methods=['POST'])
+def save_transition_settings():
+    """保存转场设置API"""
+    try:
+        data = request.get_json()
+        min_duration = data.get('min_duration', 0.5)
+        max_duration = data.get('max_duration', 2.0)
+        probability = data.get('probability', 80)
+        max_consecutive = data.get('max_consecutive', 3)
+
+        result = web_interface.save_transition_settings(min_duration, max_duration, probability, max_consecutive)
         return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
