@@ -92,7 +92,34 @@ class WebInterface:
             config['frame_drop_probability'] = self.config_manager.get_frame_drop_probability()
             config['frame_drop_interval'] = self.config_manager.get_frame_drop_interval()
             config['max_frame_drops_per_segment'] = self.config_manager.get_max_frame_drops_per_segment()
-            
+
+            # 版本信息和特效参数说明
+            config['version_info'] = {
+                'version': '2.1.0',
+                'last_updated': '2025-07-05',
+                'features': [
+                    '轻微特效参数优化',
+                    '纹理和滤镜参数支持',
+                    '智能编码检测修复',
+                    '泰语字幕乱码修复'
+                ]
+            }
+
+            config['effect_params_info'] = {
+                '亮度': '15-35 (轻微调整)',
+                '对比度': '20-40 (轻微调整)',
+                '饱和度': '25-45 (轻微调整)',
+                '大小': '10-30 (轻微缩放)',
+                '速度': '25-45 (轻微变速)',
+                '强度': '10-25 (轻微强度)',
+                '透明度': '20-40 (轻微透明)',
+                '模糊': '5-20 (轻微模糊)',
+                '旋转': '10-30 (轻微旋转)',
+                '纹理': '15-35 (轻微纹理)',
+                '滤镜': '20-40 (轻微滤镜)',
+                '其他': '中心25±8 (轻微正态分布)'
+            }
+
             return config
         except Exception as e:
             return {'error': str(e)}

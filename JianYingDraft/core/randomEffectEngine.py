@@ -235,6 +235,12 @@ class RandomEffectEngine:
             elif any(keyword in param_name for keyword in ['旋转', 'rotation', 'rotate']):
                 # 旋转参数：轻微旋转，范围10-30
                 value = random.uniform(10, 30)
+            elif any(keyword in param_name for keyword in ['纹理', 'texture', '质感']):
+                # 纹理参数：轻微纹理效果，范围15-35
+                value = random.uniform(15, 35)
+            elif any(keyword in param_name for keyword in ['滤镜', 'filter', '滤波']):
+                # 滤镜参数：轻微滤镜效果，范围20-40
+                value = random.uniform(20, 40)
             else:
                 # 其他参数：使用轻微的正态分布，中心在25，标准差为8
                 value = random.normalvariate(25, 8)
