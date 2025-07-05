@@ -793,18 +793,14 @@
                 const sectionElement = document.createElement('section');
                 sectionElement.className = 'content-section';
                 sectionElement.id = `section-${section}`;
-                sectionElement.innerHTML = `
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <span class="icon">⚙️</span>
-                                ${this.getSectionTitle(section)}
-                            </h2>
-                        </div>
-                        <p>正在加载 ${this.getSectionTitle(section)} 内容...</p>
-                    </div>
-                `;
+                sectionElement.innerHTML = this.getSectionContent(section);
                 contentArea.appendChild(sectionElement);
+
+                // 如果是配置相关页面，加载配置数据
+                if (section.startsWith('config-')) {
+                    this.loadConfigData(section);
+                }
+
                 return sectionElement;
             }
 
@@ -826,6 +822,41 @@
                     'help': '帮助文档'
                 };
                 return titles[section] || section;
+            }
+
+            getSectionContent(section) {
+                switch(section) {
+                    case 'config-basic':
+                        return this.getBasicConfigContent();
+                    case 'config-anti-detect':
+                        return this.getAntiDetectConfigContent();
+                    case 'config-effects':
+                        return this.getEffectsConfigContent();
+                    case 'config-advanced':
+                        return this.getAdvancedConfigContent();
+                    case 'effects-exclusion':
+                        return this.getEffectsExclusionContent();
+                    case 'effects-smart':
+                        return this.getSmartExclusionContent();
+                    case 'automix-single':
+                        return this.getSingleAutomixContent();
+                    case 'automix-batch':
+                        return this.getBatchAutomixContent();
+                    case 'monitor':
+                        return this.getMonitorContent();
+                    default:
+                        return `
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2 class="card-title">
+                                        <span class="icon">⚙️</span>
+                                        ${this.getSectionTitle(section)}
+                                    </h2>
+                                </div>
+                                <p>正在开发中，敬请期待...</p>
+                            </div>
+                        `;
+                }
             }
 
             setActiveNav(navLink) {
@@ -859,6 +890,448 @@
                 setTimeout(() => {
                     document.getElementById('pageLoader').classList.add('hidden');
                 }, 1000);
+            }
+
+            // 配置页面内容生成方法
+            getBasicConfigContent() {
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">📁</span>
+                                基础配置
+                            </h2>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">📁 素材库路径:</label>
+                                <input type="text" class="form-input" id="material_path" placeholder="选择素材库路径">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">💾 草稿输出路径:</label>
+                                <input type="text" class="form-input" id="draft_output_path" placeholder="选择输出路径">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">⏱️ 最小时长(秒):</label>
+                                <input type="number" class="form-input" id="video_duration_min" min="5" max="300" value="30">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">⏱️ 最大时长(秒):</label>
+                                <input type="number" class="form-input" id="video_duration_max" min="5" max="300" value="40">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🎬 视频缩放(%):</label>
+                                <input type="number" class="form-input" id="video_scale_factor" min="100" max="120" step="1" value="105">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🔊 旁白音量(%):</label>
+                                <input type="number" class="form-input" id="narration_volume" min="0" max="100" step="5" value="100">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🎵 背景音量(%):</label>
+                                <input type="number" class="form-input" id="background_volume" min="0" max="50" step="1" value="10">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📦 批量生成数量:</label>
+                                <input type="number" class="form-input" id="batch_count" min="1" max="100" value="5">
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="app.loadBasicConfig()">🔄 刷新配置</button>
+                            <button class="btn btn-success" onclick="app.saveBasicConfig()">💾 保存配置</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            getAntiDetectConfigContent() {
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">🛡️</span>
+                                高级防审核技术
+                            </h2>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">🔄 镜像翻转概率:</label>
+                                <input type="range" class="form-input" id="flip_probability" min="0" max="1" step="0.1" value="1.0"
+                                       oninput="document.getElementById('flip_probability_value').textContent = Math.round(this.value * 100) + '%'">
+                                <span id="flip_probability_value" style="color: var(--accent-color); font-weight: bold;">100%</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🌫️ 模糊背景:</label>
+                                <select class="form-select" id="blur_background_enabled">
+                                    <option value="true">启用</option>
+                                    <option value="false">禁用</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🌫️ 模糊背景概率:</label>
+                                <input type="range" class="form-input" id="blur_background_probability" min="0" max="1" step="0.1" value="1.0"
+                                       oninput="document.getElementById('blur_background_probability_value').textContent = Math.round(this.value * 100) + '%'">
+                                <span id="blur_background_probability_value" style="color: var(--accent-color); font-weight: bold;">100%</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📐 前景缩放(%):</label>
+                                <input type="number" class="form-input" id="foreground_scale" min="50" max="100" step="5" value="80">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📏 背景放大(%):</label>
+                                <input type="number" class="form-input" id="background_scale" min="100" max="200" step="10" value="120">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🌀 模糊强度(%):</label>
+                                <input type="number" class="form-input" id="background_blur_intensity" min="10" max="100" step="10" value="50">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🎞️ 抽帧处理:</label>
+                                <select class="form-select" id="frame_manipulation_enabled">
+                                    <option value="true">启用</option>
+                                    <option value="false">禁用</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🎞️ 抽帧概率:</label>
+                                <input type="range" class="form-input" id="frame_drop_probability" min="0" max="1" step="0.1" value="1.0"
+                                       oninput="document.getElementById('frame_drop_probability_value').textContent = Math.round(this.value * 100) + '%'">
+                                <span id="frame_drop_probability_value" style="color: var(--accent-color); font-weight: bold;">100%</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">⏱️ 抽帧间隔(秒):</label>
+                                <input type="number" class="form-input" id="frame_drop_interval" min="1" max="30" step="1" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">🔢 最大抽帧数:</label>
+                                <input type="number" class="form-input" id="max_frame_drops_per_segment" min="1" max="10" step="1" value="3">
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="app.loadAntiDetectConfig()">🔄 刷新配置</button>
+                            <button class="btn btn-success" onclick="app.saveAntiDetectConfig()">💾 保存配置</button>
+                            <button class="btn btn-warning" onclick="app.setForceExecutionMode()">🎯 设为强制执行模式</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            getEffectsConfigContent() {
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">🎨</span>
+                                轻微特效参数配置 (v2.1.0)
+                            </h2>
+                        </div>
+                        <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="color: var(--text-secondary); margin: 0;">
+                                💡 所有特效参数均控制在轻微范围内，避免过度强烈的视觉效果
+                            </p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">💡 滤镜强度最小值(%):</label>
+                                <input type="number" class="form-input" id="filter_intensity_min" min="5" max="50" step="1" value="10">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">💡 滤镜强度最大值(%):</label>
+                                <input type="number" class="form-input" id="filter_intensity_max" min="5" max="50" step="1" value="25">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 20px;">
+                            <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; border-left: 3px solid var(--primary-color);">
+                                <h4 style="color: var(--primary-color); margin-bottom: 10px;">基础参数范围</h4>
+                                <div style="font-size: 13px; line-height: 1.6;">
+                                    <div>🌟 亮度参数: <span style="color: var(--text-secondary);">15-35 (轻微调整)</span></div>
+                                    <div>🎭 对比度参数: <span style="color: var(--text-secondary);">20-40 (轻微调整)</span></div>
+                                    <div>🎨 饱和度参数: <span style="color: var(--text-secondary);">25-45 (轻微调整)</span></div>
+                                    <div>📏 大小参数: <span style="color: var(--text-secondary);">10-30 (轻微缩放)</span></div>
+                                </div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; border-left: 3px solid var(--accent-color);">
+                                <h4 style="color: var(--accent-color); margin-bottom: 10px;">高级参数范围</h4>
+                                <div style="font-size: 13px; line-height: 1.6;">
+                                    <div>⚡ 速度参数: <span style="color: var(--text-secondary);">25-45 (轻微变速)</span></div>
+                                    <div>💪 强度参数: <span style="color: var(--text-secondary);">10-25 (轻微强度)</span></div>
+                                    <div>👻 透明度参数: <span style="color: var(--text-secondary);">20-40 (轻微透明)</span></div>
+                                    <div>🌫️ 模糊参数: <span style="color: var(--text-secondary);">5-20 (轻微模糊)</span></div>
+                                </div>
+                            </div>
+                            <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; border-left: 3px solid var(--warning-color);">
+                                <h4 style="color: var(--warning-color); margin-bottom: 10px;">新增参数范围 ⭐</h4>
+                                <div style="font-size: 13px; line-height: 1.6;">
+                                    <div>🔄 旋转参数: <span style="color: var(--text-secondary);">10-30 (轻微旋转)</span></div>
+                                    <div>🧱 纹理参数: <span style="color: var(--accent-color);">15-35 (轻微纹理)</span></div>
+                                    <div>🎭 滤镜参数: <span style="color: var(--accent-color);">20-40 (轻微滤镜)</span></div>
+                                    <div>🎯 其他参数: <span style="color: var(--text-secondary);">中心25±8 (正态分布)</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn btn-primary" onclick="app.loadEffectsConfig()">🔄 刷新配置</button>
+                            <button class="btn btn-success" onclick="app.saveEffectsConfig()">💾 保存配置</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            getSingleAutomixContent() {
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">🎬</span>
+                                单个混剪生成
+                            </h2>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">📁 选择产品:</label>
+                                <select class="form-select" id="selected_product">
+                                    <option value="">请选择产品...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">⏱️ 目标时长(秒):</label>
+                                <input type="number" class="form-input" id="target_duration" min="10" max="300" value="35">
+                            </div>
+                        </div>
+                        <div style="text-align: center;">
+                            <button class="btn btn-primary" onclick="app.startSingleAutomix()" style="font-size: 16px; padding: 15px 30px;">
+                                🎬 开始生成混剪视频
+                            </button>
+                        </div>
+                        <div id="automix-progress" style="margin-top: 20px; display: none;">
+                            <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                    <div class="loader-spinner" style="width: 20px; height: 20px; margin-right: 10px;"></div>
+                                    <span id="progress-text">正在生成中...</span>
+                                </div>
+                                <div style="background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden;">
+                                    <div id="progress-bar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            getBatchAutomixContent() {
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">📊</span>
+                                批量生成混剪
+                            </h2>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">📁 选择产品:</label>
+                                <select class="form-select" id="batch_selected_product">
+                                    <option value="">请选择产品...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📦 生成数量:</label>
+                                <input type="number" class="form-input" id="batch_count_input" min="1" max="50" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">⏱️ 时长范围:</label>
+                                <div style="display: flex; gap: 5px;">
+                                    <input type="number" class="form-input" id="batch_min_duration" min="10" max="300" value="30" style="width: 48%;">
+                                    <span style="align-self: center;">-</span>
+                                    <input type="number" class="form-input" id="batch_max_duration" min="10" max="300" value="40" style="width: 48%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center;">
+                            <button class="btn btn-primary" onclick="app.startBatchAutomix()" style="font-size: 16px; padding: 15px 30px;">
+                                📊 开始批量生成
+                            </button>
+                        </div>
+                        <div id="batch-progress" style="margin-top: 20px; display: none;">
+                            <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <span id="batch-progress-text">正在批量生成中...</span>
+                                    <span id="batch-progress-count">0/5</span>
+                                </div>
+                                <div style="background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden;">
+                                    <div id="batch-progress-bar" style="background: var(--accent-color); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 配置加载和保存方法
+            async loadConfigData(section) {
+                try {
+                    const response = await fetch('/api/config');
+                    const config = await response.json();
+
+                    if (config.error) {
+                        this.showAlert('加载配置失败: ' + config.error, 'error');
+                        return;
+                    }
+
+                    this.populateConfigForm(section, config);
+                } catch (error) {
+                    this.showAlert('加载配置失败: ' + error.message, 'error');
+                }
+            }
+
+            populateConfigForm(section, config) {
+                if (section === 'config-basic') {
+                    this.setInputValue('material_path', config.material_path || '');
+                    this.setInputValue('draft_output_path', config.draft_output_path || '');
+                    this.setInputValue('video_duration_min', config.video_duration_min || 30);
+                    this.setInputValue('video_duration_max', config.video_duration_max || 40);
+                    this.setInputValue('video_scale_factor', Math.round((config.video_scale_factor || 1.05) * 100));
+                    this.setInputValue('narration_volume', Math.round((config.narration_volume || 1.0) * 100));
+                    this.setInputValue('background_volume', Math.round((config.background_volume || 0.1) * 100));
+                    this.setInputValue('batch_count', config.batch_count || 5);
+                } else if (section === 'config-anti-detect') {
+                    this.setInputValue('flip_probability', config.flip_probability || 1.0);
+                    this.setInputValue('blur_background_enabled', config.blur_background_enabled ? 'true' : 'false');
+                    this.setInputValue('blur_background_probability', config.blur_background_probability || 1.0);
+                    this.setInputValue('foreground_scale', Math.round((config.foreground_scale || 0.8) * 100));
+                    this.setInputValue('background_scale', Math.round((config.background_scale || 1.2) * 100));
+                    this.setInputValue('background_blur_intensity', Math.round((config.background_blur_intensity || 0.5) * 100));
+                    this.setInputValue('frame_manipulation_enabled', config.frame_manipulation_enabled ? 'true' : 'false');
+                    this.setInputValue('frame_drop_probability', config.frame_drop_probability || 1.0);
+                    this.setInputValue('frame_drop_interval', config.frame_drop_interval || 5);
+                    this.setInputValue('max_frame_drops_per_segment', config.max_frame_drops_per_segment || 3);
+
+                    // 更新滑块显示值
+                    this.updateRangeValue('flip_probability', config.flip_probability || 1.0);
+                    this.updateRangeValue('blur_background_probability', config.blur_background_probability || 1.0);
+                    this.updateRangeValue('frame_drop_probability', config.frame_drop_probability || 1.0);
+                } else if (section === 'config-effects') {
+                    this.setInputValue('filter_intensity_min', config.filter_intensity_min || 10);
+                    this.setInputValue('filter_intensity_max', config.filter_intensity_max || 25);
+                }
+            }
+
+            setInputValue(id, value) {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.value = value;
+                }
+            }
+
+            updateRangeValue(id, value) {
+                const valueElement = document.getElementById(id + '_value');
+                if (valueElement) {
+                    valueElement.textContent = Math.round(value * 100) + '%';
+                }
+            }
+
+            async saveBasicConfig() {
+                await this.saveConfig('basic');
+            }
+
+            async saveAntiDetectConfig() {
+                await this.saveConfig('anti-detect');
+            }
+
+            async saveEffectsConfig() {
+                await this.saveConfig('effects');
+            }
+
+            async saveConfig(type) {
+                try {
+                    const config = this.collectConfigData(type);
+
+                    const response = await fetch('/api/config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(config)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('配置保存成功', 'success');
+                    } else {
+                        this.showAlert('配置保存失败: ' + result.errors.join(', '), 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('保存配置失败: ' + error.message, 'error');
+                }
+            }
+
+            collectConfigData(type) {
+                const config = {};
+
+                if (type === 'basic') {
+                    config.material_path = this.getInputValue('material_path');
+                    config.draft_output_path = this.getInputValue('draft_output_path');
+                    config.video_duration_min = parseInt(this.getInputValue('video_duration_min'));
+                    config.video_duration_max = parseInt(this.getInputValue('video_duration_max'));
+                    config.video_scale_factor = parseFloat(this.getInputValue('video_scale_factor')) / 100;
+                    config.narration_volume = parseFloat(this.getInputValue('narration_volume')) / 100;
+                    config.background_volume = parseFloat(this.getInputValue('background_volume')) / 100;
+                    config.batch_count = parseInt(this.getInputValue('batch_count'));
+                } else if (type === 'anti-detect') {
+                    config.flip_probability = parseFloat(this.getInputValue('flip_probability'));
+                    config.blur_background_enabled = this.getInputValue('blur_background_enabled') === 'true';
+                    config.blur_background_probability = parseFloat(this.getInputValue('blur_background_probability'));
+                    config.foreground_scale = parseFloat(this.getInputValue('foreground_scale')) / 100;
+                    config.background_scale = parseFloat(this.getInputValue('background_scale')) / 100;
+                    config.background_blur_intensity = parseFloat(this.getInputValue('background_blur_intensity')) / 100;
+                    config.frame_manipulation_enabled = this.getInputValue('frame_manipulation_enabled') === 'true';
+                    config.frame_drop_probability = parseFloat(this.getInputValue('frame_drop_probability'));
+                    config.frame_drop_interval = parseFloat(this.getInputValue('frame_drop_interval'));
+                    config.max_frame_drops_per_segment = parseInt(this.getInputValue('max_frame_drops_per_segment'));
+                } else if (type === 'effects') {
+                    config.filter_intensity_min = parseInt(this.getInputValue('filter_intensity_min'));
+                    config.filter_intensity_max = parseInt(this.getInputValue('filter_intensity_max'));
+                }
+
+                return config;
+            }
+
+            getInputValue(id) {
+                const element = document.getElementById(id);
+                return element ? element.value : '';
+            }
+
+            showAlert(message, type) {
+                // 简单的提示实现
+                const alertDiv = document.createElement('div');
+                alertDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    color: white;
+                    font-weight: 500;
+                    z-index: 10000;
+                    max-width: 300px;
+                    box-shadow: var(--shadow);
+                `;
+
+                if (type === 'success') {
+                    alertDiv.style.background = 'var(--accent-color)';
+                } else if (type === 'error') {
+                    alertDiv.style.background = 'var(--error-color)';
+                } else {
+                    alertDiv.style.background = 'var(--primary-color)';
+                }
+
+                alertDiv.textContent = message;
+                document.body.appendChild(alertDiv);
+
+                setTimeout(() => {
+                    alertDiv.remove();
+                }, 3000);
             }
         }
 
