@@ -453,15 +453,60 @@ class AutoMixDraft(Draft):
         # 将媒体信息添加到draft的元数据库
         self._Draft__add_media_to_meta_info(media)
 
+    def _add_blur_background_tracks(self, file_path: str, start_at_track: int = 0,
+                                   duration: int = 0, bgm_mute: bool = False,
+                                   segment_info: Dict[str, Any] = None):
+        """
+        添加模糊背景效果的双轨道结构
+        """
+        from JianYingDraft.core.mediaFactory import MediaFactory
+
+        blur_info = segment_info['_blur_background']
+
+        print(f"  📐 创建模糊背景双轨道结构...")
+
+        # 1. 创建背景轨道（模糊放大的背景）
+        background_media = MediaFactory.create(file_path, duration=duration, bgm_mute=True)
+        if background_media and hasattr(background_media, 'segment_data_for_content'):
+            # 应用背景设置（放大+模糊）
+            background_segment = blur_info['background_segment']
+            background_media.segment_data_for_content.update(background_segment)
+
+            # 添加到背景轨道
+            self._Draft__add_media_to_content_tracks(background_media, start=start_at_track)
+            self._Draft__add_media_to_meta_info(background_media)
+            print(f"    🌫️  背景轨道已添加（模糊+放大）")
+
+        # 2. 创建前景轨道（缩小的清晰前景）
+        foreground_media = MediaFactory.create(file_path, duration=duration, bgm_mute=True)
+        if foreground_media and hasattr(foreground_media, 'segment_data_for_content'):
+            # 应用前景设置（缩小+清晰）
+            foreground_segment = blur_info['foreground_segment']
+            foreground_media.segment_data_for_content.update(foreground_segment)
+
+            # 添加到前景轨道（轨道1，在背景之上）
+            self._Draft__add_media_to_content_tracks(foreground_media, start=start_at_track + 1)
+            self._Draft__add_media_to_meta_info(foreground_media)
+            print(f"    📐 前景轨道已添加（缩小+清晰）")
+
+        print(f"  ✅ 模糊背景双轨道结构创建完成")
+
     def add_media_with_settings(self, file_path: str, start_at_track: int = 0,
                                duration: int = 0, bgm_mute: bool = False,
                                segment_info: Dict[str, Any] = None):
         """
         添加媒体并应用视频处理设置（缩放、色彩调整等）
+        支持模糊背景效果的双轨道处理
         """
         from JianYingDraft.core.mediaFactory import MediaFactory
 
-        # 创建媒体对象
+        # 检查是否有模糊背景效果
+        if segment_info and '_blur_background' in segment_info and segment_info['_blur_background']['enabled']:
+            print(f"  🌫️  检测到模糊背景效果，创建双轨道结构...")
+            self._add_blur_background_tracks(file_path, start_at_track, duration, bgm_mute, segment_info)
+            return
+
+        # 创建媒体对象（普通单轨道处理）
         media = MediaFactory.create(file_path, duration=duration, bgm_mute=bgm_mute)
         if media is None:
             return

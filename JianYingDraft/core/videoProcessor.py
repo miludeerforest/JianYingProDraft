@@ -212,15 +212,12 @@ class VideoProcessor:
         if speed_options:
             speed = random.choice(speed_options)
 
-            # 创建Speed对象
-            from pyJianYingDraft.segment import Speed
-            speed_obj = Speed(speed)
-
-            # 添加到片段
-            if 'speed' not in segment:
-                segment['speed'] = speed_obj.export_json()
-            else:
-                segment['speed']['speed'] = speed
+            # 简化：直接设置速度值，避免复杂的对象依赖
+            segment['_speed_variation'] = {
+                'enabled': True,
+                'speed': speed,
+                'original_speed': 1.0
+            }
 
             print(f"  ⚡ 应用变速: {speed:.2f}x（防审核）")
 
@@ -446,7 +443,11 @@ class VideoProcessor:
             processed_media_info = self.trim_start(video_info.copy())
             
             # 2. 创建基础片段信息
+            import time
+            segment_id = f"segment_{int(time.time() * 1000000)}"  # 生成唯一ID
+
             segment_info = {
+                "id": segment_id,
                 "cartoon": False,
                 "clip": {
                     "alpha": 1.0,
@@ -505,19 +506,27 @@ class VideoProcessor:
             # 获取额外的缩放因子（默认5%放大），但要确保最终结果合理
             extra_scale = self.config_manager.get_video_scale_factor()
             if 'clip' in segment_info and 'scale' in segment_info['clip']:
-                current_scale = segment_info['clip']['scale']['x']
-                # 修复：确保最终缩放在105%-115%范围内
-                final_scale = current_scale * extra_scale
-                # 如果最终缩放过大，调整到合理范围
-                if final_scale > 1.15:
-                    final_scale = 1.1  # 目标110%
-                elif final_scale < 1.05:
-                    final_scale = 1.05  # 最小105%
+                # 确保scale是字典格式
+                if isinstance(segment_info['clip']['scale'], dict) and 'x' in segment_info['clip']['scale']:
+                    current_scale = segment_info['clip']['scale']['x']
+                    # 修复：确保最终缩放在105%-115%范围内
+                    final_scale = current_scale * extra_scale
+                    # 如果最终缩放过大，调整到合理范围
+                    if final_scale > 1.15:
+                        final_scale = 1.1  # 目标110%
+                    elif final_scale < 1.05:
+                        final_scale = 1.05  # 最小105%
 
-                segment_info['clip']['scale'] = {
-                    "x": final_scale,
-                    "y": final_scale
-                }
+                    segment_info['clip']['scale'] = {
+                        "x": final_scale,
+                        "y": final_scale
+                    }
+                else:
+                    # 如果scale格式不正确，重新设置
+                    segment_info['clip']['scale'] = {
+                        "x": extra_scale,
+                        "y": extra_scale
+                    }
 
             # 6. 应用随机色彩调整
             segment_info = self.adjust_color_randomly(segment_info)
@@ -526,6 +535,21 @@ class VideoProcessor:
             segment_info = self.apply_random_flip(segment_info)
             segment_info = self.apply_random_speed(segment_info)
             segment_info = self.apply_frame_manipulation(segment_info, processed_media_info)
+
+            # 8. 检查是否需要创建模糊背景效果
+            blur_result = self.create_blur_background_effect(segment_info, processed_media_info)
+            if blur_result[0] is not None:
+                # 如果创建了模糊背景，返回背景和前景信息
+                background_info, foreground_info = blur_result
+                # 将模糊背景信息添加到segment_info中，供后续处理
+                segment_info['_blur_background'] = {
+                    'enabled': True,
+                    'background_segment': background_info[0],
+                    'background_media': background_info[1],
+                    'foreground_segment': foreground_info[0],
+                    'foreground_media': foreground_info[1]
+                }
+                print(f"  🌫️  模糊背景效果已准备，将在轨道添加时应用")
 
             return processed_media_info, segment_info
             
