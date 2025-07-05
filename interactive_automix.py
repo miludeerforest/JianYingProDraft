@@ -1977,6 +1977,7 @@ class InteractiveAutoMix:
             print("  • 变速处理: 0.9x-1.1x微调变速，打乱原始帧率")
             print("  • 画幅调整: 改变视频比例，彻底改变画面构图")
             print("  • 模糊背景: 双轨道模糊背景，彻底改变画面构图")
+            print("  • 抽帧处理: 删除关键帧，打乱视频节奏（实验性）")
             print("-" * 50)
 
             # 显示当前配置
@@ -1988,6 +1989,8 @@ class InteractiveAutoMix:
             blur_enabled = self.config_manager.is_blur_background_enabled()
             blur_prob = self.config_manager.get_blur_background_probability()
             foreground_scale = self.config_manager.get_foreground_scale()
+            frame_enabled = self.config_manager.is_frame_manipulation_enabled()
+            frame_prob = self.config_manager.get_frame_drop_probability()
 
             print("📊 当前配置:")
             print(f"  🔄 镜像翻转概率: {flip_prob:.1%}")
@@ -1999,6 +2002,9 @@ class InteractiveAutoMix:
             print(f"  🌫️  模糊背景: {'启用' if blur_enabled else '禁用'}")
             if blur_enabled:
                 print(f"  🎯 应用概率: {blur_prob:.1%}, 前景缩放: {foreground_scale:.1%}")
+            print(f"  🎞️  抽帧处理: {'启用' if frame_enabled else '禁用'}")
+            if frame_enabled:
+                print(f"  🎯 抽帧概率: {frame_prob:.1%} (实验性功能)")
             print("-" * 50)
 
             print("🛠️  设置选项:")
@@ -2008,7 +2014,8 @@ class InteractiveAutoMix:
             print("4. 📐 启用/禁用画幅调整")
             print("5. 📏 设置画幅比例")
             print("6. 🌫️  模糊背景设置")
-            print("7. 🧪 测试防审核效果")
+            print("7. 🎞️  抽帧处理设置")
+            print("8. 🧪 测试防审核效果")
             print("0. 🔙 返回上级菜单")
             print("-" * 50)
 
@@ -2028,6 +2035,8 @@ class InteractiveAutoMix:
             elif choice == 6:
                 self.blur_background_settings()
             elif choice == 7:
+                self.frame_manipulation_settings()
+            elif choice == 8:
                 self.test_anti_detection_effects()
             else:
                 print("❌ 无效选择，请重新输入")
@@ -2356,6 +2365,187 @@ class InteractiveAutoMix:
         print(f"  ✅ 机器识别难度极高")
         print(f"  ✅ 观看体验保持良好")
 
+    def frame_manipulation_settings(self):
+        """抽帧/补帧处理设置"""
+        while True:
+            print("\n🎞️  抽帧/补帧防审核设置")
+            print("-" * 50)
+            print("💡 功能说明:")
+            print("  • 在视频中删除关键帧，打乱视频节奏")
+            print("  • 破坏时间戳连续性，干扰机器识别")
+            print("  • 实验性功能，可能影响观看体验")
+            print("⚠️  注意: 此功能为实验性，建议谨慎使用")
+            print("-" * 50)
+
+            # 显示当前配置
+            frame_enabled = self.config_manager.is_frame_manipulation_enabled()
+            frame_prob = self.config_manager.get_frame_drop_probability()
+            drop_interval = self.config_manager.get_frame_drop_interval()
+            max_drops = self.config_manager.get_max_frame_drops_per_segment()
+
+            print("📊 当前配置:")
+            print(f"  🎞️  抽帧处理: {'启用' if frame_enabled else '禁用'}")
+            print(f"  🎯 抽帧概率: {frame_prob:.1%}")
+            print(f"  ⏱️  抽帧间隔: {drop_interval:.1f}秒")
+            print(f"  🔢 最大抽帧数: {max_drops}次/片段")
+            print("-" * 50)
+
+            print("🛠️  设置选项:")
+            print("1. 🔄 启用/禁用抽帧处理")
+            print("2. 🎯 设置抽帧概率")
+            print("3. ⏱️  设置抽帧间隔")
+            print("4. 🔢 设置最大抽帧数")
+            print("5. ⚠️  查看注意事项")
+            print("0. 🔙 返回上级菜单")
+            print("-" * 50)
+
+            choice = self.get_user_input("请选择功能", "0", int)
+            if choice is None or choice == 0:
+                break
+            elif choice == 1:
+                self.toggle_frame_manipulation()
+            elif choice == 2:
+                self.set_frame_drop_probability()
+            elif choice == 3:
+                self.set_frame_drop_interval()
+            elif choice == 4:
+                self.set_max_frame_drops()
+            elif choice == 5:
+                self.show_frame_manipulation_warnings()
+            else:
+                print("❌ 无效选择，请重新输入")
+
+    def toggle_frame_manipulation(self):
+        """切换抽帧处理开关"""
+        current_enabled = self.config_manager.is_frame_manipulation_enabled()
+        new_enabled = not current_enabled
+
+        if new_enabled:
+            print("\n⚠️  启用抽帧处理前请注意:")
+            print("  • 这是实验性功能，可能影响视频质量")
+            print("  • 建议先在测试视频上验证效果")
+            print("  • 对于有对话或音乐卡点的视频需谨慎使用")
+
+            confirm = input("\n确认启用抽帧处理? (y/n): ").strip().lower()
+            if confirm not in ['y', 'yes', '1']:
+                print("❌ 已取消启用")
+                return
+
+        if self.config_manager.set_frame_manipulation_enabled(new_enabled):
+            status = "启用" if new_enabled else "禁用"
+            print(f"✅ 抽帧处理已{status}")
+        else:
+            print("❌ 设置失败")
+
+    def set_frame_drop_probability(self):
+        """设置抽帧概率"""
+        print("\n🎯 设置抽帧概率")
+        print("-" * 40)
+        print("💡 说明: 控制抽帧效果的应用频率")
+        print("建议范围: 5% - 20% (过高会严重影响观看体验)")
+
+        current_prob = self.config_manager.get_frame_drop_probability()
+        print(f"当前概率: {current_prob:.1%}")
+
+        new_prob = self.get_user_input(
+            "请输入新的抽帧概率 (0.0-0.5)",
+            str(current_prob),
+            float
+        )
+
+        if new_prob is not None:
+            if 0.0 <= new_prob <= 0.5:
+                if self.config_manager.set_frame_drop_probability(new_prob):
+                    print(f"✅ 抽帧概率已设置为 {new_prob:.1%}")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 概率必须在 0.0 - 0.5 之间")
+        else:
+            print("❌ 输入无效")
+
+    def set_frame_drop_interval(self):
+        """设置抽帧间隔"""
+        print("\n⏱️  设置抽帧间隔")
+        print("-" * 40)
+        print("💡 说明: 控制抽帧点之间的最小间隔")
+        print("建议范围: 3-10秒 (保证抽帧效果不过于密集)")
+
+        current_interval = self.config_manager.get_frame_drop_interval()
+        print(f"当前间隔: {current_interval:.1f}秒")
+
+        new_interval = self.get_user_input(
+            "请输入新的抽帧间隔 (1.0-30.0秒)",
+            str(current_interval),
+            float
+        )
+
+        if new_interval is not None:
+            if 1.0 <= new_interval <= 30.0:
+                if self.config_manager.set_frame_drop_interval(new_interval):
+                    print(f"✅ 抽帧间隔已设置为 {new_interval:.1f}秒")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 间隔必须在 1.0 - 30.0 秒之间")
+        else:
+            print("❌ 输入无效")
+
+    def set_max_frame_drops(self):
+        """设置最大抽帧数"""
+        print("\n🔢 设置最大抽帧数")
+        print("-" * 40)
+        print("💡 说明: 限制每个视频片段的最大抽帧次数")
+        print("建议范围: 1-5次 (避免过度抽帧)")
+
+        current_max = self.config_manager.get_max_frame_drops_per_segment()
+        print(f"当前最大抽帧数: {current_max}次")
+
+        new_max = self.get_user_input(
+            "请输入新的最大抽帧数 (1-10次)",
+            str(current_max),
+            int
+        )
+
+        if new_max is not None:
+            if 1 <= new_max <= 10:
+                if self.config_manager.set_max_frame_drops_per_segment(new_max):
+                    print(f"✅ 最大抽帧数已设置为 {new_max}次")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 抽帧数必须在 1 - 10 次之间")
+        else:
+            print("❌ 输入无效")
+
+    def show_frame_manipulation_warnings(self):
+        """显示抽帧处理注意事项"""
+        print("\n⚠️  抽帧处理注意事项")
+        print("-" * 50)
+        print("🚨 重要警告:")
+        print("  • 抽帧是实验性功能，可能影响视频质量")
+        print("  • 对有对话内容的视频可能造成音画不同步")
+        print("  • 对有音乐卡点的视频可能破坏节奏感")
+        print("  • 建议先在测试视频上验证效果")
+
+        print("\n💡 使用建议:")
+        print("  • 抽帧概率建议不超过20%")
+        print("  • 抽帧间隔建议设置为5秒以上")
+        print("  • 每个片段抽帧次数建议不超过3次")
+        print("  • 优先在无对话的视频片段上使用")
+
+        print("\n🎯 适用场景:")
+        print("  ✅ 风景视频、产品展示视频")
+        print("  ✅ 无重要音频同步要求的视频")
+        print("  ❌ 有对话、音乐卡点的视频")
+        print("  ❌ 舞蹈、运动等需要连贯性的视频")
+
+        print("\n🔧 技术原理:")
+        print("  • 在视频中删除短暂的时间片段")
+        print("  • 破坏原始视频的时间戳连续性")
+        print("  • 干扰基于帧序列的机器识别")
+        print("  • 注意: 当前版本仅标记抽帧点，实际抽帧需要后续实现")
+
     def test_anti_detection_effects(self):
         """测试防审核效果"""
         print("\n🧪 防审核技术测试")
@@ -2386,6 +2576,13 @@ class InteractiveAutoMix:
         if blur_enabled:
             blur_prob = self.config_manager.get_blur_background_probability()
             print(f"      应用概率: {blur_prob:.1%}")
+
+        # 抽帧处理
+        frame_enabled = self.config_manager.is_frame_manipulation_enabled()
+        print(f"  🎞️  抽帧处理: {'启用' if frame_enabled else '禁用'}")
+        if frame_enabled:
+            frame_prob = self.config_manager.get_frame_drop_probability()
+            print(f"      抽帧概率: {frame_prob:.1%} (实验性)")
 
         # 其他技术
         print(f"  📐 画面缩放: 110% (固定)")
@@ -2421,6 +2618,17 @@ class InteractiveAutoMix:
                 total_score += 15
                 print("  ⚠️  模糊背景 (+15分) - 概率较低，效果有限")
 
+        # 抽帧处理
+        frame_enabled = self.config_manager.is_frame_manipulation_enabled()
+        if frame_enabled:
+            frame_prob = self.config_manager.get_frame_drop_probability()
+            if frame_prob > 0.1:
+                total_score += 20
+                print("  ✅ 抽帧处理 (+20分) - 打乱视频节奏")
+            elif frame_prob > 0:
+                total_score += 10
+                print("  ⚠️  抽帧处理 (+10分) - 概率较低，效果有限")
+
         total_score += 10  # 固定技术
         print("  ✅ 其他技术 (+10分) - 缩放、掐头去尾、调色")
 
@@ -2446,6 +2654,10 @@ class InteractiveAutoMix:
             print("  🔧 建议启用模糊背景，彻底改变画面构图")
         elif blur_prob < 0.2:
             print("  🔧 建议提高模糊背景应用概率到20%以上")
+        if not frame_enabled:
+            print("  🔧 可考虑启用抽帧处理，但需注意对视频质量的影响")
+        elif frame_prob < 0.1:
+            print("  🔧 抽帧概率较低，可适当提高（谨慎使用）")
 
 
 if __name__ == "__main__":

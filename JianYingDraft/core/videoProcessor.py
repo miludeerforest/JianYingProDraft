@@ -316,6 +316,81 @@ class VideoProcessor:
 
         return (background_segment, background_media), (foreground_segment, foreground_media)
 
+    def apply_frame_manipulation(self, segment: Dict[str, Any], media_info: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        应用抽帧/补帧处理（实验性防审核技术）
+
+        Args:
+            segment: 视频片段字典
+            media_info: 媒体信息字典
+
+        Returns:
+            Dict[str, Any]: 更新后的片段信息
+        """
+        import random
+
+        # 检查是否启用抽帧/补帧
+        if not self.config_manager.is_frame_manipulation_enabled():
+            return segment
+
+        # 检查概率
+        frame_drop_prob = self.config_manager.get_frame_drop_probability()
+        if random.random() > frame_drop_prob:
+            return segment
+
+        print(f"  🎞️  应用抽帧处理（实验性防审核）")
+
+        # 获取配置参数
+        drop_interval = self.config_manager.get_frame_drop_interval()
+        max_drops = self.config_manager.get_max_frame_drops_per_segment()
+
+        # 获取视频时长（微秒）
+        video_duration = media_info.get('duration', 0)
+        duration_seconds = video_duration / 1000000
+
+        if duration_seconds < drop_interval * 2:
+            print(f"    ⚠️  视频时长过短，跳过抽帧处理")
+            return segment
+
+        # 计算可能的抽帧点
+        possible_drops = int(duration_seconds / drop_interval)
+        actual_drops = min(possible_drops, max_drops)
+
+        if actual_drops <= 0:
+            return segment
+
+        # 生成随机抽帧点（避开开头和结尾）
+        drop_points = []
+        start_time = drop_interval
+        end_time = duration_seconds - drop_interval
+
+        for i in range(actual_drops):
+            # 在可用时间范围内随机选择抽帧点
+            if start_time < end_time:
+                drop_time = random.uniform(start_time, end_time)
+                drop_points.append(drop_time)
+                # 更新下一个抽帧点的最小时间
+                start_time = drop_time + drop_interval
+
+        if drop_points:
+            # 创建分割点信息（这里只是标记，实际分割需要在更高层实现）
+            if 'frame_drops' not in segment:
+                segment['frame_drops'] = []
+
+            for drop_time in drop_points:
+                drop_info = {
+                    'time': drop_time,
+                    'duration': 0.1,  # 抽掉0.1秒
+                    'type': 'frame_drop'
+                }
+                segment['frame_drops'].append(drop_info)
+
+            print(f"    🎞️  计划抽帧点: {len(drop_points)}个")
+            for i, drop_time in enumerate(drop_points, 1):
+                print(f"      {i}. {drop_time:.1f}s处抽帧0.1s")
+
+        return segment
+
     def adjust_color_randomly(self, segment: Dict[str, Any]) -> Dict[str, Any]:
         """
         随机调整视频的对比度和亮度
@@ -450,6 +525,7 @@ class VideoProcessor:
             # 7. 应用防审核技术
             segment_info = self.apply_random_flip(segment_info)
             segment_info = self.apply_random_speed(segment_info)
+            segment_info = self.apply_frame_manipulation(segment_info, processed_media_info)
 
             return processed_media_info, segment_info
             

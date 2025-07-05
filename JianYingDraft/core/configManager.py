@@ -109,7 +109,13 @@ class AutoMixConfigManager:
         'blur_background_probability': 0.3, # 模糊背景应用概率 (30%)
         'foreground_scale': 0.8,            # 前景视频缩放比例 (80%)
         'background_blur_intensity': 0.5,   # 背景模糊强度 (50%)
-        'background_scale': 1.2              # 背景放大比例 (120%)
+        'background_scale': 1.2,            # 背景放大比例 (120%)
+
+        # 抽帧/补帧防审核技术
+        'enable_frame_manipulation': False, # 启用抽帧/补帧（实验性功能）
+        'frame_drop_probability': 0.1,     # 抽帧概率 (10%)
+        'frame_drop_interval': 5.0,        # 抽帧间隔（秒）
+        'max_frame_drops_per_segment': 3   # 每个片段最大抽帧次数
     }
     
     @classmethod
@@ -490,6 +496,47 @@ class AutoMixConfigManager:
     def set_background_scale(cls, scale: float) -> bool:
         """设置背景放大比例"""
         return cls._set_config_value('background_scale', scale)
+
+    # 抽帧/补帧防审核技术配置方法
+    @classmethod
+    def is_frame_manipulation_enabled(cls) -> bool:
+        """检查是否启用抽帧/补帧"""
+        return cls._get_config_value('enable_frame_manipulation', cls.DEFAULT_CONFIG['enable_frame_manipulation'])
+
+    @classmethod
+    def set_frame_manipulation_enabled(cls, enabled: bool) -> bool:
+        """设置是否启用抽帧/补帧"""
+        return cls._set_config_value('enable_frame_manipulation', enabled)
+
+    @classmethod
+    def get_frame_drop_probability(cls) -> float:
+        """获取抽帧概率"""
+        return float(cls._get_config_value('frame_drop_probability', cls.DEFAULT_CONFIG['frame_drop_probability']))
+
+    @classmethod
+    def set_frame_drop_probability(cls, probability: float) -> bool:
+        """设置抽帧概率"""
+        return cls._set_config_value('frame_drop_probability', probability)
+
+    @classmethod
+    def get_frame_drop_interval(cls) -> float:
+        """获取抽帧间隔（秒）"""
+        return float(cls._get_config_value('frame_drop_interval', cls.DEFAULT_CONFIG['frame_drop_interval']))
+
+    @classmethod
+    def set_frame_drop_interval(cls, interval: float) -> bool:
+        """设置抽帧间隔（秒）"""
+        return cls._set_config_value('frame_drop_interval', interval)
+
+    @classmethod
+    def get_max_frame_drops_per_segment(cls) -> int:
+        """获取每个片段最大抽帧次数"""
+        return int(cls._get_config_value('max_frame_drops_per_segment', cls.DEFAULT_CONFIG['max_frame_drops_per_segment']))
+
+    @classmethod
+    def set_max_frame_drops_per_segment(cls, max_drops: int) -> bool:
+        """设置每个片段最大抽帧次数"""
+        return cls._set_config_value('max_frame_drops_per_segment', max_drops)
 
 
 # 为了向后兼容，提供一个简化的别名
