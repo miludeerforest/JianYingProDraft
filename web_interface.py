@@ -399,20 +399,25 @@ def smart_exclude():
     result = web_interface.smart_exclude_exaggerated_effects()
     return jsonify(result)
 
+# 创建Web界面实例
+web_interface = WebInterface()
+
+def create_app():
+    """创建Flask应用实例（用于生产部署）"""
+    return app
+
 if __name__ == '__main__':
+    # 直接运行时的简单启动（仅用于开发调试）
+    print("🌐 剪映自动混剪工具 - Web界面 (开发模式)")
+    print("📱 访问: http://localhost:5000")
+    print("💡 推荐使用: python start_web_interface.py")
+    print()
+
     # 创建templates目录
     if not os.path.exists('templates'):
         os.makedirs('templates')
-    
-    print("🌐 剪映自动混剪工具 - Web界面")
-    print("=" * 50)
-    print("🚀 启动Web服务器...")
-    print("📱 浏览器访问: http://localhost:5000")
-    print("⚙️  功能: 配置管理、排除设置、自动混剪")
-    print("🔧 基于原有代码，无任何修改")
-    
-    # 自动打开浏览器
-    threading.Timer(1.5, lambda: webbrowser.open('http://localhost:5000')).start()
-    
-    # 启动Flask应用
-    app.run(host='0.0.0.0', port=5000, debug=False)
+
+    try:
+        app.run(host='0.0.0.0', port=5000, debug=True)
+    except KeyboardInterrupt:
+        print("\n👋 Web服务器已停止")
