@@ -10,15 +10,16 @@ from .metadataManager import MetadataManager
 class EffectExclusionManager:
     """特效排除管理器"""
     
-    def __init__(self, config_file: str = "excluded_effects.json"):
+    def __init__(self, metadata_manager: MetadataManager = None, config_file: str = "excluded_effects.json"):
         """
         初始化特效排除管理器
-        
+
         Args:
+            metadata_manager: 元数据管理器实例（可选）
             config_file: 配置文件路径
         """
         self.config_file = config_file
-        self.metadata_manager = MetadataManager()
+        self.metadata_manager = metadata_manager if metadata_manager is not None else MetadataManager()
         self.excluded_filters: Set[str] = set()
         self.excluded_effects: Set[str] = set()
         self.excluded_transitions: Set[str] = set()
@@ -199,23 +200,144 @@ class EffectExclusionManager:
     def find_effects_by_keyword(self, keyword: str, effect_type: str = 'all') -> List[str]:
         """根据关键词查找特效"""
         results = []
-        
+
         if effect_type in ['all', 'filters']:
             all_filters = self.metadata_manager.get_available_filters()
             for f in all_filters:
                 if keyword.lower() in f.name.lower():
                     results.append(f"滤镜: {f.name}")
-        
+
         if effect_type in ['all', 'effects']:
             all_effects = self.metadata_manager.get_available_effects()
             for e in all_effects:
                 if keyword.lower() in e.name.lower():
                     results.append(f"特效: {e.name}")
-        
+
         if effect_type in ['all', 'transitions']:
             all_transitions = self.metadata_manager.get_available_transitions()
             for t in all_transitions:
                 if keyword.lower() in t.name.lower():
                     results.append(f"转场: {t.name}")
-        
+
         return results
+
+    def auto_exclude_exaggerated_effects(self) -> Dict[str, int]:
+        """
+        自动排除夸张的特效
+
+        Returns:
+            Dict[str, int]: 排除统计信息
+        """
+        # 定义夸张特效的关键词
+        exaggerated_keywords = {
+            # 恐怖/惊悚类
+            'horror': ['恐怖', '鬼', '血', '骷髅', '死亡', '僵尸', '幽灵', '诡异', '阴森'],
+            # 过度卡通/幼稚类
+            'cartoon': ['emoji', '仙女', '仙尘', '魔法', '独角兽', '彩虹', '爱心', '星星闪闪'],
+            # 过度复杂/干扰类
+            'complex': ['九屏', '多屏', '分屏', '跑马灯', '万花筒', '迷幻', '眩晕'],
+            # 低质量/故障类
+            'lowquality': ['故障', '像素', '马赛克', '模糊', '噪点', '撕裂', '破损'],
+            # 过时/老旧类
+            'outdated': ['90s', '80s', '70s', 'VHS', 'betamax', 'DV', '录像带'],
+            # 社交媒体界面类
+            'social': ['ins界面', 'windows弹窗', '电脑桌面', '手机界面', '聊天框'],
+            # 过度装饰类
+            'decorative': ['亮片', '闪光', '烟花', '礼花', '庆祝', '派对'],
+            # 文字/表情类
+            'text': ['I Love You', 'I Lose You', '文字', '字幕', '标题'],
+            # 恶搞/搞笑类
+            'funny': ['不对劲', '中枪了', '乌鸦飞过', '搞笑', '恶搞', '整蛊']
+        }
+
+        excluded_count = {'effects': 0, 'filters': 0, 'transitions': 0}
+
+        # 排除夸张特效
+        all_effects = self.metadata_manager.get_available_effects()
+        for effect in all_effects:
+            effect_name = effect.name.lower()
+            should_exclude = False
+
+            for category, keywords in exaggerated_keywords.items():
+                for keyword in keywords:
+                    if keyword.lower() in effect_name:
+                        should_exclude = True
+                        break
+                if should_exclude:
+                    break
+
+            if should_exclude and effect.name not in self.excluded_effects:
+                self.add_excluded_effect(effect.name)
+                excluded_count['effects'] += 1
+
+        # 排除夸张滤镜
+        all_filters = self.metadata_manager.get_available_filters()
+        for filter_meta in all_filters:
+            filter_name = filter_meta.name.lower()
+            should_exclude = False
+
+            # 滤镜的夸张关键词（相对保守）
+            filter_keywords = ['故障', '破损', '撕裂', '噪点', '马赛克']
+            for keyword in filter_keywords:
+                if keyword in filter_name:
+                    should_exclude = True
+                    break
+
+            if should_exclude and filter_meta.name not in self.excluded_filters:
+                self.add_excluded_filter(filter_meta.name)
+                excluded_count['filters'] += 1
+
+        return excluded_count
+
+    def get_exaggerated_effects_preview(self) -> Dict[str, List[str]]:
+        """
+        预览将被排除的夸张特效（不实际排除）
+
+        Returns:
+            Dict[str, List[str]]: 预览的排除列表
+        """
+        # 使用相同的关键词逻辑
+        exaggerated_keywords = {
+            'horror': ['恐怖', '鬼', '血', '骷髅', '死亡', '僵尸', '幽灵', '诡异', '阴森'],
+            'cartoon': ['emoji', '仙女', '仙尘', '魔法', '独角兽', '彩虹', '爱心', '星星闪闪'],
+            'complex': ['九屏', '多屏', '分屏', '跑马灯', '万花筒', '迷幻', '眩晕'],
+            'lowquality': ['故障', '像素', '马赛克', '模糊', '噪点', '撕裂', '破损'],
+            'outdated': ['90s', '80s', '70s', 'VHS', 'betamax', 'DV', '录像带'],
+            'social': ['ins界面', 'windows弹窗', '电脑桌面', '手机界面', '聊天框'],
+            'decorative': ['亮片', '闪光', '烟花', '礼花', '庆祝', '派对'],
+            'text': ['I Love You', 'I Lose You', '文字', '字幕', '标题'],
+            'funny': ['不对劲', '中枪了', '乌鸦飞过', '搞笑', '恶搞', '整蛊']
+        }
+
+        preview = {'effects': [], 'filters': []}
+
+        # 预览特效
+        all_effects = self.metadata_manager.get_available_effects()
+        for effect in all_effects:
+            if effect.name in self.excluded_effects:
+                continue
+
+            effect_name = effect.name.lower()
+            for category, keywords in exaggerated_keywords.items():
+                for keyword in keywords:
+                    if keyword.lower() in effect_name:
+                        preview['effects'].append(effect.name)
+                        break
+                else:
+                    continue
+                break
+
+        # 预览滤镜
+        all_filters = self.metadata_manager.get_available_filters()
+        filter_keywords = ['故障', '破损', '撕裂', '噪点', '马赛克']
+        for filter_meta in all_filters:
+            if filter_meta.name in self.excluded_filters:
+                continue
+
+            filter_name = filter_meta.name.lower()
+            for keyword in filter_keywords:
+                if keyword in filter_name:
+                    preview['filters'].append(filter_meta.name)
+                    break
+
+        return preview
