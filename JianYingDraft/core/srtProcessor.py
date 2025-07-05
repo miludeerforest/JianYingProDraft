@@ -872,8 +872,8 @@ class SRTProcessor:
 
                 print(f"  📝 chardet检测结果: {detected_encoding} (置信度: {confidence:.2f})")
 
-                # 根据检测结果和置信度选择编码
-                if confidence > 0.8:
+                # 根据检测结果和置信度选择编码，优化小语种支持
+                if confidence > 0.7:  # 降低置信度阈值，给更多编码机会
                     # 高置信度，使用检测结果
                     if 'utf-8' in detected_encoding:
                         return 'utf-8'
@@ -882,9 +882,33 @@ class SRTProcessor:
                     elif 'big5' in detected_encoding:
                         return 'big5'
                     elif detected_encoding.startswith('iso-8859'):
-                        return 'latin1'
+                        # 根据具体的ISO编码选择最佳匹配
+                        if 'iso-8859-1' in detected_encoding:
+                            return 'latin1'
+                        elif 'iso-8859-11' in detected_encoding:
+                            return 'iso-8859-11'  # 泰语
+                        else:
+                            return detected_encoding
+                    elif 'cp874' in detected_encoding or 'tis-620' in detected_encoding:
+                        return 'cp874'  # 泰语Windows编码
+                    elif 'cp1252' in detected_encoding:
+                        return 'cp1252'  # Windows西欧编码
+                    elif 'cp1251' in detected_encoding:
+                        return 'cp1251'  # Windows西里尔编码
+                    elif 'cp1250' in detected_encoding:
+                        return 'cp1250'  # Windows中欧编码
+                    elif 'shift_jis' in detected_encoding or 'sjis' in detected_encoding:
+                        return 'shift_jis'  # 日语编码
+                    elif 'euc-kr' in detected_encoding:
+                        return 'euc-kr'  # 韩语编码
+                    elif 'koi8-r' in detected_encoding:
+                        return 'koi8-r'  # 俄语编码
                     else:
                         return detected_encoding
+                elif confidence > 0.3:
+                    # 中等置信度，结合检测结果和实际测试
+                    print(f"  🔍 中等置信度，结合检测结果进行测试")
+                    return self._test_encoding_with_hint(raw_data, detected_encoding)
                 else:
                     # 低置信度，使用实际测试方法
                     return self._test_encoding_by_trial(raw_data)
@@ -899,7 +923,7 @@ class SRTProcessor:
 
     def _test_encoding_by_trial(self, raw_data: bytes) -> str:
         """
-        通过实际尝试解码来确定最佳编码
+        通过实际尝试解码来确定最佳编码，优化小语种支持
 
         Args:
             raw_data: 原始字节数据
@@ -907,16 +931,65 @@ class SRTProcessor:
         Returns:
             str: 最佳编码
         """
-        # 常见编码优先级列表
+        # 扩展的编码优先级列表，增加小语种支持
         encodings_to_try = [
             'utf-8',           # 最常见的现代编码
             'utf-8-sig',       # 带BOM的UTF-8
+
+            # 中文编码
             'gbk',             # 中文Windows默认编码
             'gb2312',          # 简体中文编码
             'big5',            # 繁体中文编码
-            'latin1',          # 西欧编码
+
+            # 西欧语言编码（西班牙语、法语、德语等）
+            'latin1',          # ISO-8859-1 西欧编码
+            'iso-8859-1',      # 同latin1
             'cp1252',          # Windows西欧编码
-            'iso-8859-1',      # ISO西欧编码
+            'iso-8859-15',     # 西欧编码（包含欧元符号）
+
+            # 东欧语言编码
+            'cp1250',          # Windows中欧编码
+            'iso-8859-2',      # 中欧编码
+
+            # 西里尔字母编码（俄语等）
+            'cp1251',          # Windows西里尔编码
+            'iso-8859-5',      # 西里尔编码
+            'koi8-r',          # 俄语编码
+
+            # 希腊语编码
+            'cp1253',          # Windows希腊语编码
+            'iso-8859-7',      # 希腊语编码
+
+            # 土耳其语编码
+            'cp1254',          # Windows土耳其语编码
+            'iso-8859-9',      # 土耳其语编码
+
+            # 泰语编码
+            'cp874',           # Windows泰语编码
+            'iso-8859-11',     # 泰语编码（TIS-620）
+            'tis-620',         # 泰语标准编码
+
+            # 阿拉伯语编码
+            'cp1256',          # Windows阿拉伯语编码
+            'iso-8859-6',      # 阿拉伯语编码
+
+            # 希伯来语编码
+            'cp1255',          # Windows希伯来语编码
+            'iso-8859-8',      # 希伯来语编码
+
+            # 日语编码
+            'shift_jis',       # 日语Shift-JIS编码
+            'euc-jp',          # 日语EUC编码
+            'iso-2022-jp',     # 日语ISO编码
+
+            # 韩语编码
+            'euc-kr',          # 韩语EUC编码
+            'cp949',           # 韩语Windows编码
+
+            # 其他常见编码
+            'ascii',           # 纯ASCII编码
+            'cp437',           # DOS编码
+            'cp850',           # DOS多语言编码
         ]
 
         best_encoding = 'utf-8'
@@ -947,9 +1020,99 @@ class SRTProcessor:
         print(f"  ✅ 选择最佳编码: {best_encoding} (分数: {best_score:.2f})")
         return best_encoding
 
+    def _test_encoding_with_hint(self, raw_data: bytes, hint_encoding: str) -> str:
+        """
+        结合chardet提示进行编码测试，优化中等置信度情况
+
+        Args:
+            raw_data: 原始字节数据
+            hint_encoding: chardet检测到的编码提示
+
+        Returns:
+            str: 最佳编码
+        """
+        # 根据提示编码构建优先测试列表
+        priority_encodings = []
+
+        # 根据提示编码添加相关编码
+        if hint_encoding:
+            hint_lower = hint_encoding.lower()
+
+            # 添加提示编码本身
+            priority_encodings.append(hint_encoding)
+
+            # 根据提示编码添加相关编码族
+            if 'utf' in hint_lower:
+                priority_encodings.extend(['utf-8', 'utf-8-sig', 'utf-16'])
+            elif 'gb' in hint_lower or 'chinese' in hint_lower:
+                priority_encodings.extend(['gbk', 'gb2312', 'gb18030'])
+            elif 'big5' in hint_lower:
+                priority_encodings.extend(['big5', 'big5hkscs'])
+            elif 'iso-8859' in hint_lower:
+                # 根据具体的ISO编码添加相关编码
+                if '1' in hint_lower:
+                    priority_encodings.extend(['latin1', 'iso-8859-1', 'cp1252'])
+                elif '11' in hint_lower:
+                    priority_encodings.extend(['iso-8859-11', 'cp874', 'tis-620'])
+                elif '2' in hint_lower:
+                    priority_encodings.extend(['iso-8859-2', 'cp1250'])
+                elif '5' in hint_lower:
+                    priority_encodings.extend(['iso-8859-5', 'cp1251', 'koi8-r'])
+            elif 'cp874' in hint_lower or 'tis' in hint_lower:
+                priority_encodings.extend(['cp874', 'iso-8859-11', 'tis-620'])
+            elif 'cp1252' in hint_lower:
+                priority_encodings.extend(['cp1252', 'latin1', 'iso-8859-1'])
+            elif 'cp1251' in hint_lower:
+                priority_encodings.extend(['cp1251', 'iso-8859-5', 'koi8-r'])
+            elif 'shift_jis' in hint_lower or 'sjis' in hint_lower:
+                priority_encodings.extend(['shift_jis', 'euc-jp', 'iso-2022-jp'])
+            elif 'euc-kr' in hint_lower:
+                priority_encodings.extend(['euc-kr', 'cp949'])
+
+        # 添加通用备选编码
+        fallback_encodings = [
+            'utf-8', 'utf-8-sig', 'latin1', 'cp1252', 'gbk', 'big5'
+        ]
+
+        # 合并并去重
+        all_encodings = []
+        seen = set()
+        for encoding in priority_encodings + fallback_encodings:
+            if encoding and encoding not in seen:
+                all_encodings.append(encoding)
+                seen.add(encoding)
+
+        # 测试编码
+        best_encoding = 'utf-8'
+        best_score = 0
+
+        print(f"  🎯 基于提示 '{hint_encoding}' 进行优先测试")
+
+        for encoding in all_encodings:
+            try:
+                decoded_text = raw_data.decode(encoding)
+                score = self._calculate_text_quality_score(decoded_text)
+
+                print(f"    🔍 测试编码 {encoding}: 分数 {score:.2f}")
+
+                if score > best_score:
+                    best_score = score
+                    best_encoding = encoding
+
+                # 如果分数很高，直接使用
+                if score > 0.85:
+                    break
+
+            except (UnicodeDecodeError, UnicodeError):
+                print(f"    ❌ 编码 {encoding} 解码失败")
+                continue
+
+        print(f"  ✅ 基于提示选择编码: {best_encoding} (分数: {best_score:.2f})")
+        return best_encoding
+
     def _calculate_text_quality_score(self, text: str) -> float:
         """
-        计算文本质量分数，用于判断编码是否正确
+        计算文本质量分数，用于判断编码是否正确，优化小语种支持
 
         Args:
             text: 解码后的文本
@@ -970,29 +1133,66 @@ class SRTProcessor:
         control_chars = sum(1 for c in text if ord(c) < 32 and c not in '\n\r\t')
         replacement_chars = text.count('\ufffd')  # 替换字符，表示解码错误
 
+        # 扩展的语言字符检测
+        latin_chars = sum(1 for c in text if '\u0080' <= c <= '\u024f')  # 拉丁扩展（西班牙语、法语等）
+        cyrillic_chars = sum(1 for c in text if '\u0400' <= c <= '\u04ff')  # 西里尔字母（俄语等）
+        greek_chars = sum(1 for c in text if '\u0370' <= c <= '\u03ff')  # 希腊字母
+        arabic_chars = sum(1 for c in text if '\u0600' <= c <= '\u06ff')  # 阿拉伯字母
+        hebrew_chars = sum(1 for c in text if '\u0590' <= c <= '\u05ff')  # 希伯来字母
+        thai_chars = sum(1 for c in text if '\u0e00' <= c <= '\u0e7f')  # 泰语字符
+        japanese_chars = sum(1 for c in text if '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff')  # 日语假名
+        korean_chars = sum(1 for c in text if '\uac00' <= c <= '\ud7af')  # 韩语字符
+
+        # 计算各种语言字符的总数
+        non_ascii_language_chars = (chinese_chars + latin_chars + cyrillic_chars +
+                                  greek_chars + arabic_chars + hebrew_chars +
+                                  thai_chars + japanese_chars + korean_chars)
+
         # 计算分数
         if total_chars > 0:
-            # 可打印字符比例
+            # 可打印字符比例（基础分）
             printable_ratio = printable_chars / total_chars
-            score += printable_ratio * 0.4
+            score += printable_ratio * 0.3
 
             # 控制字符惩罚
             control_ratio = control_chars / total_chars
-            score -= control_ratio * 0.3
+            score -= control_ratio * 0.4
 
             # 替换字符惩罚（严重）
             replacement_ratio = replacement_chars / total_chars
-            score -= replacement_ratio * 0.5
+            score -= replacement_ratio * 0.6
 
-            # 中文字符加分
-            chinese_ratio = chinese_chars / total_chars
-            if chinese_ratio > 0.1:  # 如果有较多中文字符
-                score += chinese_ratio * 0.2
+            # 语言字符加分（更全面的语言支持）
+            language_ratio = non_ascii_language_chars / total_chars
+            if language_ratio > 0.05:  # 如果有语言特定字符
+                score += language_ratio * 0.3
+
+                # 特定语言额外加分
+                if chinese_chars > 0:
+                    score += min(chinese_chars / total_chars, 0.2) * 0.2
+                if thai_chars > 0:  # 泰语特别处理
+                    score += min(thai_chars / total_chars, 0.3) * 0.25
+                if arabic_chars > 0:  # 阿拉伯语特别处理
+                    score += min(arabic_chars / total_chars, 0.3) * 0.2
+                if latin_chars > 0:  # 西欧语言（包括西班牙语）
+                    score += min(latin_chars / total_chars, 0.3) * 0.15
 
             # ASCII字符适度加分
             ascii_ratio = ascii_chars / total_chars
             if 0.1 < ascii_ratio < 0.9:  # 适度的ASCII字符
                 score += 0.1
+            elif ascii_ratio >= 0.9 and non_ascii_language_chars == 0:  # 纯ASCII内容
+                score += 0.15
+
+            # 检查是否包含常见的字幕时间戳格式
+            if '-->' in text and any(char.isdigit() for char in text):
+                score += 0.1
+
+            # 检查是否包含常见的字幕序号
+            lines = text.split('\n')
+            numbered_lines = sum(1 for line in lines if line.strip().isdigit())
+            if numbered_lines > 0:
+                score += min(numbered_lines / len(lines), 0.1) * 0.1
 
         return max(0.0, min(1.0, score))
 
@@ -1021,15 +1221,51 @@ class SRTProcessor:
         except UnicodeDecodeError as e:
             print(f"  ⚠️  编码 {self.encoding} 读取失败: {str(e)}")
 
-        # 如果失败，尝试多种编码的容错读取
+        # 如果失败，尝试多种编码的容错读取，扩展小语种支持
         fallback_encodings = [
             ('utf-8', 'replace'),
             ('utf-8-sig', 'replace'),
+
+            # 中文编码
             ('gbk', 'replace'),
             ('gb2312', 'replace'),
             ('big5', 'replace'),
-            ('latin1', 'ignore'),
+
+            # 西欧语言编码（西班牙语、法语等）
+            ('latin1', 'replace'),
             ('cp1252', 'replace'),
+            ('iso-8859-1', 'replace'),
+            ('iso-8859-15', 'replace'),
+
+            # 泰语编码
+            ('cp874', 'replace'),
+            ('iso-8859-11', 'replace'),
+            ('tis-620', 'replace'),
+
+            # 东欧语言编码
+            ('cp1250', 'replace'),
+            ('iso-8859-2', 'replace'),
+
+            # 西里尔字母编码（俄语等）
+            ('cp1251', 'replace'),
+            ('iso-8859-5', 'replace'),
+            ('koi8-r', 'replace'),
+
+            # 其他语言编码
+            ('cp1253', 'replace'),  # 希腊语
+            ('cp1254', 'replace'),  # 土耳其语
+            ('cp1255', 'replace'),  # 希伯来语
+            ('cp1256', 'replace'),  # 阿拉伯语
+
+            # 日韩语编码
+            ('shift_jis', 'replace'),
+            ('euc-jp', 'replace'),
+            ('euc-kr', 'replace'),
+            ('cp949', 'replace'),
+
+            # 最后的备选
+            ('ascii', 'ignore'),
+            ('cp437', 'replace'),
         ]
 
         for encoding, error_handling in fallback_encodings:
