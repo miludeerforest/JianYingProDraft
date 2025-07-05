@@ -84,14 +84,14 @@ class AutoMixConfigManager:
         'use_vip_effects': False,
         'trim_start_duration': 3000000,  # 3秒
         'video_scale_factor': 1.05,
-        'contrast_range_min': 0.8,
-        'contrast_range_max': 1.2,
-        'brightness_range_min': 0.9,
-        'brightness_range_max': 1.1,
+        'contrast_range_min': 0.9,
+        'contrast_range_max': 1.1,
+        'brightness_range_min': 0.95,
+        'brightness_range_max': 1.05,
         'min_video_duration': 5000000,   # 5秒
         'max_video_duration': 300000000, # 300秒
-        'filter_intensity_min': 20,      # 滤镜强度最小值 (20%)
-        'filter_intensity_max': 30,      # 滤镜强度最大值 (30%)
+        'filter_intensity_min': 10,      # 滤镜强度最小值 (10%) - 轻微效果
+        'filter_intensity_max': 25,      # 滤镜强度最大值 (25%) - 轻微效果
         'pexels_api_key': 'rwDQTKgarldHRe2MUQGbtUB95E59p7csmYSSIis1qRxOqVpHjAOadPTD',  # Pexels API密钥 (内置默认)
         'pexels_overlay_opacity': 0.05,     # 防审核覆盖层不透明度 (5%)
         'enable_pexels_overlay': True,      # 是否启用Pexels防审核覆盖层

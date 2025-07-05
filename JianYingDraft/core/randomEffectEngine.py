@@ -189,30 +189,60 @@ class RandomEffectEngine:
     
     def generate_random_parameters(self, effect_meta: Any) -> List[Optional[float]]:
         """
-        生成随机参数值
-        
+        生成随机参数值（轻微效果）
+
         Args:
             effect_meta: 效果元数据
-            
+
         Returns:
             List[Optional[float]]: 参数值列表（0-100范围）
         """
         params = getattr(effect_meta, 'params', [])
         if not params:
             return []
-        
+
         random_params = []
-        
+
         for param in params:
-            # 生成0-100范围内的随机值
-            # 使用正态分布，中心在50，标准差为20，确保大部分值在合理范围内
-            value = random.normalvariate(50, 20)
-            
-            # 限制在0-100范围内
+            # 生成轻微的随机效果参数
+            # 根据参数类型智能调整范围，避免过于强烈的效果
+            param_name = getattr(param, 'name', '').lower()
+
+            if any(keyword in param_name for keyword in ['亮度', 'brightness', '明度']):
+                # 亮度参数：轻微调整，范围15-35（避免过亮或过暗）
+                value = random.uniform(15, 35)
+            elif any(keyword in param_name for keyword in ['对比度', 'contrast', '对比']):
+                # 对比度参数：轻微调整，范围20-40
+                value = random.uniform(20, 40)
+            elif any(keyword in param_name for keyword in ['饱和度', 'saturation', '饱和']):
+                # 饱和度参数：轻微调整，范围25-45
+                value = random.uniform(25, 45)
+            elif any(keyword in param_name for keyword in ['大小', 'size', '尺寸', '缩放', 'scale']):
+                # 大小/缩放参数：轻微调整，范围10-30
+                value = random.uniform(10, 30)
+            elif any(keyword in param_name for keyword in ['速度', 'speed', '快慢']):
+                # 速度参数：轻微调整，范围25-45
+                value = random.uniform(25, 45)
+            elif any(keyword in param_name for keyword in ['强度', 'intensity', '程度']):
+                # 强度参数：轻微效果，范围10-25
+                value = random.uniform(10, 25)
+            elif any(keyword in param_name for keyword in ['透明度', 'opacity', 'alpha']):
+                # 透明度参数：轻微调整，范围20-40
+                value = random.uniform(20, 40)
+            elif any(keyword in param_name for keyword in ['模糊', 'blur', '虚化']):
+                # 模糊参数：轻微模糊，范围5-20
+                value = random.uniform(5, 20)
+            elif any(keyword in param_name for keyword in ['旋转', 'rotation', 'rotate']):
+                # 旋转参数：轻微旋转，范围10-30
+                value = random.uniform(10, 30)
+            else:
+                # 其他参数：使用轻微的正态分布，中心在25，标准差为8
+                value = random.normalvariate(25, 8)
+
+            # 确保值在0-100范围内
             value = max(0, min(100, value))
-            
             random_params.append(value)
-        
+
         return random_params
     
     def _ensure_filter_diversity(self, available_filters: List[Any]) -> List[Any]:
