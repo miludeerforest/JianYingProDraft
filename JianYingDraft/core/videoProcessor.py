@@ -226,6 +226,96 @@ class VideoProcessor:
 
         return segment
 
+    def create_blur_background_effect(self, segment: Dict[str, Any], media_info: Dict[str, Any]) -> tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        创建模糊背景效果（防审核技术）
+
+        Args:
+            segment: 原始视频片段字典
+            media_info: 媒体信息字典
+
+        Returns:
+            tuple: (背景片段, 前景片段)
+        """
+        import random
+        import copy
+
+        # 检查是否启用模糊背景
+        if not self.config_manager.is_blur_background_enabled():
+            return None, segment
+
+        # 检查概率
+        blur_probability = self.config_manager.get_blur_background_probability()
+        if random.random() > blur_probability:
+            return None, segment
+
+        print(f"  🌫️  创建模糊背景效果（防审核）")
+
+        # 获取配置参数
+        foreground_scale = self.config_manager.get_foreground_scale()
+        background_scale = self.config_manager.get_background_scale()
+        blur_intensity = self.config_manager.get_background_blur_intensity()
+
+        # 创建背景片段（复制原片段）
+        background_segment = copy.deepcopy(segment)
+        background_media = copy.deepcopy(media_info)
+
+        # 设置背景片段属性
+        background_segment['id'] = f"{segment['id']}_background"
+
+        # 背景：放大并模糊
+        if 'clip' not in background_segment:
+            background_segment['clip'] = {
+                "alpha": 1.0,
+                "flip": {"horizontal": False, "vertical": False},
+                "rotation": 0.0,
+                "scale": {"x": 1.0, "y": 1.0},
+                "transform": {"x": 0.0, "y": 0.0}
+            }
+
+        # 设置背景缩放
+        background_segment['clip']['scale']['x'] = background_scale
+        background_segment['clip']['scale']['y'] = background_scale
+
+        # 添加模糊滤镜到背景
+        if 'filters' not in background_segment:
+            background_segment['filters'] = []
+
+        # 创建模糊滤镜
+        blur_filter = {
+            "id": f"blur_filter_{segment['id']}",
+            "type": "blur",
+            "intensity": blur_intensity,
+            "platform": "mobile"
+        }
+        background_segment['filters'].append(blur_filter)
+
+        # 创建前景片段（缩小的主视频）
+        foreground_segment = copy.deepcopy(segment)
+        foreground_media = copy.deepcopy(media_info)
+
+        # 设置前景片段属性
+        foreground_segment['id'] = f"{segment['id']}_foreground"
+
+        # 前景：缩小并居中
+        if 'clip' not in foreground_segment:
+            foreground_segment['clip'] = {
+                "alpha": 1.0,
+                "flip": {"horizontal": False, "vertical": False},
+                "rotation": 0.0,
+                "scale": {"x": 1.0, "y": 1.0},
+                "transform": {"x": 0.0, "y": 0.0}
+            }
+
+        # 设置前景缩放
+        foreground_segment['clip']['scale']['x'] = foreground_scale
+        foreground_segment['clip']['scale']['y'] = foreground_scale
+
+        print(f"    📐 背景放大: {background_scale:.1f}x, 前景缩放: {foreground_scale:.1f}x")
+        print(f"    🌫️  模糊强度: {blur_intensity:.1%}")
+
+        return (background_segment, background_media), (foreground_segment, foreground_media)
+
     def adjust_color_randomly(self, segment: Dict[str, Any]) -> Dict[str, Any]:
         """
         随机调整视频的对比度和亮度

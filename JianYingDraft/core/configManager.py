@@ -102,7 +102,14 @@ class AutoMixConfigManager:
         'speed_variation_min': 0.9,         # 最小变速比例
         'speed_variation_max': 1.1,         # 最大变速比例
         'enable_canvas_adjustment': False,  # 启用画幅调整（暂时禁用）
-        'canvas_ratio': '9:16'              # 默认画幅比例
+        'canvas_ratio': '9:16',             # 默认画幅比例
+
+        # 模糊背景防审核技术
+        'enable_blur_background': True,     # 启用模糊背景
+        'blur_background_probability': 0.3, # 模糊背景应用概率 (30%)
+        'foreground_scale': 0.8,            # 前景视频缩放比例 (80%)
+        'background_blur_intensity': 0.5,   # 背景模糊强度 (50%)
+        'background_scale': 1.2              # 背景放大比例 (120%)
     }
     
     @classmethod
@@ -432,6 +439,57 @@ class AutoMixConfigManager:
     def set_canvas_ratio(cls, ratio: str) -> bool:
         """设置画幅比例"""
         return cls._set_config_value('canvas_ratio', ratio)
+
+    # 模糊背景防审核技术配置方法
+    @classmethod
+    def is_blur_background_enabled(cls) -> bool:
+        """检查是否启用模糊背景"""
+        return cls._get_config_value('enable_blur_background', cls.DEFAULT_CONFIG['enable_blur_background'])
+
+    @classmethod
+    def set_blur_background_enabled(cls, enabled: bool) -> bool:
+        """设置是否启用模糊背景"""
+        return cls._set_config_value('enable_blur_background', enabled)
+
+    @classmethod
+    def get_blur_background_probability(cls) -> float:
+        """获取模糊背景应用概率"""
+        return float(cls._get_config_value('blur_background_probability', cls.DEFAULT_CONFIG['blur_background_probability']))
+
+    @classmethod
+    def set_blur_background_probability(cls, probability: float) -> bool:
+        """设置模糊背景应用概率"""
+        return cls._set_config_value('blur_background_probability', probability)
+
+    @classmethod
+    def get_foreground_scale(cls) -> float:
+        """获取前景视频缩放比例"""
+        return float(cls._get_config_value('foreground_scale', cls.DEFAULT_CONFIG['foreground_scale']))
+
+    @classmethod
+    def set_foreground_scale(cls, scale: float) -> bool:
+        """设置前景视频缩放比例"""
+        return cls._set_config_value('foreground_scale', scale)
+
+    @classmethod
+    def get_background_blur_intensity(cls) -> float:
+        """获取背景模糊强度"""
+        return float(cls._get_config_value('background_blur_intensity', cls.DEFAULT_CONFIG['background_blur_intensity']))
+
+    @classmethod
+    def set_background_blur_intensity(cls, intensity: float) -> bool:
+        """设置背景模糊强度"""
+        return cls._set_config_value('background_blur_intensity', intensity)
+
+    @classmethod
+    def get_background_scale(cls) -> float:
+        """获取背景放大比例"""
+        return float(cls._get_config_value('background_scale', cls.DEFAULT_CONFIG['background_scale']))
+
+    @classmethod
+    def set_background_scale(cls, scale: float) -> bool:
+        """设置背景放大比例"""
+        return cls._set_config_value('background_scale', scale)
 
 
 # 为了向后兼容，提供一个简化的别名

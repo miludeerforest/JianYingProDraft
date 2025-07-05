@@ -1976,6 +1976,7 @@ class InteractiveAutoMix:
             print("  • 镜像翻转: 水平翻转画面，对机器识别极具欺骗性")
             print("  • 变速处理: 0.9x-1.1x微调变速，打乱原始帧率")
             print("  • 画幅调整: 改变视频比例，彻底改变画面构图")
+            print("  • 模糊背景: 双轨道模糊背景，彻底改变画面构图")
             print("-" * 50)
 
             # 显示当前配置
@@ -1984,6 +1985,9 @@ class InteractiveAutoMix:
             speed_range = self.config_manager.get_speed_variation_range()
             canvas_enabled = self.config_manager.is_canvas_adjustment_enabled()
             canvas_ratio = self.config_manager.get_canvas_ratio()
+            blur_enabled = self.config_manager.is_blur_background_enabled()
+            blur_prob = self.config_manager.get_blur_background_probability()
+            foreground_scale = self.config_manager.get_foreground_scale()
 
             print("📊 当前配置:")
             print(f"  🔄 镜像翻转概率: {flip_prob:.1%}")
@@ -1992,6 +1996,9 @@ class InteractiveAutoMix:
                 print(f"  📈 变速范围: {speed_range[0]:.1f}x - {speed_range[1]:.1f}x")
             print(f"  📐 画幅调整: {'启用' if canvas_enabled else '禁用'}")
             print(f"  📏 画幅比例: {canvas_ratio}")
+            print(f"  🌫️  模糊背景: {'启用' if blur_enabled else '禁用'}")
+            if blur_enabled:
+                print(f"  🎯 应用概率: {blur_prob:.1%}, 前景缩放: {foreground_scale:.1%}")
             print("-" * 50)
 
             print("🛠️  设置选项:")
@@ -2000,7 +2007,8 @@ class InteractiveAutoMix:
             print("3. 📈 设置变速范围")
             print("4. 📐 启用/禁用画幅调整")
             print("5. 📏 设置画幅比例")
-            print("6. 🧪 测试防审核效果")
+            print("6. 🌫️  模糊背景设置")
+            print("7. 🧪 测试防审核效果")
             print("0. 🔙 返回上级菜单")
             print("-" * 50)
 
@@ -2018,6 +2026,8 @@ class InteractiveAutoMix:
             elif choice == 5:
                 self.set_canvas_ratio()
             elif choice == 6:
+                self.blur_background_settings()
+            elif choice == 7:
                 self.test_anti_detection_effects()
             else:
                 print("❌ 无效选择，请重新输入")
@@ -2137,6 +2147,215 @@ class InteractiveAutoMix:
         else:
             print("❌ 无效选择")
 
+    def blur_background_settings(self):
+        """模糊背景设置"""
+        while True:
+            print("\n🌫️  模糊背景防审核设置")
+            print("-" * 50)
+            print("💡 功能说明:")
+            print("  • 创建双轨道效果：背景轨道(模糊放大) + 前景轨道(缩小)")
+            print("  • 彻底改变画面构图，同时保持内容完整")
+            print("  • 对机器识别极具欺骗性，观看体验友好")
+            print("-" * 50)
+
+            # 显示当前配置
+            blur_enabled = self.config_manager.is_blur_background_enabled()
+            blur_prob = self.config_manager.get_blur_background_probability()
+            foreground_scale = self.config_manager.get_foreground_scale()
+            background_scale = self.config_manager.get_background_scale()
+            blur_intensity = self.config_manager.get_background_blur_intensity()
+
+            print("📊 当前配置:")
+            print(f"  🌫️  模糊背景: {'启用' if blur_enabled else '禁用'}")
+            print(f"  🎯 应用概率: {blur_prob:.1%}")
+            print(f"  📐 前景缩放: {foreground_scale:.1%}")
+            print(f"  📏 背景放大: {background_scale:.1%}")
+            print(f"  🌀 模糊强度: {blur_intensity:.1%}")
+            print("-" * 50)
+
+            print("🛠️  设置选项:")
+            print("1. 🔄 启用/禁用模糊背景")
+            print("2. 🎯 设置应用概率")
+            print("3. 📐 设置前景缩放比例")
+            print("4. 📏 设置背景放大比例")
+            print("5. 🌀 设置模糊强度")
+            print("6. 🧪 预览效果说明")
+            print("0. 🔙 返回上级菜单")
+            print("-" * 50)
+
+            choice = self.get_user_input("请选择功能", "0", int)
+            if choice is None or choice == 0:
+                break
+            elif choice == 1:
+                self.toggle_blur_background()
+            elif choice == 2:
+                self.set_blur_background_probability()
+            elif choice == 3:
+                self.set_foreground_scale()
+            elif choice == 4:
+                self.set_background_scale()
+            elif choice == 5:
+                self.set_blur_intensity()
+            elif choice == 6:
+                self.preview_blur_background_effect()
+            else:
+                print("❌ 无效选择，请重新输入")
+
+    def toggle_blur_background(self):
+        """切换模糊背景开关"""
+        current_enabled = self.config_manager.is_blur_background_enabled()
+        new_enabled = not current_enabled
+
+        if self.config_manager.set_blur_background_enabled(new_enabled):
+            status = "启用" if new_enabled else "禁用"
+            print(f"✅ 模糊背景已{status}")
+            if new_enabled:
+                print("💡 提示: 模糊背景会创建双轨道效果，显著改变画面构图")
+        else:
+            print("❌ 设置失败")
+
+    def set_blur_background_probability(self):
+        """设置模糊背景应用概率"""
+        print("\n🎯 设置模糊背景应用概率")
+        print("-" * 40)
+        print("💡 说明: 控制模糊背景效果的应用频率")
+        print("建议范围: 20% - 50% (平衡效果与性能)")
+
+        current_prob = self.config_manager.get_blur_background_probability()
+        print(f"当前概率: {current_prob:.1%}")
+
+        new_prob = self.get_user_input(
+            "请输入新的应用概率 (0.0-1.0)",
+            str(current_prob),
+            float
+        )
+
+        if new_prob is not None:
+            if 0.0 <= new_prob <= 1.0:
+                if self.config_manager.set_blur_background_probability(new_prob):
+                    print(f"✅ 模糊背景应用概率已设置为 {new_prob:.1%}")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 概率必须在 0.0 - 1.0 之间")
+        else:
+            print("❌ 输入无效")
+
+    def set_foreground_scale(self):
+        """设置前景缩放比例"""
+        print("\n📐 设置前景缩放比例")
+        print("-" * 40)
+        print("💡 说明: 控制前景视频的大小")
+        print("建议范围: 70% - 90% (保持内容可见性)")
+
+        current_scale = self.config_manager.get_foreground_scale()
+        print(f"当前缩放: {current_scale:.1%}")
+
+        new_scale = self.get_user_input(
+            "请输入新的前景缩放比例 (0.5-1.0)",
+            str(current_scale),
+            float
+        )
+
+        if new_scale is not None:
+            if 0.5 <= new_scale <= 1.0:
+                if self.config_manager.set_foreground_scale(new_scale):
+                    print(f"✅ 前景缩放比例已设置为 {new_scale:.1%}")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 缩放比例必须在 0.5 - 1.0 之间")
+        else:
+            print("❌ 输入无效")
+
+    def set_background_scale(self):
+        """设置背景放大比例"""
+        print("\n📏 设置背景放大比例")
+        print("-" * 40)
+        print("💡 说明: 控制背景视频的放大程度")
+        print("建议范围: 110% - 150% (填充整个画面)")
+
+        current_scale = self.config_manager.get_background_scale()
+        print(f"当前放大: {current_scale:.1%}")
+
+        new_scale = self.get_user_input(
+            "请输入新的背景放大比例 (1.0-2.0)",
+            str(current_scale),
+            float
+        )
+
+        if new_scale is not None:
+            if 1.0 <= new_scale <= 2.0:
+                if self.config_manager.set_background_scale(new_scale):
+                    print(f"✅ 背景放大比例已设置为 {new_scale:.1%}")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 放大比例必须在 1.0 - 2.0 之间")
+        else:
+            print("❌ 输入无效")
+
+    def set_blur_intensity(self):
+        """设置模糊强度"""
+        print("\n🌀 设置模糊强度")
+        print("-" * 40)
+        print("💡 说明: 控制背景的模糊程度")
+        print("建议范围: 30% - 70% (平衡效果与美观)")
+
+        current_intensity = self.config_manager.get_background_blur_intensity()
+        print(f"当前强度: {current_intensity:.1%}")
+
+        new_intensity = self.get_user_input(
+            "请输入新的模糊强度 (0.0-1.0)",
+            str(current_intensity),
+            float
+        )
+
+        if new_intensity is not None:
+            if 0.0 <= new_intensity <= 1.0:
+                if self.config_manager.set_background_blur_intensity(new_intensity):
+                    print(f"✅ 模糊强度已设置为 {new_intensity:.1%}")
+                else:
+                    print("❌ 设置失败")
+            else:
+                print("❌ 强度必须在 0.0 - 1.0 之间")
+        else:
+            print("❌ 输入无效")
+
+    def preview_blur_background_effect(self):
+        """预览模糊背景效果说明"""
+        print("\n🧪 模糊背景效果预览")
+        print("-" * 50)
+        print("📺 视觉效果说明:")
+        print("  ┌─────────────────────────────────┐")
+        print("  │  🌫️  模糊放大的背景视频        │")
+        print("  │    ┌─────────────────────┐    │")
+        print("  │    │  📱 清晰的前景视频  │    │")
+        print("  │    │                     │    │")
+        print("  │    │     主要内容        │    │")
+        print("  │    │                     │    │")
+        print("  │    └─────────────────────┘    │")
+        print("  │                               │")
+        print("  └─────────────────────────────────┘")
+
+        # 获取当前配置
+        foreground_scale = self.config_manager.get_foreground_scale()
+        background_scale = self.config_manager.get_background_scale()
+        blur_intensity = self.config_manager.get_background_blur_intensity()
+        blur_prob = self.config_manager.get_blur_background_probability()
+
+        print(f"\n📊 当前效果参数:")
+        print(f"  📐 前景大小: {foreground_scale:.1%} (主视频)")
+        print(f"  📏 背景大小: {background_scale:.1%} (模糊视频)")
+        print(f"  🌀 模糊程度: {blur_intensity:.1%}")
+        print(f"  🎯 应用概率: {blur_prob:.1%}")
+
+        print(f"\n🎯 防审核效果:")
+        print(f"  ✅ 画面构图完全改变")
+        print(f"  ✅ 像素分布彻底打乱")
+        print(f"  ✅ 机器识别难度极高")
+        print(f"  ✅ 观看体验保持良好")
+
     def test_anti_detection_effects(self):
         """测试防审核效果"""
         print("\n🧪 防审核技术测试")
@@ -2161,6 +2380,13 @@ class InteractiveAutoMix:
             speed_range = self.config_manager.get_speed_variation_range()
             print(f"      变速范围: {speed_range[0]:.1f}x - {speed_range[1]:.1f}x")
 
+        # 模糊背景
+        blur_enabled = self.config_manager.is_blur_background_enabled()
+        print(f"  🌫️  模糊背景: {'启用' if blur_enabled else '禁用'}")
+        if blur_enabled:
+            blur_prob = self.config_manager.get_blur_background_probability()
+            print(f"      应用概率: {blur_prob:.1%}")
+
         # 其他技术
         print(f"  📐 画面缩放: 110% (固定)")
         print(f"  ✂️  掐头去尾: 前3秒 (固定)")
@@ -2184,6 +2410,17 @@ class InteractiveAutoMix:
             total_score += 20
             print("  ✅ 变速处理 (+20分) - 打乱原始帧率")
 
+        # 模糊背景
+        blur_enabled = self.config_manager.is_blur_background_enabled()
+        if blur_enabled:
+            blur_prob = self.config_manager.get_blur_background_probability()
+            if blur_prob > 0.2:
+                total_score += 25
+                print("  ✅ 模糊背景 (+25分) - 彻底改变画面构图")
+            elif blur_prob > 0:
+                total_score += 15
+                print("  ⚠️  模糊背景 (+15分) - 概率较低，效果有限")
+
         total_score += 10  # 固定技术
         print("  ✅ 其他技术 (+10分) - 缩放、掐头去尾、调色")
 
@@ -2205,6 +2442,10 @@ class InteractiveAutoMix:
             print("  🔧 建议提高镜像翻转概率到30%以上")
         if not speed_enabled:
             print("  🔧 建议启用变速处理，增强防审核效果")
+        if not blur_enabled:
+            print("  🔧 建议启用模糊背景，彻底改变画面构图")
+        elif blur_prob < 0.2:
+            print("  🔧 建议提高模糊背景应用概率到20%以上")
 
 
 if __name__ == "__main__":
