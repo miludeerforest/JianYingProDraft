@@ -943,7 +943,7 @@
     <div class="container">
         <div class="header">
             <h1>🎬 剪映自动混剪工具</h1>
-            <p>Web交互界面 - 基于原有代码，无任何修改</p>
+            <p>Web交互界面 v2.1.0 - 轻微特效参数优化，纹理和滤镜参数支持</p>
         </div>
         
         <div class="main-content">
@@ -1043,6 +1043,72 @@
                         <div class="config-item">
                             <label>🔢 最大抽帧数:</label>
                             <input type="number" id="max_frame_drops_per_segment" min="1" max="10" step="1" value="3">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 轻微特效参数配置 -->
+                <div class="config-section">
+                    <h3>🎨 轻微特效参数配置 (v2.1.0)</h3>
+                    <div class="info-tip">
+                        💡 所有特效参数均控制在轻微范围内，避免过度强烈的视觉效果
+                    </div>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>💡 滤镜强度最小值(%):</label>
+                            <input type="number" id="filter_intensity_min" min="5" max="50" step="1" value="10">
+                        </div>
+                        <div class="config-item">
+                            <label>💡 滤镜强度最大值(%):</label>
+                            <input type="number" id="filter_intensity_max" min="5" max="50" step="1" value="25">
+                        </div>
+                        <div class="config-item">
+                            <label>🌟 亮度参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">15-35 (轻微调整)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🎭 对比度参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">20-40 (轻微调整)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🎨 饱和度参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">25-45 (轻微调整)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>📏 大小参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">10-30 (轻微缩放)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>⚡ 速度参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">25-45 (轻微变速)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>💪 强度参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">10-25 (轻微强度)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>👻 透明度参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">20-40 (轻微透明)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🌫️ 模糊参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">5-20 (轻微模糊)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🔄 旋转参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">10-30 (轻微旋转)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🧱 纹理参数范围: ⭐</label>
+                            <span style="color: #4CAF50; font-size: 12px;">15-35 (轻微纹理)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🎭 滤镜参数范围: ⭐</label>
+                            <span style="color: #4CAF50; font-size: 12px;">20-40 (轻微滤镜)</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🎯 其他参数范围:</label>
+                            <span style="color: #666; font-size: 12px;">中心25±8 (正态分布)</span>
                         </div>
                     </div>
                 </div>
@@ -1316,6 +1382,10 @@
                 document.getElementById('frame_drop_interval').value = config.frame_drop_interval || 5;
                 document.getElementById('max_frame_drops_per_segment').value = config.max_frame_drops_per_segment || 3;
 
+                // 轻微特效参数配置
+                document.getElementById('filter_intensity_min').value = config.filter_intensity_min || 10;
+                document.getElementById('filter_intensity_max').value = config.filter_intensity_max || 25;
+
                 showAlert('配置加载成功', 'success');
             } catch (error) {
                 showAlert('加载配置失败: ' + error.message, 'error');
@@ -1353,7 +1423,11 @@
                     frame_manipulation_enabled: document.getElementById('frame_manipulation_enabled').value === 'true',
                     frame_drop_probability: parseFloat(document.getElementById('frame_drop_probability').value),
                     frame_drop_interval: parseFloat(document.getElementById('frame_drop_interval').value),
-                    max_frame_drops_per_segment: parseInt(document.getElementById('max_frame_drops_per_segment').value)
+                    max_frame_drops_per_segment: parseInt(document.getElementById('max_frame_drops_per_segment').value),
+
+                    // 轻微特效参数配置
+                    filter_intensity_min: parseInt(document.getElementById('filter_intensity_min').value),
+                    filter_intensity_max: parseInt(document.getElementById('filter_intensity_max').value)
                 };
 
                 const response = await fetch('/api/config', {
