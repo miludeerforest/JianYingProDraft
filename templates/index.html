@@ -435,7 +435,7 @@
             flex-wrap: wrap;
         }
 
-        .effect-select {
+        .effect-input {
             flex: 1;
             min-width: 200px;
             padding: 8px 12px;
@@ -443,12 +443,59 @@
             border-radius: 6px;
             font-size: 14px;
             background: white;
+            position: relative;
         }
 
-        .effect-select:focus {
+        .effect-input:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .autocomplete-container {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .autocomplete-suggestion {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .autocomplete-suggestion:hover {
+            background: #f8f9fa;
+        }
+
+        .autocomplete-suggestion.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .autocomplete-suggestion:last-child {
+            border-bottom: none;
+        }
+
+        .search-highlight {
+            background: #ffeb3b;
+            font-weight: bold;
         }
 
         .btn-add {
@@ -939,9 +986,15 @@
                     <div class="exclusion-list" id="filters-list"></div>
                     <div class="add-exclusion-section">
                         <div class="add-exclusion-form">
-                            <select class="effect-select" id="filters-select">
-                                <option value="">选择要排除的滤镜...</option>
-                            </select>
+                            <div class="autocomplete-container">
+                                <input type="text" class="effect-input" id="filters-input"
+                                       placeholder="输入滤镜名称进行搜索..."
+                                       autocomplete="off"
+                                       oninput="handleAutocomplete('filters', this.value)"
+                                       onkeydown="handleKeydown(event, 'filters')"
+                                       onblur="hideAutocomplete('filters')">
+                                <div class="autocomplete-suggestions" id="filters-suggestions"></div>
+                            </div>
                             <button class="btn-add" onclick="addExclusion('filters')">➕ 添加排除</button>
                         </div>
                     </div>
@@ -952,9 +1005,15 @@
                     <div class="exclusion-list" id="effects-list"></div>
                     <div class="add-exclusion-section">
                         <div class="add-exclusion-form">
-                            <select class="effect-select" id="effects-select">
-                                <option value="">选择要排除的特效...</option>
-                            </select>
+                            <div class="autocomplete-container">
+                                <input type="text" class="effect-input" id="effects-input"
+                                       placeholder="输入特效名称进行搜索..."
+                                       autocomplete="off"
+                                       oninput="handleAutocomplete('effects', this.value)"
+                                       onkeydown="handleKeydown(event, 'effects')"
+                                       onblur="hideAutocomplete('effects')">
+                                <div class="autocomplete-suggestions" id="effects-suggestions"></div>
+                            </div>
                             <button class="btn-add" onclick="addExclusion('effects')">➕ 添加排除</button>
                         </div>
                     </div>
@@ -965,9 +1024,15 @@
                     <div class="exclusion-list" id="transitions-list"></div>
                     <div class="add-exclusion-section">
                         <div class="add-exclusion-form">
-                            <select class="effect-select" id="transitions-select">
-                                <option value="">选择要排除的转场...</option>
-                            </select>
+                            <div class="autocomplete-container">
+                                <input type="text" class="effect-input" id="transitions-input"
+                                       placeholder="输入转场名称进行搜索..."
+                                       autocomplete="off"
+                                       oninput="handleAutocomplete('transitions', this.value)"
+                                       onkeydown="handleKeydown(event, 'transitions')"
+                                       onblur="hideAutocomplete('transitions')">
+                                <div class="autocomplete-suggestions" id="transitions-suggestions"></div>
+                            </div>
                             <button class="btn-add" onclick="addExclusion('transitions')">➕ 添加排除</button>
                         </div>
                     </div>
@@ -1262,13 +1327,28 @@
             }
         }
 
+        // 全局变量存储可用特效列表
+        let availableEffectsData = {
+            filters: [],
+            effects: [],
+            transitions: []
+        };
+
+        let selectedSuggestionIndex = -1;
+
         // 添加排除项
         async function addExclusion(type) {
-            const selectElement = document.getElementById(type + '-select');
-            const selectedName = selectElement.value;
+            const inputElement = document.getElementById(type + '-input');
+            const selectedName = inputElement.value.trim();
 
             if (!selectedName) {
-                showAlert('请选择要排除的项目', 'warning');
+                showAlert('请输入要排除的项目名称', 'warning');
+                return;
+            }
+
+            // 检查是否是有效的特效名称
+            if (!availableEffectsData[type].includes(selectedName)) {
+                showAlert(`特效 "${selectedName}" 不存在或已被排除`, 'warning');
                 return;
             }
 
@@ -1285,7 +1365,8 @@
 
                 if (result.success) {
                     showAlert(`已添加排除项: ${selectedName}`, 'success');
-                    selectElement.value = ''; // 清空选择
+                    inputElement.value = ''; // 清空输入
+                    hideAutocomplete(type); // 隐藏建议
                     loadExclusions(); // 重新加载
                     loadAvailableEffects(); // 重新加载可用特效列表
                 } else {
@@ -1309,39 +1390,134 @@
 
                 const data = result.data;
 
-                // 更新滤镜选择框
-                if (data.filters) {
-                    updateEffectSelect('filters', data.filters);
-                }
-
-                // 更新特效选择框
-                if (data.effects) {
-                    updateEffectSelect('effects', data.effects);
-                }
-
-                // 更新转场选择框
-                if (data.transitions) {
-                    updateEffectSelect('transitions', data.transitions);
-                }
+                // 更新全局可用特效数据
+                availableEffectsData = {
+                    filters: data.filters || [],
+                    effects: data.effects || [],
+                    transitions: data.transitions || []
+                };
 
             } catch (error) {
                 showAlert('加载可用特效列表失败: ' + error.message, 'error');
             }
         }
 
-        // 更新特效选择框
-        function updateEffectSelect(type, effectList) {
-            const selectElement = document.getElementById(type + '-select');
+        // 处理自动补全输入
+        function handleAutocomplete(type, query) {
+            selectedSuggestionIndex = -1;
 
-            // 清空现有选项（保留默认选项）
-            selectElement.innerHTML = `<option value="">选择要排除的${getTypeLabel(type)}...</option>`;
+            if (!query.trim()) {
+                hideAutocomplete(type);
+                return;
+            }
 
-            // 添加可用特效选项
-            effectList.forEach(effectName => {
-                const option = document.createElement('option');
-                option.value = effectName;
-                option.textContent = effectName;
-                selectElement.appendChild(option);
+            const suggestions = searchEffects(type, query);
+            showSuggestions(type, suggestions, query);
+        }
+
+        // 搜索特效
+        function searchEffects(type, query) {
+            const effectList = availableEffectsData[type] || [];
+            const lowerQuery = query.toLowerCase();
+
+            return effectList.filter(effect =>
+                effect.toLowerCase().includes(lowerQuery)
+            ).slice(0, 10); // 限制显示10个建议
+        }
+
+        // 显示建议列表
+        function showSuggestions(type, suggestions, query) {
+            const suggestionsContainer = document.getElementById(type + '-suggestions');
+
+            if (suggestions.length === 0) {
+                hideAutocomplete(type);
+                return;
+            }
+
+            suggestionsContainer.innerHTML = '';
+
+            suggestions.forEach((suggestion, index) => {
+                const div = document.createElement('div');
+                div.className = 'autocomplete-suggestion';
+                div.innerHTML = highlightMatch(suggestion, query);
+                div.onclick = () => selectSuggestion(type, suggestion);
+                div.onmousedown = (e) => e.preventDefault(); // 防止失去焦点
+                suggestionsContainer.appendChild(div);
+            });
+
+            suggestionsContainer.style.display = 'block';
+        }
+
+        // 高亮匹配文本
+        function highlightMatch(text, query) {
+            const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+            return text.replace(regex, '<span class="search-highlight">$1</span>');
+        }
+
+        // 转义正则表达式特殊字符
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // 选择建议项
+        function selectSuggestion(type, suggestion) {
+            const inputElement = document.getElementById(type + '-input');
+            inputElement.value = suggestion;
+            hideAutocomplete(type);
+            inputElement.focus();
+        }
+
+        // 隐藏自动补全
+        function hideAutocomplete(type) {
+            setTimeout(() => {
+                const suggestionsContainer = document.getElementById(type + '-suggestions');
+                suggestionsContainer.style.display = 'none';
+                selectedSuggestionIndex = -1;
+            }, 150);
+        }
+
+        // 处理键盘事件
+        function handleKeydown(event, type) {
+            const suggestionsContainer = document.getElementById(type + '-suggestions');
+            const suggestions = suggestionsContainer.querySelectorAll('.autocomplete-suggestion');
+
+            if (suggestions.length === 0) return;
+
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+                    updateSuggestionSelection(suggestions);
+                    break;
+
+                case 'ArrowUp':
+                    event.preventDefault();
+                    selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                    updateSuggestionSelection(suggestions);
+                    break;
+
+                case 'Enter':
+                    event.preventDefault();
+                    if (selectedSuggestionIndex >= 0) {
+                        const selectedSuggestion = suggestions[selectedSuggestionIndex];
+                        selectSuggestion(type, selectedSuggestion.textContent);
+                    }
+                    break;
+
+                case 'Escape':
+                    hideAutocomplete(type);
+                    break;
+            }
+        }
+
+        // 更新建议选择状态
+        function updateSuggestionSelection(suggestions) {
+            suggestions.forEach((suggestion, index) => {
+                if (index === selectedSuggestionIndex) {
+                    suggestion.classList.add('selected');
+                } else {
+                    suggestion.classList.remove('selected');
+                }
             });
         }
 
