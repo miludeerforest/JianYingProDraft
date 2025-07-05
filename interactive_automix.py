@@ -1993,18 +1993,19 @@ class InteractiveAutoMix:
             frame_prob = self.config_manager.get_frame_drop_probability()
 
             print("📊 当前配置:")
-            print(f"  🔄 镜像翻转概率: {flip_prob:.1%}")
+            flip_status = "强制执行" if flip_prob >= 1.0 else f"{flip_prob:.1%}概率"
+            print(f"  🔄 镜像翻转: {flip_status}")
             print(f"  ⚡ 变速处理: {'启用' if speed_enabled else '禁用'}")
             if speed_enabled:
                 print(f"  📈 变速范围: {speed_range[0]:.1f}x - {speed_range[1]:.1f}x")
             print(f"  📐 画幅调整: {'启用' if canvas_enabled else '禁用'}")
             print(f"  📏 画幅比例: {canvas_ratio}")
-            print(f"  🌫️  模糊背景: {'启用' if blur_enabled else '禁用'}")
+            blur_status = "强制执行" if blur_prob >= 1.0 else f"{blur_prob:.1%}概率"
+            print(f"  🌫️  模糊背景: {'启用' if blur_enabled else '禁用'} ({blur_status})")
             if blur_enabled:
-                print(f"  🎯 应用概率: {blur_prob:.1%}, 前景缩放: {foreground_scale:.1%}")
-            print(f"  🎞️  抽帧处理: {'启用' if frame_enabled else '禁用'}")
-            if frame_enabled:
-                print(f"  🎯 抽帧概率: {frame_prob:.1%} (实验性功能)")
+                print(f"  📐 前景缩放: {foreground_scale:.1%}")
+            frame_status = "强制执行" if frame_prob >= 1.0 else f"{frame_prob:.1%}概率"
+            print(f"  🎞️  抽帧处理: {'启用' if frame_enabled else '禁用'} ({frame_status})")
             print("-" * 50)
 
             print("🛠️  设置选项:")
@@ -2596,7 +2597,10 @@ class InteractiveAutoMix:
             total_score += 40
             print("  ✅ Pexels覆盖层 (+40分) - 最有效的防审核手段")
 
-        if flip_prob > 0.3:
+        if flip_prob >= 1.0:
+            total_score += 35
+            print("  🎯 镜像翻转 (+35分) - 强制执行，最大防审核效果")
+        elif flip_prob > 0.3:
             total_score += 30
             print("  ✅ 镜像翻转 (+30分) - 对机器识别极具欺骗性")
         elif flip_prob > 0:
@@ -2611,7 +2615,10 @@ class InteractiveAutoMix:
         blur_enabled = self.config_manager.is_blur_background_enabled()
         if blur_enabled:
             blur_prob = self.config_manager.get_blur_background_probability()
-            if blur_prob > 0.2:
+            if blur_prob >= 1.0:
+                total_score += 30
+                print("  🎯 模糊背景 (+30分) - 强制执行，彻底改变画面构图")
+            elif blur_prob > 0.2:
                 total_score += 25
                 print("  ✅ 模糊背景 (+25分) - 彻底改变画面构图")
             elif blur_prob > 0:
@@ -2622,7 +2629,10 @@ class InteractiveAutoMix:
         frame_enabled = self.config_manager.is_frame_manipulation_enabled()
         if frame_enabled:
             frame_prob = self.config_manager.get_frame_drop_probability()
-            if frame_prob > 0.1:
+            if frame_prob >= 1.0:
+                total_score += 25
+                print("  🎯 抽帧处理 (+25分) - 强制执行，打乱视频节奏")
+            elif frame_prob > 0.1:
                 total_score += 20
                 print("  ✅ 抽帧处理 (+20分) - 打乱视频节奏")
             elif frame_prob > 0:
@@ -2632,9 +2642,15 @@ class InteractiveAutoMix:
         total_score += 10  # 固定技术
         print("  ✅ 其他技术 (+10分) - 缩放、掐头去尾、调色")
 
-        print(f"\n📊 总体防审核评分: {total_score}/100")
+        print(f"\n📊 总体防审核评分: {total_score}/160 (强制执行模式)")
 
-        if total_score >= 80:
+        if total_score >= 140:
+            print("🚀 防审核能力: 超强（强制执行模式）")
+        elif total_score >= 120:
+            print("🎉 防审核能力: 完美")
+        elif total_score >= 100:
+            print("🎉 防审核能力: 卓越")
+        elif total_score >= 80:
             print("🎉 防审核能力: 优秀")
         elif total_score >= 60:
             print("👍 防审核能力: 良好")

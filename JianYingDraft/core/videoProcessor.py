@@ -161,10 +161,10 @@ class VideoProcessor:
         """
         import random
 
-        # 获取翻转概率配置
+        # 获取翻转概率配置（如果是100%则强制执行）
         flip_probability = self.config_manager.get_flip_probability()
 
-        if random.random() < flip_probability:
+        if flip_probability >= 1.0 or random.random() < flip_probability:
             # 确保clip结构存在
             if 'clip' not in segment:
                 segment['clip'] = {
@@ -177,7 +177,7 @@ class VideoProcessor:
 
             # 应用水平翻转（最有效的防审核手段）
             segment['clip']['flip']['horizontal'] = True
-            print(f"  🔄 应用镜像翻转（防审核）")
+            print(f"  🔄 应用镜像翻转（防审核 - {'强制执行' if flip_probability >= 1.0 else f'{flip_probability:.1%}概率'}）")
 
         return segment
 
@@ -244,12 +244,12 @@ class VideoProcessor:
         if not self.config_manager.is_blur_background_enabled():
             return None, segment
 
-        # 检查概率
+        # 检查概率（如果是100%则强制执行）
         blur_probability = self.config_manager.get_blur_background_probability()
-        if random.random() > blur_probability:
+        if blur_probability < 1.0 and random.random() > blur_probability:
             return None, segment
 
-        print(f"  🌫️  创建模糊背景效果（防审核）")
+        print(f"  🌫️  创建模糊背景效果（防审核 - {'强制执行' if blur_probability >= 1.0 else f'{blur_probability:.1%}概率'}）")
 
         # 获取配置参数
         foreground_scale = self.config_manager.get_foreground_scale()
@@ -333,12 +333,12 @@ class VideoProcessor:
         if not self.config_manager.is_frame_manipulation_enabled():
             return segment
 
-        # 检查概率
+        # 检查概率（如果是100%则强制执行）
         frame_drop_prob = self.config_manager.get_frame_drop_probability()
-        if random.random() > frame_drop_prob:
+        if frame_drop_prob < 1.0 and random.random() > frame_drop_prob:
             return segment
 
-        print(f"  🎞️  应用抽帧处理（实验性防审核）")
+        print(f"  🎞️  应用抽帧处理（实验性防审核 - {'强制执行' if frame_drop_prob >= 1.0 else f'{frame_drop_prob:.1%}概率'}）")
 
         # 获取配置参数
         drop_interval = self.config_manager.get_frame_drop_interval()

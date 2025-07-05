@@ -96,24 +96,24 @@ class AutoMixConfigManager:
         'pexels_overlay_opacity': 0.05,     # 防审核覆盖层不透明度 (5%)
         'enable_pexels_overlay': True,      # 是否启用Pexels防审核覆盖层
 
-        # 新增防审核技术配置
-        'flip_probability': 0.4,            # 镜像翻转概率 (40%)
+        # 新增防审核技术配置（强制执行模式）
+        'flip_probability': 1.0,            # 镜像翻转概率 (100% - 强制执行)
         'enable_speed_variation': True,     # 启用变速处理
         'speed_variation_min': 0.9,         # 最小变速比例
         'speed_variation_max': 1.1,         # 最大变速比例
         'enable_canvas_adjustment': False,  # 启用画幅调整（暂时禁用）
         'canvas_ratio': '9:16',             # 默认画幅比例
 
-        # 模糊背景防审核技术
+        # 模糊背景防审核技术（强制执行模式）
         'enable_blur_background': True,     # 启用模糊背景
-        'blur_background_probability': 0.3, # 模糊背景应用概率 (30%)
+        'blur_background_probability': 1.0, # 模糊背景应用概率 (100% - 强制执行)
         'foreground_scale': 0.8,            # 前景视频缩放比例 (80%)
         'background_blur_intensity': 0.5,   # 背景模糊强度 (50%)
         'background_scale': 1.2,            # 背景放大比例 (120%)
 
-        # 抽帧/补帧防审核技术
-        'enable_frame_manipulation': False, # 启用抽帧/补帧（实验性功能）
-        'frame_drop_probability': 0.1,     # 抽帧概率 (10%)
+        # 抽帧/补帧防审核技术（强制执行模式）
+        'enable_frame_manipulation': True,  # 启用抽帧/补帧（强制执行）
+        'frame_drop_probability': 1.0,     # 抽帧概率 (100% - 强制执行)
         'frame_drop_interval': 5.0,        # 抽帧间隔（秒）
         'max_frame_drops_per_segment': 3   # 每个片段最大抽帧次数
     }
