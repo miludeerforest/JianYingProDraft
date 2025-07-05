@@ -3,8 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 剪映自动混剪工具 - Web界面</title>
+    <title>🎬 剪映自动混剪工具 v2.1.0</title>
     <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #4CAF50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --border-color: #e0e6ed;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --sidebar-width: 280px;
+            --header-height: 60px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,55 +29,31 @@
         }
 
         body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            background-attachment: fixed;
-            min-height: 100vh;
-            color: #333;
+            font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
             overflow-x: hidden;
         }
 
-        /* 动态背景粒子效果 */
-        .background-particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .particle {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
-        }
-
-        /* 页面加载动画 */
+        /* 页面加载器 */
         .page-loader {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+            transition: opacity 0.5s ease;
         }
 
         .page-loader.hidden {
             opacity: 0;
-            visibility: hidden;
+            pointer-events: none;
         }
 
         .loader-content {
@@ -69,13 +62,13 @@
         }
 
         .loader-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -83,848 +76,408 @@
             100% { transform: rotate(360deg); }
         }
 
-        .loader-text {
-            font-size: 18px;
-            font-weight: bold;
-            animation: pulse 2s ease-in-out infinite;
+        /* 主布局 */
+        .app-container {
+            display: flex;
+            height: 100vh;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
+        /* 侧边栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+            transform: translateX(0);
+            transition: var(--transition);
         }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
             padding: 20px;
-        }
-        
-        .header {
-            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            margin-bottom: 30px;
         }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
         }
 
-        .header p {
-            font-size: 1.2em;
+        .sidebar-header .version {
+            font-size: 12px;
             opacity: 0.9;
         }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
         }
-        
-        .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
+
+        .nav-item {
+            margin: 2px 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: var(--transition);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-primary);
+            color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-link .icon {
+            margin-right: 10px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .nav-link .text {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .nav-link .arrow {
+            font-size: 12px;
+            transition: var(--transition);
+        }
+
+        .nav-link.expanded .arrow {
+            transform: rotate(90deg);
+        }
+
+        /* 二级菜单 */
+        .sub-nav {
+            max-height: 0;
             overflow: hidden;
-            opacity: 0;
-            transform: translateY(30px);
-            animation: slideInUp 0.8s ease forwards;
+            transition: max-height 0.3s ease;
+            background: var(--bg-primary);
+            margin: 2px 10px;
+            border-radius: 8px;
         }
 
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.6s ease;
+        .sub-nav.expanded {
+            max-height: 300px;
         }
 
-        .card:hover::before {
-            left: 100%;
+        .sub-nav-link {
+            display: block;
+            padding: 10px 20px 10px 45px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            transition: var(--transition);
+            border-radius: 6px;
+            margin: 2px 5px;
         }
 
-        .card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        .sub-nav-link:hover {
+            background: white;
+            color: var(--primary-color);
         }
 
-        @keyframes slideInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
+        .sub-nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            transition: var(--transition);
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        /* 顶部栏 */
+        .top-bar {
+            height: var(--header-height);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb-item {
+            margin-right: 8px;
+        }
+
+        .breadcrumb-separator {
+            margin: 0 8px;
+            color: var(--border-color);
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .menu-toggle:hover {
+            background: var(--bg-primary);
+        }
+
+        /* 内容区域 */
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+        }
+
+        .card-title .icon {
+            margin-right: 8px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+            
+            .content-area {
+                padding: 15px;
             }
         }
 
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        
-        .card h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
-        }
-
-        .card h2::after {
-            content: '';
-            position: absolute;
-            bottom: -3px;
-            left: 0;
-            width: 50px;
-            height: 3px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 2px;
-        }
-        
-        .config-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .config-item {
-            margin-bottom: 15px;
-        }
-
-        .config-item label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        .config-section {
-            margin-bottom: 15px;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
-            border-left: 3px solid #667eea;
-        }
-
-        .config-section h3 {
-            color: #667eea;
-            font-size: 1em;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .config-item input, .config-item select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.9);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* 工具提示 */
+        .tooltip {
             position: relative;
+            cursor: help;
         }
 
-        .config-item input:focus, .config-item select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            transform: translateY(-2px);
-            background: white;
-        }
-
-        .config-item input:hover, .config-item select:hover {
-            border-color: #667eea;
-            transform: translateY(-1px);
-        }
-        
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin: 5px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn::before {
-            content: '';
+        .tooltip::after {
+            content: attr(data-tooltip);
             position: absolute;
-            top: 50%;
+            bottom: 100%;
             left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s ease, height 0.6s ease;
-        }
-
-        .btn:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:active {
-            transform: translateY(-1px) scale(1.02);
-        }
-        
-        .btn-success {
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
-        }
-        
-        .btn-warning {
-            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .stats-header {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        .stats-title {
-            font-size: 0.9em;
-            color: #667eea;
-            font-weight: 600;
-            margin-bottom: 3px;
-        }
-
-        .stats-subtitle {
-            font-size: 0.8em;
-            color: #888;
-            font-weight: 400;
-        }
-        
-        .stat-item {
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border-radius: 15px;
-            border-left: 4px solid #667eea;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            pointer-events: none;
+            transition: var(--transition);
+            z-index: 1000;
         }
 
-        .stat-item:hover::before {
+        .tooltip:hover::after {
             opacity: 1;
         }
 
-        .stat-item:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
-        }
-        
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .exclusion-list {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 10px;
-            background: #f9f9f9;
-        }
-
-        .exclusion-section {
-            margin-bottom: 12px;
+        /* 快速操作按钮 */
+        .quick-action-btn {
             display: flex;
-            flex-direction: column;
-            min-height: 0;
-            flex: 1;
-        }
-
-        .exclusion-header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .exclusion-title {
-            font-size: 1em;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .exclusion-count {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-        }
-        
-        .exclusion-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 5px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .exclusion-item:last-child {
-            border-bottom: none;
-        }
-
-        .add-exclusion-section {
-            margin-top: 15px;
             padding: 15px;
-            background: #f0f8ff;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .add-exclusion-form {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .effect-input {
-            flex: 1;
-            min-width: 200px;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            background: white;
-            position: relative;
-        }
-
-        .effect-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-        }
-
-        .autocomplete-container {
-            position: relative;
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .autocomplete-suggestions {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-
-        .autocomplete-suggestion {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 14px;
-        }
-
-        .autocomplete-suggestion:hover {
-            background: #f8f9fa;
-        }
-
-        .autocomplete-suggestion.selected {
-            background: #667eea;
-            color: white;
-        }
-
-        .autocomplete-suggestion:last-child {
-            border-bottom: none;
-        }
-
-        .search-highlight {
-            background: #ffeb3b;
-            font-weight: bold;
-        }
-
-        .btn-add {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-add:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-smart-exclude {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .btn-smart-exclude:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-        }
-
-        .exclusion-controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .status-panel {
-            grid-column: 1 / -1;
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-
-        .control-section {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding: 12px;
-            background: rgba(102, 126, 234, 0.05);
-            border-radius: 8px;
-            border: 1px solid rgba(102, 126, 234, 0.1);
-        }
-
-        .control-label {
-            font-weight: 600;
-            color: #555;
-            font-size: 1em;
-        }
-
-        .product-select {
-            min-width: 200px;
-            padding: 10px 15px;
-            border: 2px solid #e0e0e0;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
             border-radius: 10px;
-            background: white;
-            font-size: 14px;
-            transition: all 0.3s ease;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: left;
+            width: 100%;
         }
 
-        .product-select:focus {
+        .quick-action-btn:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .quick-action-btn .icon {
+            font-size: 24px;
+            margin-right: 15px;
+            color: var(--primary-color);
+        }
+
+        .quick-action-btn .title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 3px;
+        }
+
+        .quick-action-btn .desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg-secondary);
+            transition: var(--transition);
+        }
+
+        .form-input:focus, .form-select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-        
-        .progress-bar {
-            width: 100%;
-            height: 25px;
-            background: rgba(224, 224, 224, 0.3);
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 15px 0;
-            position: relative;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
 
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-            width: 0%;
-            transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            border-radius: 15px;
-            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
-        }
-
-        .progress-fill::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-        
-        .status-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(76, 175, 80, 0.05);
-            border-radius: 12px;
-            border: 1px solid rgba(76, 175, 80, 0.1);
-        }
-
-        .status-section h3 {
-            color: #4CAF50;
-            font-size: 1.1em;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .status-display {
-            margin-top: 15px;
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.7);
+        .btn {
+            padding: 10px 20px;
+            border: none;
             border-radius: 8px;
-            border-left: 4px solid #4CAF50;
-        }
-
-        .status-label {
-            font-weight: 600;
-            color: #555;
-            margin-right: 10px;
-        }
-
-        .status-value {
-            color: #4CAF50;
-            font-weight: 600;
-        }
-
-        .log-section {
-            margin-bottom: 20px;
-        }
-
-        .log-section h3 {
-            color: #667eea;
-            font-size: 1.1em;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-
-        .log-area {
-            background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            height: 120px;
-            overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            line-height: 1.3;
-            white-space: pre-wrap;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-            flex: 1;
-        }
-        
-        .alert {
-            padding: 15px 20px;
-            border-radius: 12px;
-            margin: 10px 20px;
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            min-width: 300px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 14px;
             font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .alert-success {
-            background: linear-gradient(135deg, rgba(212, 237, 218, 0.9) 0%, rgba(195, 230, 203, 0.9) 100%);
-            color: #155724;
-            border-left: 4px solid #28a745;
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
         }
 
-        .alert-error {
-            background: linear-gradient(135deg, rgba(248, 215, 218, 0.9) 0%, rgba(245, 198, 203, 0.9) 100%);
-            color: #721c24;
-            border-left: 4px solid #dc3545;
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
         }
 
-        .alert-info {
-            background: linear-gradient(135deg, rgba(209, 236, 241, 0.9) 0%, rgba(190, 229, 235, 0.9) 100%);
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
+        .btn-success {
+            background: var(--accent-color);
+            color: white;
         }
 
-        /* 脉冲动画 */
-        .pulse {
-            animation: pulse-animation 2s infinite;
-        }
-
-        @keyframes pulse-animation {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        /* 摇摆动画 */
-        .shake {
-            animation: shake-animation 0.5s ease-in-out;
-        }
-
-        @keyframes shake-animation {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        /* 弹跳动画 */
-        .bounce {
-            animation: bounce-animation 0.6s ease;
-        }
-
-        @keyframes bounce-animation {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-10px); }
-            60% { transform: translateY(-5px); }
-        }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .config-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
-            .card {
-                padding: 20px;
-                margin-bottom: 15px;
-            }
-
-            .header h1 {
-                font-size: 2em;
-            }
-
-            .btn {
-                padding: 10px 20px;
-                font-size: 14px;
-                margin: 3px;
-            }
-
-            .alert {
-                margin: 10px;
-                min-width: auto;
-                right: 10px;
-                left: 10px;
-            }
-
-            /* 移动端触摸优化 */
-            .btn, .config-item input, .config-item select {
-                min-height: 44px; /* iOS推荐的最小触摸目标 */
-            }
-
-            /* 移动端卡片悬停效果调整 */
-            .card:hover {
-                transform: translateY(-5px) scale(1.01);
-            }
-        }
-
-        /* 平板端适配 */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .config-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* 大屏幕优化 */
-        @media (min-width: 1400px) {
-            .container {
-                max-width: 1400px;
-            }
-
-            .main-content {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .config-grid {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
-        }
-
-        /* 排版增强 */
-        .card h3 {
-            color: #667eea;
-            font-size: 1em;
-            margin: 15px 0 10px 0;
-            font-weight: 600;
-            padding-left: 12px;
-            border-left: 3px solid #667eea;
-            flex-shrink: 0;
-        }
-
-        /* 确保内容区域正确分配空间 */
-        .card-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        .section-divider {
-            height: 2px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 1px;
-            margin: 30px 0;
-            opacity: 0.3;
-        }
-
-        /* 表单增强 */
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* 按钮组 */
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 25px;
-        }
-
-        /* 信息提示 */
-        .info-tip {
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin: 15px 0;
-            font-size: 0.9em;
-            color: #667eea;
-        }
-
-        .info-tip::before {
-            content: '💡 ';
-            margin-right: 5px;
-        }
-
-        /* 高级防审核技术样式 */
-        .config-item input[type="range"] {
-            width: 60% !important;
-            margin-right: 10px;
-        }
-
-        .config-item span {
-            color: #4CAF50;
-            font-weight: bold;
-            min-width: 50px;
-            display: inline-block;
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-1px);
         }
 
         .btn-warning {
-            background: linear-gradient(45deg, #ff9800, #f57c00);
+            background: var(--warning-color);
             color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 0 10px;
-            transition: all 0.3s ease;
         }
 
         .btn-warning:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
+            background: #f57c00;
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -933,1105 +486,386 @@
     <div class="page-loader" id="pageLoader">
         <div class="loader-content">
             <div class="loader-spinner"></div>
-            <div class="loader-text">🎬 加载剪映自动混剪工具...</div>
+            <div>正在加载剪映自动混剪工具...</div>
         </div>
     </div>
 
-    <!-- 动态背景粒子 -->
-    <div class="background-particles" id="backgroundParticles"></div>
-
-    <div class="container">
-        <div class="header">
-            <h1>🎬 剪映自动混剪工具</h1>
-            <p>Web交互界面 v2.1.0 - 轻微特效参数优化，纹理和滤镜参数支持</p>
-        </div>
-        
-        <div class="main-content">
-            <!-- 配置管理 -->
-            <div class="card">
-                <h2>⚙️ 配置管理</h2>
-                <div class="info-tip">
-                    💡 特效、滤镜、转场默认100%添加，无需设置概率
-                </div>
-                <div class="config-grid">
-                    <div class="config-item">
-                        <label>📁 素材库路径:</label>
-                        <input type="text" id="material_path" placeholder="素材库路径">
-                    </div>
-                    <div class="config-item">
-                        <label>💾 草稿输出路径:</label>
-                        <input type="text" id="draft_output_path" placeholder="草稿输出路径">
-                    </div>
-                    <div class="config-item">
-                        <label>⏱️ 最小时长(秒):</label>
-                        <input type="number" id="video_duration_min" min="5" max="300">
-                    </div>
-                    <div class="config-item">
-                        <label>⏱️ 最大时长(秒):</label>
-                        <input type="number" id="video_duration_max" min="5" max="300">
-                    </div>
-                    <div class="config-item">
-                        <label>🎬 视频缩放(%):</label>
-                        <input type="number" id="video_scale_factor" min="100" max="120" step="1" value="105">
-                    </div>
-                    <div class="config-item">
-                        <label>🔊 旁白音量(%):</label>
-                        <input type="number" id="narration_volume" min="0" max="100" step="5" value="100">
-                    </div>
-                    <div class="config-item">
-                        <label>🎵 背景音量(%):</label>
-                        <input type="number" id="background_volume" min="0" max="50" step="1" value="10">
-                    </div>
-                    <div class="config-item">
-                        <label>📦 批量生成数量:</label>
-                        <input type="number" id="batch_count" min="1" max="100">
-                    </div>
-                </div>
-
-                <!-- 高级防审核技术配置 -->
-                <div class="config-section">
-                    <h3>🛡️ 高级防审核技术</h3>
-                    <div class="config-grid">
-                        <div class="config-item">
-                            <label>🔄 镜像翻转概率:</label>
-                            <input type="range" id="flip_probability" min="0" max="1" step="0.1" value="1.0"
-                                   oninput="updateRangeValue('flip_probability', this.value)">
-                            <span id="flip_probability_value">100%</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🌫️ 模糊背景:</label>
-                            <select id="blur_background_enabled">
-                                <option value="true">启用</option>
-                                <option value="false">禁用</option>
-                            </select>
-                        </div>
-                        <div class="config-item">
-                            <label>🌫️ 模糊背景概率:</label>
-                            <input type="range" id="blur_background_probability" min="0" max="1" step="0.1" value="1.0"
-                                   oninput="updateRangeValue('blur_background_probability', this.value)">
-                            <span id="blur_background_probability_value">100%</span>
-                        </div>
-                        <div class="config-item">
-                            <label>📐 前景缩放(%):</label>
-                            <input type="number" id="foreground_scale" min="50" max="100" step="5" value="80">
-                        </div>
-                        <div class="config-item">
-                            <label>📏 背景放大(%):</label>
-                            <input type="number" id="background_scale" min="100" max="200" step="10" value="120">
-                        </div>
-                        <div class="config-item">
-                            <label>🌀 模糊强度(%):</label>
-                            <input type="number" id="background_blur_intensity" min="10" max="100" step="10" value="50">
-                        </div>
-                        <div class="config-item">
-                            <label>🎞️ 抽帧处理:</label>
-                            <select id="frame_manipulation_enabled">
-                                <option value="true">启用</option>
-                                <option value="false">禁用</option>
-                            </select>
-                        </div>
-                        <div class="config-item">
-                            <label>🎞️ 抽帧概率:</label>
-                            <input type="range" id="frame_drop_probability" min="0" max="1" step="0.1" value="1.0"
-                                   oninput="updateRangeValue('frame_drop_probability', this.value)">
-                            <span id="frame_drop_probability_value">100%</span>
-                        </div>
-                        <div class="config-item">
-                            <label>⏱️ 抽帧间隔(秒):</label>
-                            <input type="number" id="frame_drop_interval" min="1" max="30" step="1" value="5">
-                        </div>
-                        <div class="config-item">
-                            <label>🔢 最大抽帧数:</label>
-                            <input type="number" id="max_frame_drops_per_segment" min="1" max="10" step="1" value="3">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 轻微特效参数配置 -->
-                <div class="config-section">
-                    <h3>🎨 轻微特效参数配置 (v2.1.0)</h3>
-                    <div class="info-tip">
-                        💡 所有特效参数均控制在轻微范围内，避免过度强烈的视觉效果
-                    </div>
-                    <div class="config-grid">
-                        <div class="config-item">
-                            <label>💡 滤镜强度最小值(%):</label>
-                            <input type="number" id="filter_intensity_min" min="5" max="50" step="1" value="10">
-                        </div>
-                        <div class="config-item">
-                            <label>💡 滤镜强度最大值(%):</label>
-                            <input type="number" id="filter_intensity_max" min="5" max="50" step="1" value="25">
-                        </div>
-                        <div class="config-item">
-                            <label>🌟 亮度参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">15-35 (轻微调整)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🎭 对比度参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">20-40 (轻微调整)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🎨 饱和度参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">25-45 (轻微调整)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>📏 大小参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">10-30 (轻微缩放)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>⚡ 速度参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">25-45 (轻微变速)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>💪 强度参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">10-25 (轻微强度)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>👻 透明度参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">20-40 (轻微透明)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🌫️ 模糊参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">5-20 (轻微模糊)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🔄 旋转参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">10-30 (轻微旋转)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🧱 纹理参数范围: ⭐</label>
-                            <span style="color: #4CAF50; font-size: 12px;">15-35 (轻微纹理)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🎭 滤镜参数范围: ⭐</label>
-                            <span style="color: #4CAF50; font-size: 12px;">20-40 (轻微滤镜)</span>
-                        </div>
-                        <div class="config-item">
-                            <label>🎯 其他参数范围:</label>
-                            <span style="color: #666; font-size: 12px;">中心25±8 (正态分布)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn" onclick="loadConfig()">🔄 刷新配置</button>
-                    <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
-                    <button class="btn btn-warning" onclick="setForceExecutionMode()">🎯 设为强制执行模式</button>
-                </div>
+    <!-- 主应用容器 -->
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>🎬 剪映混剪工具</h1>
+                <div class="version">v2.1.0 - 轻微特效优化版</div>
             </div>
             
-            <!-- 排除管理 -->
-            <div class="card">
-                <h2>🚫 排除管理</h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-number" id="filters-total">0</div>
-                        <div class="stat-label">总滤镜</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="effects-total">0</div>
-                        <div class="stat-label">总特效</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-number" id="transitions-total">0</div>
-                        <div class="stat-label">总转场</div>
+            <div class="sidebar-nav">
+                <!-- 一级菜单：概览 -->
+                <div class="nav-item">
+                    <a class="nav-link active" data-section="overview">
+                        <span class="icon">🏠</span>
+                        <span class="text">概览</span>
+                    </a>
+                </div>
+
+                <!-- 一级菜单：配置管理 -->
+                <div class="nav-item">
+                    <a class="nav-link" data-section="config" data-has-submenu="true">
+                        <span class="icon">⚙️</span>
+                        <span class="text">配置管理</span>
+                        <span class="arrow">▶</span>
+                    </a>
+                    <div class="sub-nav">
+                        <a class="sub-nav-link" data-section="config-basic">基础配置</a>
+                        <a class="sub-nav-link" data-section="config-anti-detect">防审核设置</a>
+                        <a class="sub-nav-link" data-section="config-effects">特效参数</a>
+                        <a class="sub-nav-link" data-section="config-advanced">高级选项</a>
                     </div>
                 </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label>🎨 已排除滤镜 (<span id="filters-excluded">0</span>个):</label>
-                    <div class="exclusion-list" id="filters-list"></div>
-                    <div class="add-exclusion-section">
-                        <div class="add-exclusion-form">
-                            <div class="autocomplete-container">
-                                <input type="text" class="effect-input" id="filters-input"
-                                       placeholder="输入滤镜名称进行搜索..."
-                                       autocomplete="off"
-                                       oninput="handleAutocomplete('filters', this.value)"
-                                       onkeydown="handleKeydown(event, 'filters')"
-                                       onblur="hideAutocomplete('filters')">
-                                <div class="autocomplete-suggestions" id="filters-suggestions"></div>
+                <!-- 一级菜单：特效管理 -->
+                <div class="nav-item">
+                    <a class="nav-link" data-section="effects" data-has-submenu="true">
+                        <span class="icon">🎨</span>
+                        <span class="text">特效管理</span>
+                        <span class="arrow">▶</span>
+                    </a>
+                    <div class="sub-nav">
+                        <a class="sub-nav-link" data-section="effects-exclusion">特效排除</a>
+                        <a class="sub-nav-link" data-section="effects-filters">滤镜管理</a>
+                        <a class="sub-nav-link" data-section="effects-transitions">转场设置</a>
+                        <a class="sub-nav-link" data-section="effects-smart">智能排除</a>
+                    </div>
+                </div>
+
+                <!-- 一级菜单：混剪操作 -->
+                <div class="nav-item">
+                    <a class="nav-link" data-section="automix" data-has-submenu="true">
+                        <span class="icon">🎬</span>
+                        <span class="text">混剪操作</span>
+                        <span class="arrow">▶</span>
+                    </a>
+                    <div class="sub-nav">
+                        <a class="sub-nav-link" data-section="automix-single">单个混剪</a>
+                        <a class="sub-nav-link" data-section="automix-batch">批量生成</a>
+                        <a class="sub-nav-link" data-section="automix-products">产品选择</a>
+                    </div>
+                </div>
+
+                <!-- 一级菜单：状态监控 -->
+                <div class="nav-item">
+                    <a class="nav-link" data-section="monitor">
+                        <span class="icon">📊</span>
+                        <span class="text">状态监控</span>
+                    </a>
+                </div>
+
+                <!-- 一级菜单：帮助 -->
+                <div class="nav-item">
+                    <a class="nav-link" data-section="help">
+                        <span class="icon">❓</span>
+                        <span class="text">帮助文档</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容区域 -->
+        <main class="main-content" id="mainContent">
+            <!-- 顶部栏 -->
+            <header class="top-bar">
+                <div class="breadcrumb" id="breadcrumb">
+                    <span class="breadcrumb-item">🏠 概览</span>
+                </div>
+                <div class="top-actions">
+                    <button class="menu-toggle" id="menuToggle">☰</button>
+                </div>
+            </header>
+
+            <!-- 内容区域 -->
+            <div class="content-area" id="contentArea">
+                <!-- 概览页面 -->
+                <section class="content-section active" id="section-overview">
+                    <!-- 欢迎卡片 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">🎬</span>
+                                欢迎使用剪映自动混剪工具 v2.1.0
+                            </h2>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                            <div>
+                                <h3 style="color: var(--primary-color); margin-bottom: 10px;">🎯 核心功能</h3>
+                                <ul style="list-style: none; padding: 0;">
+                                    <li style="padding: 5px 0;"><span style="color: var(--accent-color);">✓</span> 智能视频混剪</li>
+                                    <li style="padding: 5px 0;"><span style="color: var(--accent-color);">✓</span> 轻微特效优化</li>
+                                    <li style="padding: 5px 0;"><span style="color: var(--accent-color);">✓</span> 防审核技术</li>
+                                    <li style="padding: 5px 0;"><span style="color: var(--accent-color);">✓</span> 批量生成</li>
+                                </ul>
                             </div>
-                            <button class="btn-add" onclick="addExclusion('filters')">➕ 添加排除</button>
+                            <div>
+                                <h3 style="color: var(--primary-color); margin-bottom: 10px;">🆕 v2.1.0 更新</h3>
+                                <ul style="list-style: none; padding: 0;">
+                                    <li style="padding: 5px 0;"><span style="color: var(--warning-color);">⭐</span> 纹理参数支持</li>
+                                    <li style="padding: 5px 0;"><span style="color: var(--warning-color);">⭐</span> 滤镜参数支持</li>
+                                    <li style="padding: 5px 0;"><span style="color: var(--warning-color);">⭐</span> 泰语字幕修复</li>
+                                    <li style="padding: 5px 0;"><span style="color: var(--warning-color);">⭐</span> 界面性能优化</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label>✨ 已排除特效 (<span id="effects-excluded">0</span>个):</label>
-                    <div class="exclusion-list" id="effects-list"></div>
-                    <div class="add-exclusion-section">
-                        <div class="add-exclusion-form">
-                            <div class="autocomplete-container">
-                                <input type="text" class="effect-input" id="effects-input"
-                                       placeholder="输入特效名称进行搜索..."
-                                       autocomplete="off"
-                                       oninput="handleAutocomplete('effects', this.value)"
-                                       onkeydown="handleKeydown(event, 'effects')"
-                                       onblur="hideAutocomplete('effects')">
-                                <div class="autocomplete-suggestions" id="effects-suggestions"></div>
-                            </div>
-                            <button class="btn-add" onclick="addExclusion('effects')">➕ 添加排除</button>
+                    <!-- 统计信息 -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div class="card" style="text-align: center; padding: 15px;">
+                            <div style="font-size: 24px; color: var(--primary-color); margin-bottom: 5px;">912</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">视频特效</div>
+                        </div>
+                        <div class="card" style="text-align: center; padding: 15px;">
+                            <div style="font-size: 24px; color: var(--accent-color); margin-bottom: 5px;">468</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">滤镜效果</div>
+                        </div>
+                        <div class="card" style="text-align: center; padding: 15px;">
+                            <div style="font-size: 24px; color: var(--warning-color); margin-bottom: 5px;">362</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">转场动画</div>
+                        </div>
+                        <div class="card" style="text-align: center; padding: 15px;">
+                            <div style="font-size: 24px; color: var(--secondary-color); margin-bottom: 5px;">12</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">参数类型</div>
                         </div>
                     </div>
-                </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label>🔄 已排除转场 (<span id="transitions-excluded">0</span>个):</label>
-                    <div class="exclusion-list" id="transitions-list"></div>
-                    <div class="add-exclusion-section">
-                        <div class="add-exclusion-form">
-                            <div class="autocomplete-container">
-                                <input type="text" class="effect-input" id="transitions-input"
-                                       placeholder="输入转场名称进行搜索..."
-                                       autocomplete="off"
-                                       oninput="handleAutocomplete('transitions', this.value)"
-                                       onkeydown="handleKeydown(event, 'transitions')"
-                                       onblur="hideAutocomplete('transitions')">
-                                <div class="autocomplete-suggestions" id="transitions-suggestions"></div>
-                            </div>
-                            <button class="btn-add" onclick="addExclusion('transitions')">➕ 添加排除</button>
+                    <!-- 快速操作 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">⚡</span>
+                                快速操作
+                            </h2>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                            <button class="quick-action-btn" data-action="config-basic">
+                                <span class="icon">⚙️</span>
+                                <div>
+                                    <div class="title">基础配置</div>
+                                    <div class="desc">设置素材路径和输出目录</div>
+                                </div>
+                            </button>
+                            <button class="quick-action-btn" data-action="effects-smart">
+                                <span class="icon">🎨</span>
+                                <div>
+                                    <div class="title">智能排除</div>
+                                    <div class="desc">一键排除夸张特效</div>
+                                </div>
+                            </button>
+                            <button class="quick-action-btn" data-action="automix-single">
+                                <span class="icon">🎬</span>
+                                <div>
+                                    <div class="title">开始混剪</div>
+                                    <div class="desc">生成单个混剪视频</div>
+                                </div>
+                            </button>
+                            <button class="quick-action-btn" data-action="automix-batch">
+                                <span class="icon">📊</span>
+                                <div>
+                                    <div class="title">批量生成</div>
+                                    <div class="desc">一次生成多个版本</div>
+                                </div>
+                            </button>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <div class="exclusion-controls">
-                    <button class="btn" onclick="loadExclusions()">🔄 刷新排除列表</button>
-                    <button class="btn-smart-exclude" onclick="smartExcludeEffects()">🚫 智能排除夸张特效</button>
-                </div>
+                <!-- 其他内容区域将通过JavaScript动态加载 -->
             </div>
-        </div>
-
-        <!-- 自动混剪控制 -->
-        <div class="status-panel">
-            <h2>🎬 自动混剪控制</h2>
-
-            <div style="margin-bottom: 20px;">
-                <label>📦 选择产品:</label>
-                <select id="product_select" style="width: 200px; margin-right: 10px;">
-                    <option value="">自动选择</option>
-                </select>
-                <button class="btn btn-success" onclick="startAutomix()" id="start-btn">🚀 开始混剪</button>
-                <button class="btn" onclick="loadProducts()">🔄 刷新产品列表</button>
-            </div>
-
-            <div style="margin-bottom: 20px;">
-                <label>📊 混剪状态:</label>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill">
-                        <div class="progress-text" id="progress-text">0%</div>
-                    </div>
-                </div>
-                <div id="status-text">就绪</div>
-            </div>
-
-            <div>
-                <label>📋 运行日志:</label>
-                <div class="log-area" id="log-area">等待开始混剪...</div>
-            </div>
-        </div>
+        </main>
     </div>
-    
+
     <script>
-        // 全局变量
-        let isRunning = false;
-        let statusInterval = null;
-        
-        // 页面加载时初始化
-        window.addEventListener('load', function() {
-            // 初始化背景粒子
-            initBackgroundParticles();
-
-            // 延迟隐藏加载器
-            setTimeout(() => {
-                document.getElementById('pageLoader').classList.add('hidden');
-
-                // 初始化页面内容
-                setTimeout(() => {
-                    loadConfig();
-                    loadExclusions();
-                    loadProducts();
-                    loadAvailableEffects();
-                    initInteractiveEffects();
-                }, 500);
-            }, 1500);
-        });
-
-        // 初始化背景粒子效果
-        function initBackgroundParticles() {
-            const container = document.getElementById('backgroundParticles');
-            const particleCount = 20;
-
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-
-                // 随机大小和位置
-                const size = Math.random() * 6 + 2;
-                particle.style.width = size + 'px';
-                particle.style.height = size + 'px';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.top = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 6 + 's';
-                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
-
-                container.appendChild(particle);
+        // 基础应用类
+        class AutoMixApp {
+            constructor() {
+                this.currentSection = 'overview';
+                this.init();
             }
-        }
 
-        // 初始化交互效果
-        function initInteractiveEffects() {
-            // 为所有卡片添加鼠标跟踪效果
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                card.addEventListener('mousemove', handleCardMouseMove);
-                card.addEventListener('mouseleave', handleCardMouseLeave);
-            });
-
-            // 为统计项添加点击动画
-            const statItems = document.querySelectorAll('.stat-item');
-            statItems.forEach(item => {
-                item.addEventListener('click', handleStatItemClick);
-            });
-        }
-
-        // 卡片鼠标跟踪效果
-        function handleCardMouseMove(e) {
-            const card = e.currentTarget;
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-
-            const rotateX = (y - centerY) / 10;
-            const rotateY = (centerX - x) / 10;
-
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px) scale(1.02)`;
-        }
-
-        // 卡片鼠标离开效果
-        function handleCardMouseLeave(e) {
-            const card = e.currentTarget;
-            card.style.transform = '';
-        }
-
-        // 统计项点击动画
-        function handleStatItemClick(e) {
-            const item = e.currentTarget;
-            item.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                item.style.transform = '';
-            }, 150);
-        }
-
-        // 更新滑块值显示
-        function updateRangeValue(id, value) {
-            const percentage = Math.round(value * 100);
-            document.getElementById(id + '_value').textContent = percentage + '%';
-        }
-
-        // 设为强制执行模式
-        function setForceExecutionMode() {
-            document.getElementById('flip_probability').value = 1.0;
-            updateRangeValue('flip_probability', 1.0);
-            document.getElementById('blur_background_enabled').value = 'true';
-            document.getElementById('blur_background_probability').value = 1.0;
-            updateRangeValue('blur_background_probability', 1.0);
-            document.getElementById('frame_manipulation_enabled').value = 'true';
-            document.getElementById('frame_drop_probability').value = 1.0;
-            updateRangeValue('frame_drop_probability', 1.0);
-
-            showAlert('已设置为强制执行模式（100%执行）', 'success');
-        }
-
-        // 加载配置
-        async function loadConfig() {
-            try {
-                const response = await fetch('/api/config');
-                const config = await response.json();
-                
-                if (config.error) {
-                    showAlert('加载配置失败: ' + config.error, 'error');
-                    return;
-                }
-                
-                // 填充配置表单
-                document.getElementById('material_path').value = config.material_path || '';
-                document.getElementById('draft_output_path').value = config.draft_output_path || '';
-                document.getElementById('video_duration_min').value = config.video_duration_min || 30;
-                document.getElementById('video_duration_max').value = config.video_duration_max || 40;
-                document.getElementById('video_scale_factor').value = Math.round((config.video_scale_factor || 1.05) * 100);
-                document.getElementById('narration_volume').value = Math.round((config.narration_volume || 1.0) * 100);
-                document.getElementById('background_volume').value = Math.round((config.background_volume || 0.1) * 100);
-                document.getElementById('batch_count').value = config.batch_count || 5;
-
-                // 高级防审核技术配置
-                document.getElementById('flip_probability').value = config.flip_probability || 1.0;
-                updateRangeValue('flip_probability', config.flip_probability || 1.0);
-                document.getElementById('blur_background_enabled').value = config.blur_background_enabled ? 'true' : 'false';
-                document.getElementById('blur_background_probability').value = config.blur_background_probability || 1.0;
-                updateRangeValue('blur_background_probability', config.blur_background_probability || 1.0);
-                document.getElementById('foreground_scale').value = Math.round((config.foreground_scale || 0.8) * 100);
-                document.getElementById('background_scale').value = Math.round((config.background_scale || 1.2) * 100);
-                document.getElementById('background_blur_intensity').value = Math.round((config.background_blur_intensity || 0.5) * 100);
-                document.getElementById('frame_manipulation_enabled').value = config.frame_manipulation_enabled ? 'true' : 'false';
-                document.getElementById('frame_drop_probability').value = config.frame_drop_probability || 1.0;
-                updateRangeValue('frame_drop_probability', config.frame_drop_probability || 1.0);
-                document.getElementById('frame_drop_interval').value = config.frame_drop_interval || 5;
-                document.getElementById('max_frame_drops_per_segment').value = config.max_frame_drops_per_segment || 3;
-
-                // 轻微特效参数配置
-                document.getElementById('filter_intensity_min').value = config.filter_intensity_min || 10;
-                document.getElementById('filter_intensity_max').value = config.filter_intensity_max || 25;
-
-                showAlert('配置加载成功', 'success');
-            } catch (error) {
-                showAlert('加载配置失败: ' + error.message, 'error');
+            init() {
+                this.bindEvents();
+                this.hideLoader();
             }
-        }
-        
-        // 保存配置（增强版）
-        async function saveConfig() {
-            const saveBtn = document.querySelector('button[onclick="saveConfig()"]');
-            const originalText = saveBtn.textContent;
 
-            try {
-                // 按钮动画
-                saveBtn.textContent = '💾 保存中...';
-                saveBtn.disabled = true;
-                saveBtn.classList.add('pulse');
-
-                const config = {
-                    material_path: document.getElementById('material_path').value,
-                    draft_output_path: document.getElementById('draft_output_path').value,
-                    video_duration_min: parseInt(document.getElementById('video_duration_min').value),
-                    video_duration_max: parseInt(document.getElementById('video_duration_max').value),
-                    video_scale_factor: parseFloat(document.getElementById('video_scale_factor').value) / 100,
-                    narration_volume: parseFloat(document.getElementById('narration_volume').value) / 100,
-                    background_volume: parseFloat(document.getElementById('background_volume').value) / 100,
-                    batch_count: parseInt(document.getElementById('batch_count').value),
-
-                    // 高级防审核技术配置
-                    flip_probability: parseFloat(document.getElementById('flip_probability').value),
-                    blur_background_enabled: document.getElementById('blur_background_enabled').value === 'true',
-                    blur_background_probability: parseFloat(document.getElementById('blur_background_probability').value),
-                    foreground_scale: parseFloat(document.getElementById('foreground_scale').value) / 100,
-                    background_scale: parseFloat(document.getElementById('background_scale').value) / 100,
-                    background_blur_intensity: parseFloat(document.getElementById('background_blur_intensity').value) / 100,
-                    frame_manipulation_enabled: document.getElementById('frame_manipulation_enabled').value === 'true',
-                    frame_drop_probability: parseFloat(document.getElementById('frame_drop_probability').value),
-                    frame_drop_interval: parseFloat(document.getElementById('frame_drop_interval').value),
-                    max_frame_drops_per_segment: parseInt(document.getElementById('max_frame_drops_per_segment').value),
-
-                    // 轻微特效参数配置
-                    filter_intensity_min: parseInt(document.getElementById('filter_intensity_min').value),
-                    filter_intensity_max: parseInt(document.getElementById('filter_intensity_max').value)
-                };
-
-                const response = await fetch('/api/config', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(config)
+            bindEvents() {
+                // 菜单点击事件
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.nav-link')) {
+                        this.handleNavClick(e.target.closest('.nav-link'));
+                    }
+                    if (e.target.closest('.sub-nav-link')) {
+                        this.handleSubNavClick(e.target.closest('.sub-nav-link'));
+                    }
+                    if (e.target.closest('.quick-action-btn')) {
+                        this.handleQuickAction(e.target.closest('.quick-action-btn'));
+                    }
                 });
 
-                const result = await response.json();
+                // 移动端菜单切换
+                document.getElementById('menuToggle').addEventListener('click', () => {
+                    this.toggleSidebar();
+                });
+            }
 
-                if (result.success) {
-                    showAlert('配置保存成功', 'success');
-                    saveBtn.classList.add('bounce');
-                    saveBtn.textContent = '✅ 保存成功';
+            handleNavClick(navLink) {
+                const section = navLink.dataset.section;
+                const hasSubmenu = navLink.dataset.hasSubmenu === 'true';
+
+                if (hasSubmenu) {
+                    this.toggleSubmenu(navLink);
                 } else {
-                    showAlert('配置保存失败: ' + result.errors.join(', '), 'error');
-                    saveBtn.classList.add('shake');
-                    saveBtn.textContent = '❌ 保存失败';
+                    this.switchSection(section);
+                    this.setActiveNav(navLink);
                 }
-            } catch (error) {
-                showAlert('保存配置失败: ' + error.message, 'error');
-                saveBtn.classList.add('shake');
-                saveBtn.textContent = '❌ 保存失败';
-            } finally {
-                // 恢复按钮状态
-                setTimeout(() => {
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = originalText;
-                    saveBtn.classList.remove('pulse', 'bounce', 'shake');
-                }, 2000);
             }
-        }
-        
-        // 加载排除列表
-        async function loadExclusions() {
-            try {
-                const response = await fetch('/api/exclusions');
-                const stats = await response.json();
-                
-                if (stats.error) {
-                    showAlert('加载排除列表失败: ' + stats.error, 'error');
-                    return;
+
+            handleSubNavClick(subNavLink) {
+                const section = subNavLink.dataset.section;
+                this.switchSection(section);
+                this.setActiveSubNav(subNavLink);
+            }
+
+            handleQuickAction(actionBtn) {
+                const action = actionBtn.dataset.action;
+                this.switchSection(action);
+
+                // 更新导航状态
+                const targetSubNav = document.querySelector(`[data-section="${action}"]`);
+                if (targetSubNav && targetSubNav.classList.contains('sub-nav-link')) {
+                    this.setActiveSubNav(targetSubNav);
+                    // 展开对应的父菜单
+                    const parentNav = targetSubNav.closest('.nav-item').querySelector('.nav-link');
+                    if (parentNav) {
+                        this.toggleSubmenu(parentNav);
+                    }
                 }
-                
-                // 更新统计信息
-                document.getElementById('filters-total').textContent = stats.filters.total;
-                document.getElementById('filters-excluded').textContent = stats.filters.excluded;
-                document.getElementById('effects-total').textContent = stats.effects.total;
-                document.getElementById('effects-excluded').textContent = stats.effects.excluded;
-                document.getElementById('transitions-total').textContent = stats.transitions.total;
-                document.getElementById('transitions-excluded').textContent = stats.transitions.excluded;
-                
-                // 更新排除列表
-                updateExclusionList('filters', stats.filters.excluded_list);
-                updateExclusionList('effects', stats.effects.excluded_list);
-                updateExclusionList('transitions', stats.transitions.excluded_list);
-                
-            } catch (error) {
-                showAlert('加载排除列表失败: ' + error.message, 'error');
             }
-        }
-        
-        // 更新排除列表显示
-        function updateExclusionList(type, excludedList) {
-            const container = document.getElementById(type + '-list');
-            container.innerHTML = '';
-            
-            if (excludedList.length === 0) {
-                container.innerHTML = '<div style="text-align: center; color: #999;">暂无排除项</div>';
-                return;
+
+            toggleSubmenu(navLink) {
+                const subNav = navLink.parentElement.querySelector('.sub-nav');
+                const isExpanded = navLink.classList.contains('expanded');
+
+                // 关闭其他展开的菜单
+                document.querySelectorAll('.nav-link.expanded').forEach(link => {
+                    if (link !== navLink) {
+                        link.classList.remove('expanded');
+                        link.parentElement.querySelector('.sub-nav').classList.remove('expanded');
+                    }
+                });
+
+                if (isExpanded) {
+                    navLink.classList.remove('expanded');
+                    subNav.classList.remove('expanded');
+                } else {
+                    navLink.classList.add('expanded');
+                    subNav.classList.add('expanded');
+                }
             }
-            
-            excludedList.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'exclusion-item';
-                div.innerHTML = `
-                    <span>${item}</span>
-                    <button class="btn btn-danger" style="padding: 2px 8px; font-size: 12px;" 
-                            onclick="removeExclusion('${type}', '${item}')">移除</button>
+
+            switchSection(section) {
+                // 隐藏所有内容区域
+                document.querySelectorAll('.content-section').forEach(sec => {
+                    sec.classList.remove('active');
+                });
+
+                // 显示目标区域
+                let targetSection = document.getElementById(`section-${section}`);
+                if (!targetSection) {
+                    // 如果区域不存在，动态创建
+                    targetSection = this.createSection(section);
+                }
+                targetSection.classList.add('active');
+
+                this.currentSection = section;
+                this.updateBreadcrumb(section);
+            }
+
+            createSection(section) {
+                const contentArea = document.getElementById('contentArea');
+                const sectionElement = document.createElement('section');
+                sectionElement.className = 'content-section';
+                sectionElement.id = `section-${section}`;
+                sectionElement.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">⚙️</span>
+                                ${this.getSectionTitle(section)}
+                            </h2>
+                        </div>
+                        <p>正在加载 ${this.getSectionTitle(section)} 内容...</p>
+                    </div>
                 `;
-                container.appendChild(div);
-            });
-        }
-        
-        // 移除排除项
-        async function removeExclusion(type, name) {
-            try {
-                const response = await fetch(`/api/exclusions/${type}/remove`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({name: name})
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showAlert(`已移除排除项: ${name}`, 'success');
-                    loadExclusions(); // 重新加载
-                    loadAvailableEffects(); // 重新加载可用特效列表
-                } else {
-                    showAlert('移除失败: ' + result.error, 'error');
-                }
-            } catch (error) {
-                showAlert('移除失败: ' + error.message, 'error');
-            }
-        }
-
-        // 全局变量存储可用特效列表
-        let availableEffectsData = {
-            filters: [],
-            effects: [],
-            transitions: []
-        };
-
-        let selectedSuggestionIndex = -1;
-
-        // 添加排除项
-        async function addExclusion(type) {
-            const inputElement = document.getElementById(type + '-input');
-            const selectedName = inputElement.value.trim();
-
-            if (!selectedName) {
-                showAlert('请输入要排除的项目名称', 'warning');
-                return;
+                contentArea.appendChild(sectionElement);
+                return sectionElement;
             }
 
-            // 检查是否是有效的特效名称
-            if (!availableEffectsData[type].includes(selectedName)) {
-                showAlert(`特效 "${selectedName}" 不存在或已被排除`, 'warning');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/exclusions/${type}/add`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({name: selectedName})
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    showAlert(`已添加排除项: ${selectedName}`, 'success');
-                    inputElement.value = ''; // 清空输入
-                    hideAutocomplete(type); // 隐藏建议
-                    loadExclusions(); // 重新加载
-                    loadAvailableEffects(); // 重新加载可用特效列表
-                } else {
-                    showAlert('添加失败: ' + result.error, 'error');
-                }
-            } catch (error) {
-                showAlert('添加失败: ' + error.message, 'error');
-            }
-        }
-
-        // 加载可用特效列表
-        async function loadAvailableEffects() {
-            try {
-                const response = await fetch('/api/effects/available');
-                const result = await response.json();
-
-                if (!result.success) {
-                    showAlert('加载可用特效列表失败: ' + result.error, 'error');
-                    return;
-                }
-
-                const data = result.data;
-
-                // 更新全局可用特效数据
-                availableEffectsData = {
-                    filters: data.filters || [],
-                    effects: data.effects || [],
-                    transitions: data.transitions || []
+            getSectionTitle(section) {
+                const titles = {
+                    'overview': '概览',
+                    'config-basic': '基础配置',
+                    'config-anti-detect': '防审核设置',
+                    'config-effects': '特效参数',
+                    'config-advanced': '高级选项',
+                    'effects-exclusion': '特效排除',
+                    'effects-filters': '滤镜管理',
+                    'effects-transitions': '转场设置',
+                    'effects-smart': '智能排除',
+                    'automix-single': '单个混剪',
+                    'automix-batch': '批量生成',
+                    'automix-products': '产品选择',
+                    'monitor': '状态监控',
+                    'help': '帮助文档'
                 };
-
-            } catch (error) {
-                showAlert('加载可用特效列表失败: ' + error.message, 'error');
-            }
-        }
-
-        // 处理自动补全输入
-        function handleAutocomplete(type, query) {
-            selectedSuggestionIndex = -1;
-
-            if (!query.trim()) {
-                hideAutocomplete(type);
-                return;
+                return titles[section] || section;
             }
 
-            const suggestions = searchEffects(type, query);
-            showSuggestions(type, suggestions, query);
-        }
-
-        // 搜索特效
-        function searchEffects(type, query) {
-            const effectList = availableEffectsData[type] || [];
-            const lowerQuery = query.toLowerCase();
-
-            return effectList.filter(effect =>
-                effect.toLowerCase().includes(lowerQuery)
-            ).slice(0, 10); // 限制显示10个建议
-        }
-
-        // 显示建议列表
-        function showSuggestions(type, suggestions, query) {
-            const suggestionsContainer = document.getElementById(type + '-suggestions');
-
-            if (suggestions.length === 0) {
-                hideAutocomplete(type);
-                return;
-            }
-
-            suggestionsContainer.innerHTML = '';
-
-            suggestions.forEach((suggestion, index) => {
-                const div = document.createElement('div');
-                div.className = 'autocomplete-suggestion';
-                div.innerHTML = highlightMatch(suggestion, query);
-                div.onclick = () => selectSuggestion(type, suggestion);
-                div.onmousedown = (e) => e.preventDefault(); // 防止失去焦点
-                suggestionsContainer.appendChild(div);
-            });
-
-            suggestionsContainer.style.display = 'block';
-        }
-
-        // 高亮匹配文本
-        function highlightMatch(text, query) {
-            const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-            return text.replace(regex, '<span class="search-highlight">$1</span>');
-        }
-
-        // 转义正则表达式特殊字符
-        function escapeRegex(string) {
-            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        }
-
-        // 选择建议项
-        function selectSuggestion(type, suggestion) {
-            const inputElement = document.getElementById(type + '-input');
-            inputElement.value = suggestion;
-            hideAutocomplete(type);
-            inputElement.focus();
-        }
-
-        // 隐藏自动补全
-        function hideAutocomplete(type) {
-            setTimeout(() => {
-                const suggestionsContainer = document.getElementById(type + '-suggestions');
-                suggestionsContainer.style.display = 'none';
-                selectedSuggestionIndex = -1;
-            }, 150);
-        }
-
-        // 处理键盘事件
-        function handleKeydown(event, type) {
-            const suggestionsContainer = document.getElementById(type + '-suggestions');
-            const suggestions = suggestionsContainer.querySelectorAll('.autocomplete-suggestion');
-
-            if (suggestions.length === 0) return;
-
-            switch (event.key) {
-                case 'ArrowDown':
-                    event.preventDefault();
-                    selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
-                    updateSuggestionSelection(suggestions);
-                    break;
-
-                case 'ArrowUp':
-                    event.preventDefault();
-                    selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
-                    updateSuggestionSelection(suggestions);
-                    break;
-
-                case 'Enter':
-                    event.preventDefault();
-                    if (selectedSuggestionIndex >= 0) {
-                        const selectedSuggestion = suggestions[selectedSuggestionIndex];
-                        selectSuggestion(type, selectedSuggestion.textContent);
-                    }
-                    break;
-
-                case 'Escape':
-                    hideAutocomplete(type);
-                    break;
-            }
-        }
-
-        // 更新建议选择状态
-        function updateSuggestionSelection(suggestions) {
-            suggestions.forEach((suggestion, index) => {
-                if (index === selectedSuggestionIndex) {
-                    suggestion.classList.add('selected');
-                } else {
-                    suggestion.classList.remove('selected');
-                }
-            });
-        }
-
-        // 获取类型标签
-        function getTypeLabel(type) {
-            const labels = {
-                'filters': '滤镜',
-                'effects': '特效',
-                'transitions': '转场'
-            };
-            return labels[type] || type;
-        }
-
-        // 智能排除夸张特效
-        async function smartExcludeEffects() {
-            if (!confirm('确认执行智能排除夸张特效？\n\n此操作将自动排除恐怖、卡通、故障、过时等类型的特效，使视频更加专业。')) {
-                return;
-            }
-
-            try {
-                showAlert('正在执行智能排除...', 'info');
-
-                const response = await fetch('/api/exclusions/smart-exclude', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+            setActiveNav(navLink) {
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
                 });
+                navLink.classList.add('active');
+            }
 
-                const result = await response.json();
-
-                if (result.success) {
-                    const excludedCount = result.excluded_count;
-                    const message = `智能排除完成！\n排除特效: ${excludedCount.effects}个\n排除滤镜: ${excludedCount.filters}个`;
-                    showAlert(message, 'success');
-                    loadExclusions(); // 重新加载
-                    loadAvailableEffects(); // 重新加载可用特效列表
-                } else {
-                    showAlert('智能排除失败: ' + result.error, 'error');
-                }
-            } catch (error) {
-                showAlert('智能排除失败: ' + error.message, 'error');
-            }
-        }
-        
-        // 加载产品列表
-        async function loadProducts() {
-            try {
-                const response = await fetch('/api/products');
-                const result = await response.json();
-                
-                const select = document.getElementById('product_select');
-                select.innerHTML = '<option value="">自动选择</option>';
-                
-                if (result.success && result.products) {
-                    result.products.forEach(product => {
-                        const option = document.createElement('option');
-                        option.value = product;
-                        option.textContent = product;
-                        select.appendChild(option);
-                    });
-                    showAlert(`找到 ${result.products.length} 个产品`, 'info');
-                } else {
-                    showAlert('加载产品列表失败: ' + (result.error || '未知错误'), 'error');
-                }
-            } catch (error) {
-                showAlert('加载产品列表失败: ' + error.message, 'error');
-            }
-        }
-        
-        // 开始自动混剪
-        async function startAutomix() {
-            if (isRunning) {
-                showAlert('混剪正在进行中，请等待完成', 'info');
-                return;
-            }
-            
-            try {
-                const productName = document.getElementById('product_select').value;
-                
-                const response = await fetch('/api/automix/start', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({product_name: productName})
+            setActiveSubNav(subNavLink) {
+                document.querySelectorAll('.sub-nav-link').forEach(link => {
+                    link.classList.remove('active');
                 });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    isRunning = true;
-                    document.getElementById('start-btn').disabled = true;
-                    document.getElementById('start-btn').textContent = '🔄 混剪中...';
-                    
-                    // 开始状态轮询
-                    statusInterval = setInterval(checkStatus, 1000);
-                    
-                    showAlert('混剪已开始', 'success');
-                } else {
-                    showAlert('启动失败: ' + result.message, 'error');
-                }
-            } catch (error) {
-                showAlert('启动失败: ' + error.message, 'error');
+                subNavLink.classList.add('active');
             }
-        }
-        
-        // 检查混剪状态
-        async function checkStatus() {
-            try {
-                const response = await fetch('/api/automix/status');
-                const status = await response.json();
-                
-                document.getElementById('status-text').textContent = status.progress || '运行中...';
-                
-                if (status.running) {
-                    // 更新进度条
-                    let progress = 0;
 
-                    // 尝试从进度文本中提取进度信息
-                    const progressMatch = status.progress.match(/第\s*(\d+)\/(\d+)/);
-                    if (progressMatch) {
-                        const current = parseInt(progressMatch[1]);
-                        const total = parseInt(progressMatch[2]);
-                        progress = Math.round((current / total) * 100);
-                    } else {
-                        // 模拟进度
-                        const progressFill = document.getElementById('progress-fill');
-                        let currentWidth = parseInt(progressFill.style.width) || 0;
-                        if (currentWidth < 90) {
-                            currentWidth += 2;
-                            progress = currentWidth;
-                        }
-                    }
-
-                    updateProgressBar(progress);
-                } else {
-                    // 混剪完成
-                    isRunning = false;
-                    clearInterval(statusInterval);
-                    
-                    document.getElementById('start-btn').disabled = false;
-                    document.getElementById('start-btn').textContent = '🚀 开始混剪';
-                    updateProgressBar(100);
-
-                    if (status.error) {
-                        showAlert('混剪失败: ' + status.error, 'error');
-                        appendLog('❌ 错误: ' + status.error);
-                        // 错误时进度条变红
-                        document.getElementById('progress-fill').style.background = 'linear-gradient(135deg, #f44336 0%, #da190b 100%)';
-                    } else if (status.result) {
-                        // 检查是否是批量生成结果
-                        if (status.result.batch_results) {
-                            const successCount = status.result.success_count;
-                            const totalCount = status.result.total_count;
-                            showAlert(`批量生成完成！成功: ${successCount}/${totalCount}`, 'success');
-                            appendLog(`✅ 批量生成完成: 成功 ${successCount}/${totalCount} 个视频`);
-
-                            // 显示每个结果的详细信息
-                            status.result.batch_results.forEach((result, index) => {
-                                if (result.success) {
-                                    appendLog(`  ${index + 1}. ✅ ${result.draft_name} - ${(result.duration/1000000).toFixed(1)}s`);
-                                } else {
-                                    appendLog(`  ${index + 1}. ❌ ${result.draft_name} - ${result.error}`);
-                                }
-                            });
-                        } else {
-                            showAlert('混剪完成！', 'success');
-                            appendLog('✅ 混剪完成: ' + JSON.stringify(status.result));
-                        }
-                        // 成功时添加完成动画
-                        celebrateSuccess();
-                    }
-
-                    // 重置进度条
-                    setTimeout(() => {
-                        resetProgressBar();
-                    }, 3000);
-                }
-                
-                // 更新日志
-                if (status.progress) {
-                    appendLog(status.progress);
-                }
-                
-            } catch (error) {
-                console.error('检查状态失败:', error);
+            updateBreadcrumb(section) {
+                const breadcrumb = document.getElementById('breadcrumb');
+                const title = this.getSectionTitle(section);
+                breadcrumb.innerHTML = `<span class="breadcrumb-item">🏠 ${title}</span>`;
             }
-        }
-        
-        // 添加日志
-        function appendLog(message) {
-            const logArea = document.getElementById('log-area');
-            const timestamp = new Date().toLocaleTimeString();
-            logArea.textContent += `[${timestamp}] ${message}\n`;
-            logArea.scrollTop = logArea.scrollHeight;
-        }
-        
-        // 更新进度条
-        function updateProgressBar(percentage) {
-            const progressFill = document.getElementById('progress-fill');
-            const progressText = document.getElementById('progress-text');
 
-            progressFill.style.width = percentage + '%';
-            progressText.textContent = Math.round(percentage) + '%';
+            toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const mainContent = document.getElementById('mainContent');
+                
+                sidebar.classList.toggle('mobile-open');
+            }
 
-            // 根据进度改变颜色
-            if (percentage < 30) {
-                progressFill.style.background = 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)';
-            } else if (percentage < 70) {
-                progressFill.style.background = 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)';
-            } else {
-                progressFill.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+            hideLoader() {
+                setTimeout(() => {
+                    document.getElementById('pageLoader').classList.add('hidden');
+                }, 1000);
             }
         }
 
-        // 重置进度条
-        function resetProgressBar() {
-            const progressFill = document.getElementById('progress-fill');
-            const progressText = document.getElementById('progress-text');
-
-            progressFill.style.width = '0%';
-            progressText.textContent = '0%';
-            progressFill.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
-        }
-
-        // 成功庆祝动画
-        function celebrateSuccess() {
-            // 创建彩带效果
-            for (let i = 0; i < 50; i++) {
-                createConfetti();
-            }
-
-            // 添加成功音效（如果需要）
-            // playSuccessSound();
-        }
-
-        // 创建彩带粒子
-        function createConfetti() {
-            const confetti = document.createElement('div');
-            confetti.style.position = 'fixed';
-            confetti.style.width = '10px';
-            confetti.style.height = '10px';
-            confetti.style.backgroundColor = getRandomColor();
-            confetti.style.left = Math.random() * window.innerWidth + 'px';
-            confetti.style.top = '-10px';
-            confetti.style.zIndex = '10000';
-            confetti.style.borderRadius = '50%';
-            confetti.style.pointerEvents = 'none';
-
-            document.body.appendChild(confetti);
-
-            // 动画
-            const animation = confetti.animate([
-                { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
-                { transform: `translateY(${window.innerHeight + 100}px) rotate(720deg)`, opacity: 0 }
-            ], {
-                duration: Math.random() * 2000 + 1000,
-                easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-            });
-
-            animation.onfinish = () => confetti.remove();
-        }
-
-        // 获取随机颜色
-        function getRandomColor() {
-            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
-            return colors[Math.floor(Math.random() * colors.length)];
-        }
-
-        // 显示提示信息（增强版）
-        function showAlert(message, type = 'info') {
-            // 移除现有的提示
-            const existingAlert = document.querySelector('.alert');
-            if (existingAlert) {
-                existingAlert.style.transform = 'translateX(100%)';
-                setTimeout(() => existingAlert.remove(), 300);
-            }
-
-            // 创建新提示
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.textContent = message;
-            alert.style.transform = 'translateX(100%)';
-            alert.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-
-            // 插入到页面顶部
-            document.body.insertBefore(alert, document.body.firstChild);
-
-            // 滑入动画
-            setTimeout(() => {
-                alert.style.transform = 'translateX(0)';
-            }, 100);
-
-            // 3秒后自动移除
-            setTimeout(() => {
-                if (alert.parentNode) {
-                    alert.style.transform = 'translateX(100%)';
-                    setTimeout(() => alert.remove(), 300);
-                }
-            }, 3000);
-        }
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new AutoMixApp();
+        });
     </script>
 </body>
 </html>
