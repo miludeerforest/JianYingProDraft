@@ -896,6 +896,36 @@
             content: '💡 ';
             margin-right: 5px;
         }
+
+        /* 高级防审核技术样式 */
+        .config-item input[type="range"] {
+            width: 60% !important;
+            margin-right: 10px;
+        }
+
+        .config-item span {
+            color: #4CAF50;
+            font-weight: bold;
+            min-width: 50px;
+            display: inline-block;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ff9800, #f57c00);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -957,9 +987,70 @@
                         <input type="number" id="batch_count" min="1" max="100">
                     </div>
                 </div>
+
+                <!-- 高级防审核技术配置 -->
+                <div class="config-section">
+                    <h3>🛡️ 高级防审核技术</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>🔄 镜像翻转概率:</label>
+                            <input type="range" id="flip_probability" min="0" max="1" step="0.1" value="1.0"
+                                   oninput="updateRangeValue('flip_probability', this.value)">
+                            <span id="flip_probability_value">100%</span>
+                        </div>
+                        <div class="config-item">
+                            <label>🌫️ 模糊背景:</label>
+                            <select id="blur_background_enabled">
+                                <option value="true">启用</option>
+                                <option value="false">禁用</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>🌫️ 模糊背景概率:</label>
+                            <input type="range" id="blur_background_probability" min="0" max="1" step="0.1" value="1.0"
+                                   oninput="updateRangeValue('blur_background_probability', this.value)">
+                            <span id="blur_background_probability_value">100%</span>
+                        </div>
+                        <div class="config-item">
+                            <label>📐 前景缩放(%):</label>
+                            <input type="number" id="foreground_scale" min="50" max="100" step="5" value="80">
+                        </div>
+                        <div class="config-item">
+                            <label>📏 背景放大(%):</label>
+                            <input type="number" id="background_scale" min="100" max="200" step="10" value="120">
+                        </div>
+                        <div class="config-item">
+                            <label>🌀 模糊强度(%):</label>
+                            <input type="number" id="background_blur_intensity" min="10" max="100" step="10" value="50">
+                        </div>
+                        <div class="config-item">
+                            <label>🎞️ 抽帧处理:</label>
+                            <select id="frame_manipulation_enabled">
+                                <option value="true">启用</option>
+                                <option value="false">禁用</option>
+                            </select>
+                        </div>
+                        <div class="config-item">
+                            <label>🎞️ 抽帧概率:</label>
+                            <input type="range" id="frame_drop_probability" min="0" max="1" step="0.1" value="1.0"
+                                   oninput="updateRangeValue('frame_drop_probability', this.value)">
+                            <span id="frame_drop_probability_value">100%</span>
+                        </div>
+                        <div class="config-item">
+                            <label>⏱️ 抽帧间隔(秒):</label>
+                            <input type="number" id="frame_drop_interval" min="1" max="30" step="1" value="5">
+                        </div>
+                        <div class="config-item">
+                            <label>🔢 最大抽帧数:</label>
+                            <input type="number" id="max_frame_drops_per_segment" min="1" max="10" step="1" value="3">
+                        </div>
+                    </div>
+                </div>
+
                 <div style="text-align: center; margin-top: 20px;">
                     <button class="btn" onclick="loadConfig()">🔄 刷新配置</button>
                     <button class="btn btn-success" onclick="saveConfig()">💾 保存配置</button>
+                    <button class="btn btn-warning" onclick="setForceExecutionMode()">🎯 设为强制执行模式</button>
                 </div>
             </div>
             
@@ -1168,7 +1259,27 @@
                 item.style.transform = '';
             }, 150);
         }
-        
+
+        // 更新滑块值显示
+        function updateRangeValue(id, value) {
+            const percentage = Math.round(value * 100);
+            document.getElementById(id + '_value').textContent = percentage + '%';
+        }
+
+        // 设为强制执行模式
+        function setForceExecutionMode() {
+            document.getElementById('flip_probability').value = 1.0;
+            updateRangeValue('flip_probability', 1.0);
+            document.getElementById('blur_background_enabled').value = 'true';
+            document.getElementById('blur_background_probability').value = 1.0;
+            updateRangeValue('blur_background_probability', 1.0);
+            document.getElementById('frame_manipulation_enabled').value = 'true';
+            document.getElementById('frame_drop_probability').value = 1.0;
+            updateRangeValue('frame_drop_probability', 1.0);
+
+            showAlert('已设置为强制执行模式（100%执行）', 'success');
+        }
+
         // 加载配置
         async function loadConfig() {
             try {
@@ -1189,7 +1300,22 @@
                 document.getElementById('narration_volume').value = Math.round((config.narration_volume || 1.0) * 100);
                 document.getElementById('background_volume').value = Math.round((config.background_volume || 0.1) * 100);
                 document.getElementById('batch_count').value = config.batch_count || 5;
-                
+
+                // 高级防审核技术配置
+                document.getElementById('flip_probability').value = config.flip_probability || 1.0;
+                updateRangeValue('flip_probability', config.flip_probability || 1.0);
+                document.getElementById('blur_background_enabled').value = config.blur_background_enabled ? 'true' : 'false';
+                document.getElementById('blur_background_probability').value = config.blur_background_probability || 1.0;
+                updateRangeValue('blur_background_probability', config.blur_background_probability || 1.0);
+                document.getElementById('foreground_scale').value = Math.round((config.foreground_scale || 0.8) * 100);
+                document.getElementById('background_scale').value = Math.round((config.background_scale || 1.2) * 100);
+                document.getElementById('background_blur_intensity').value = Math.round((config.background_blur_intensity || 0.5) * 100);
+                document.getElementById('frame_manipulation_enabled').value = config.frame_manipulation_enabled ? 'true' : 'false';
+                document.getElementById('frame_drop_probability').value = config.frame_drop_probability || 1.0;
+                updateRangeValue('frame_drop_probability', config.frame_drop_probability || 1.0);
+                document.getElementById('frame_drop_interval').value = config.frame_drop_interval || 5;
+                document.getElementById('max_frame_drops_per_segment').value = config.max_frame_drops_per_segment || 3;
+
                 showAlert('配置加载成功', 'success');
             } catch (error) {
                 showAlert('加载配置失败: ' + error.message, 'error');
@@ -1215,7 +1341,19 @@
                     video_scale_factor: parseFloat(document.getElementById('video_scale_factor').value) / 100,
                     narration_volume: parseFloat(document.getElementById('narration_volume').value) / 100,
                     background_volume: parseFloat(document.getElementById('background_volume').value) / 100,
-                    batch_count: parseInt(document.getElementById('batch_count').value)
+                    batch_count: parseInt(document.getElementById('batch_count').value),
+
+                    // 高级防审核技术配置
+                    flip_probability: parseFloat(document.getElementById('flip_probability').value),
+                    blur_background_enabled: document.getElementById('blur_background_enabled').value === 'true',
+                    blur_background_probability: parseFloat(document.getElementById('blur_background_probability').value),
+                    foreground_scale: parseFloat(document.getElementById('foreground_scale').value) / 100,
+                    background_scale: parseFloat(document.getElementById('background_scale').value) / 100,
+                    background_blur_intensity: parseFloat(document.getElementById('background_blur_intensity').value) / 100,
+                    frame_manipulation_enabled: document.getElementById('frame_manipulation_enabled').value === 'true',
+                    frame_drop_probability: parseFloat(document.getElementById('frame_drop_probability').value),
+                    frame_drop_interval: parseFloat(document.getElementById('frame_drop_interval').value),
+                    max_frame_drops_per_segment: parseInt(document.getElementById('max_frame_drops_per_segment').value)
                 };
 
                 const response = await fetch('/api/config', {

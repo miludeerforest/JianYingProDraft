@@ -79,6 +79,18 @@ class WebInterface:
             # 防审核配置
             config['pexels_overlay_enabled'] = self.config_manager.is_pexels_overlay_enabled()
             config['pexels_overlay_opacity'] = self.config_manager.get_pexels_overlay_opacity()
+
+            # 高级防审核技术配置
+            config['flip_probability'] = self.config_manager.get_flip_probability()
+            config['blur_background_enabled'] = self.config_manager.is_blur_background_enabled()
+            config['blur_background_probability'] = self.config_manager.get_blur_background_probability()
+            config['foreground_scale'] = self.config_manager.get_foreground_scale()
+            config['background_scale'] = self.config_manager.get_background_scale()
+            config['background_blur_intensity'] = self.config_manager.get_background_blur_intensity()
+            config['frame_manipulation_enabled'] = self.config_manager.is_frame_manipulation_enabled()
+            config['frame_drop_probability'] = self.config_manager.get_frame_drop_probability()
+            config['frame_drop_interval'] = self.config_manager.get_frame_drop_interval()
+            config['max_frame_drops_per_segment'] = self.config_manager.get_max_frame_drops_per_segment()
             
             return config
         except Exception as e:
@@ -162,6 +174,28 @@ class WebInterface:
                         success &= self.config_manager._set_config_value('enable_pexels_overlay', bool(value))
                     elif key == 'pexels_overlay_opacity':
                         success &= self.config_manager._set_config_value('pexels_overlay_opacity', float(value))
+
+                    # 高级防审核技术配置
+                    elif key == 'flip_probability':
+                        success &= self.config_manager.set_flip_probability(float(value))
+                    elif key == 'blur_background_enabled':
+                        success &= self.config_manager.set_blur_background_enabled(bool(value))
+                    elif key == 'blur_background_probability':
+                        success &= self.config_manager.set_blur_background_probability(float(value))
+                    elif key == 'foreground_scale':
+                        success &= self.config_manager.set_foreground_scale(float(value))
+                    elif key == 'background_scale':
+                        success &= self.config_manager.set_background_scale(float(value))
+                    elif key == 'background_blur_intensity':
+                        success &= self.config_manager.set_background_blur_intensity(float(value))
+                    elif key == 'frame_manipulation_enabled':
+                        success &= self.config_manager.set_frame_manipulation_enabled(bool(value))
+                    elif key == 'frame_drop_probability':
+                        success &= self.config_manager.set_frame_drop_probability(float(value))
+                    elif key == 'frame_drop_interval':
+                        success &= self.config_manager.set_frame_drop_interval(float(value))
+                    elif key == 'max_frame_drops_per_segment':
+                        success &= self.config_manager.set_max_frame_drops_per_segment(int(value))
                 except Exception as e:
                     errors.append(f"{key}: {str(e)}")
             
