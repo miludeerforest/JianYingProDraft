@@ -419,6 +419,80 @@
         .exclusion-item:last-child {
             border-bottom: none;
         }
+
+        .add-exclusion-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .add-exclusion-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .effect-select {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .effect-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-smart-exclude {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-smart-exclude:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .exclusion-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
         
         .status-panel {
             grid-column: 1 / -1;
@@ -863,20 +937,45 @@
                 <div style="margin-bottom: 15px;">
                     <label>🎨 已排除滤镜 (<span id="filters-excluded">0</span>个):</label>
                     <div class="exclusion-list" id="filters-list"></div>
+                    <div class="add-exclusion-section">
+                        <div class="add-exclusion-form">
+                            <select class="effect-select" id="filters-select">
+                                <option value="">选择要排除的滤镜...</option>
+                            </select>
+                            <button class="btn-add" onclick="addExclusion('filters')">➕ 添加排除</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 15px;">
                     <label>✨ 已排除特效 (<span id="effects-excluded">0</span>个):</label>
                     <div class="exclusion-list" id="effects-list"></div>
+                    <div class="add-exclusion-section">
+                        <div class="add-exclusion-form">
+                            <select class="effect-select" id="effects-select">
+                                <option value="">选择要排除的特效...</option>
+                            </select>
+                            <button class="btn-add" onclick="addExclusion('effects')">➕ 添加排除</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div style="margin-bottom: 15px;">
                     <label>🔄 已排除转场 (<span id="transitions-excluded">0</span>个):</label>
                     <div class="exclusion-list" id="transitions-list"></div>
+                    <div class="add-exclusion-section">
+                        <div class="add-exclusion-form">
+                            <select class="effect-select" id="transitions-select">
+                                <option value="">选择要排除的转场...</option>
+                            </select>
+                            <button class="btn-add" onclick="addExclusion('transitions')">➕ 添加排除</button>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="text-align: center;">
+                <div class="exclusion-controls">
                     <button class="btn" onclick="loadExclusions()">🔄 刷新排除列表</button>
+                    <button class="btn-smart-exclude" onclick="smartExcludeEffects()">🚫 智能排除夸张特效</button>
                 </div>
             </div>
         </div>
@@ -930,6 +1029,7 @@
                     loadConfig();
                     loadExclusions();
                     loadProducts();
+                    loadAvailableEffects();
                     initInteractiveEffects();
                 }, 500);
             }, 1500);
@@ -1147,17 +1247,143 @@
                     },
                     body: JSON.stringify({name: name})
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.success) {
                     showAlert(`已移除排除项: ${name}`, 'success');
                     loadExclusions(); // 重新加载
+                    loadAvailableEffects(); // 重新加载可用特效列表
                 } else {
                     showAlert('移除失败: ' + result.error, 'error');
                 }
             } catch (error) {
                 showAlert('移除失败: ' + error.message, 'error');
+            }
+        }
+
+        // 添加排除项
+        async function addExclusion(type) {
+            const selectElement = document.getElementById(type + '-select');
+            const selectedName = selectElement.value;
+
+            if (!selectedName) {
+                showAlert('请选择要排除的项目', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/exclusions/${type}/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({name: selectedName})
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(`已添加排除项: ${selectedName}`, 'success');
+                    selectElement.value = ''; // 清空选择
+                    loadExclusions(); // 重新加载
+                    loadAvailableEffects(); // 重新加载可用特效列表
+                } else {
+                    showAlert('添加失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('添加失败: ' + error.message, 'error');
+            }
+        }
+
+        // 加载可用特效列表
+        async function loadAvailableEffects() {
+            try {
+                const response = await fetch('/api/effects/available');
+                const result = await response.json();
+
+                if (!result.success) {
+                    showAlert('加载可用特效列表失败: ' + result.error, 'error');
+                    return;
+                }
+
+                const data = result.data;
+
+                // 更新滤镜选择框
+                if (data.filters) {
+                    updateEffectSelect('filters', data.filters);
+                }
+
+                // 更新特效选择框
+                if (data.effects) {
+                    updateEffectSelect('effects', data.effects);
+                }
+
+                // 更新转场选择框
+                if (data.transitions) {
+                    updateEffectSelect('transitions', data.transitions);
+                }
+
+            } catch (error) {
+                showAlert('加载可用特效列表失败: ' + error.message, 'error');
+            }
+        }
+
+        // 更新特效选择框
+        function updateEffectSelect(type, effectList) {
+            const selectElement = document.getElementById(type + '-select');
+
+            // 清空现有选项（保留默认选项）
+            selectElement.innerHTML = `<option value="">选择要排除的${getTypeLabel(type)}...</option>`;
+
+            // 添加可用特效选项
+            effectList.forEach(effectName => {
+                const option = document.createElement('option');
+                option.value = effectName;
+                option.textContent = effectName;
+                selectElement.appendChild(option);
+            });
+        }
+
+        // 获取类型标签
+        function getTypeLabel(type) {
+            const labels = {
+                'filters': '滤镜',
+                'effects': '特效',
+                'transitions': '转场'
+            };
+            return labels[type] || type;
+        }
+
+        // 智能排除夸张特效
+        async function smartExcludeEffects() {
+            if (!confirm('确认执行智能排除夸张特效？\n\n此操作将自动排除恐怖、卡通、故障、过时等类型的特效，使视频更加专业。')) {
+                return;
+            }
+
+            try {
+                showAlert('正在执行智能排除...', 'info');
+
+                const response = await fetch('/api/exclusions/smart-exclude', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const excludedCount = result.excluded_count;
+                    const message = `智能排除完成！\n排除特效: ${excludedCount.effects}个\n排除滤镜: ${excludedCount.filters}个`;
+                    showAlert(message, 'success');
+                    loadExclusions(); // 重新加载
+                    loadAvailableEffects(); // 重新加载可用特效列表
+                } else {
+                    showAlert('智能排除失败: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showAlert('智能排除失败: ' + error.message, 'error');
             }
         }
         

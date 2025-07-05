@@ -268,6 +268,47 @@ class WebInterface:
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+    def get_available_effects_list(self, effect_type='all'):
+        """获取可用特效列表"""
+        try:
+            result = {}
+
+            if effect_type in ['all', 'filters']:
+                all_filters = self.exclusion_manager.metadata_manager.get_available_filters()
+                available_filters = [f.name for f in all_filters if f.name not in self.exclusion_manager.excluded_filters]
+                result['filters'] = sorted(available_filters)
+
+            if effect_type in ['all', 'effects']:
+                all_effects = self.exclusion_manager.metadata_manager.get_available_effects()
+                available_effects = [e.name for e in all_effects if e.name not in self.exclusion_manager.excluded_effects]
+                result['effects'] = sorted(available_effects)
+
+            if effect_type in ['all', 'transitions']:
+                all_transitions = self.exclusion_manager.metadata_manager.get_available_transitions()
+                available_transitions = [t.name for t in all_transitions if t.name not in self.exclusion_manager.excluded_transitions]
+                result['transitions'] = sorted(available_transitions)
+
+            return {'success': True, 'data': result}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def smart_exclude_exaggerated_effects(self):
+        """智能排除夸张特效"""
+        try:
+            # 获取预览
+            preview = self.exclusion_manager.get_exaggerated_effects_preview()
+
+            # 执行排除
+            excluded_count = self.exclusion_manager.auto_exclude_exaggerated_effects()
+
+            return {
+                'success': True,
+                'preview': preview,
+                'excluded_count': excluded_count
+            }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
 # 创建Web界面实例
 web_interface = WebInterface()
 
@@ -344,6 +385,19 @@ def get_automix_status():
     """获取混剪状态API"""
     status = web_interface.get_automix_status()
     return jsonify(status)
+
+@app.route('/api/effects/available')
+def get_available_effects():
+    """获取可用特效列表API"""
+    effect_type = request.args.get('type', 'all')
+    result = web_interface.get_available_effects_list(effect_type)
+    return jsonify(result)
+
+@app.route('/api/exclusions/smart-exclude', methods=['POST'])
+def smart_exclude():
+    """智能排除夸张特效API"""
+    result = web_interface.smart_exclude_exaggerated_effects()
+    return jsonify(result)
 
 if __name__ == '__main__':
     # 创建templates目录
