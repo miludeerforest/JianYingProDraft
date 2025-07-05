@@ -402,6 +402,119 @@ class OptimizedWebInterface:
             self.automix_status['running'] = False
             return {'success': False, 'error': str(e)}
 
+    def search_effects(self, search_term, effect_type):
+        """搜索特效"""
+        try:
+            effects = []
+
+            # 模拟特效数据 - 实际应该从元数据文件加载
+            if effect_type == 'all' or effect_type == 'video_effects':
+                # 模拟视频特效
+                for i in range(1, 21):  # 显示20个示例
+                    effect_name = f"视频特效_{i:03d}"
+                    if not search_term or search_term.lower() in effect_name.lower():
+                        effects.append({
+                            'id': f'video_effect_{i}',
+                            'name': effect_name,
+                            'type': '视频特效',
+                            'excluded': effect_name in self.exclusion_manager.excluded_effects
+                        })
+
+            if effect_type == 'all' or effect_type == 'filters':
+                # 模拟滤镜
+                for i in range(1, 21):
+                    filter_name = f"滤镜_{i:03d}"
+                    if not search_term or search_term.lower() in filter_name.lower():
+                        effects.append({
+                            'id': f'filter_{i}',
+                            'name': filter_name,
+                            'type': '滤镜',
+                            'excluded': filter_name in self.exclusion_manager.excluded_filters
+                        })
+
+            if effect_type == 'all' or effect_type == 'transitions':
+                # 模拟转场
+                for i in range(1, 21):
+                    transition_name = f"转场_{i:03d}"
+                    if not search_term or search_term.lower() in transition_name.lower():
+                        effects.append({
+                            'id': f'transition_{i}',
+                            'name': transition_name,
+                            'type': '转场',
+                            'excluded': transition_name in self.exclusion_manager.excluded_transitions
+                        })
+
+            return {'success': True, 'effects': effects}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def exclude_effects(self, effect_ids):
+        """排除特效"""
+        try:
+            excluded_count = 0
+
+            for effect_id in effect_ids:
+                if effect_id.startswith('video_effect_'):
+                    effect_name = f"视频特效_{effect_id.split('_')[-1]}"
+                    self.exclusion_manager.add_excluded_effect(effect_name)
+                    excluded_count += 1
+                elif effect_id.startswith('filter_'):
+                    filter_name = f"滤镜_{effect_id.split('_')[-1]}"
+                    self.exclusion_manager.add_excluded_filter(filter_name)
+                    excluded_count += 1
+                elif effect_id.startswith('transition_'):
+                    transition_name = f"转场_{effect_id.split('_')[-1]}"
+                    self.exclusion_manager.add_excluded_transition(transition_name)
+                    excluded_count += 1
+
+            # 清除缓存
+            self._cache['exclusions'] = None
+
+            return {'success': True, 'excluded_count': excluded_count}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def include_effects(self, effect_ids):
+        """包含特效（移除排除）"""
+        try:
+            included_count = 0
+
+            for effect_id in effect_ids:
+                if effect_id.startswith('video_effect_'):
+                    effect_name = f"视频特效_{effect_id.split('_')[-1]}"
+                    self.exclusion_manager.remove_excluded_effect(effect_name)
+                    included_count += 1
+                elif effect_id.startswith('filter_'):
+                    filter_name = f"滤镜_{effect_id.split('_')[-1]}"
+                    self.exclusion_manager.remove_excluded_filter(filter_name)
+                    included_count += 1
+                elif effect_id.startswith('transition_'):
+                    transition_name = f"转场_{effect_id.split('_')[-1]}"
+                    self.exclusion_manager.remove_excluded_transition(transition_name)
+                    included_count += 1
+
+            # 清除缓存
+            self._cache['exclusions'] = None
+
+            return {'success': True, 'included_count': included_count}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def reset_all_exclusions(self):
+        """重置所有排除设置"""
+        try:
+            # 清空所有排除列表
+            self.exclusion_manager.excluded_effects.clear()
+            self.exclusion_manager.excluded_filters.clear()
+            self.exclusion_manager.excluded_transitions.clear()
+
+            # 清除缓存
+            self._cache['exclusions'] = None
+
+            return {'success': True, 'message': '已重置所有排除设置'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
 # 创建Flask应用
 app = Flask(__name__)
 web_interface = OptimizedWebInterface()
@@ -481,6 +594,52 @@ def start_batch_automix():
 
         # 启动批量混剪任务
         result = web_interface.start_batch_automix(product, count, min_duration, max_duration)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/effects/search', methods=['POST'])
+def search_effects():
+    """搜索特效API"""
+    try:
+        data = request.get_json()
+        search_term = data.get('search_term', '')
+        effect_type = data.get('effect_type', 'all')
+
+        result = web_interface.search_effects(search_term, effect_type)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/effects/exclude', methods=['POST'])
+def exclude_effects():
+    """排除特效API"""
+    try:
+        data = request.get_json()
+        effect_ids = data.get('effect_ids', [])
+
+        result = web_interface.exclude_effects(effect_ids)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/effects/include', methods=['POST'])
+def include_effects():
+    """包含特效API"""
+    try:
+        data = request.get_json()
+        effect_ids = data.get('effect_ids', [])
+
+        result = web_interface.include_effects(effect_ids)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/effects/reset', methods=['POST'])
+def reset_effects():
+    """重置特效排除API"""
+    try:
+        result = web_interface.reset_all_exclusions()
         return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

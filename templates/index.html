@@ -806,6 +806,11 @@
                     this.loadProductsForAutomix(section);
                 }
 
+                // 如果是特效排除页面，加载排除统计
+                if (section === 'effects-exclusion') {
+                    this.loadExclusionStats();
+                }
+
                 return sectionElement;
             }
 
@@ -2104,6 +2109,178 @@
                     }
                 } catch (error) {
                     this.showAlert('加载产品失败: ' + error.message, 'error');
+                }
+            }
+
+            // 特效排除管理功能
+            async searchEffects() {
+                const searchTerm = this.getInputValue('effect-search');
+                const effectType = this.getInputValue('effect-type');
+
+                try {
+                    const response = await fetch('/api/effects/search', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            search_term: searchTerm,
+                            effect_type: effectType
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.displayEffectsList(result.effects);
+                        this.showAlert(`找到 ${result.effects.length} 个特效`, 'success');
+                    } else {
+                        this.showAlert('搜索特效失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('搜索特效失败: ' + error.message, 'error');
+                }
+            }
+
+            displayEffectsList(effects) {
+                const effectsList = document.getElementById('effects-list');
+                if (!effectsList) return;
+
+                if (effects.length === 0) {
+                    effectsList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">未找到匹配的特效</p>';
+                    return;
+                }
+
+                effectsList.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <input type="checkbox" id="select-all-effects" onchange="app.toggleSelectAll()" style="margin-right: 8px;">
+                            <span style="font-weight: 600;">全选/取消全选</span>
+                        </label>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px;">
+                        ${effects.map(effect => `
+                            <label style="display: flex; align-items: center; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: var(--transition);"
+                                   onmouseover="this.style.backgroundColor='var(--bg-primary)'"
+                                   onmouseout="this.style.backgroundColor='transparent'">
+                                <input type="checkbox" class="effect-checkbox" value="${effect.id}" style="margin-right: 8px;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 500; margin-bottom: 2px;">${effect.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                        ${effect.type} ${effect.excluded ? '(已排除)' : '(可用)'}
+                                    </div>
+                                </div>
+                                <div style="font-size: 12px; color: ${effect.excluded ? 'var(--error-color)' : 'var(--accent-color)'};">
+                                    ${effect.excluded ? '❌' : '✅'}
+                                </div>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            toggleSelectAll() {
+                const selectAllCheckbox = document.getElementById('select-all-effects');
+                const effectCheckboxes = document.querySelectorAll('.effect-checkbox');
+
+                effectCheckboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            }
+
+            async excludeSelected() {
+                const selectedEffects = this.getSelectedEffects();
+
+                if (selectedEffects.length === 0) {
+                    this.showAlert('请先选择要排除的特效', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/effects/exclude', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            effect_ids: selectedEffects
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(`成功排除 ${selectedEffects.length} 个特效`, 'success');
+                        this.searchEffects(); // 刷新列表
+                        this.loadExclusionStats(); // 更新统计
+                    } else {
+                        this.showAlert('排除特效失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('排除特效失败: ' + error.message, 'error');
+                }
+            }
+
+            async includeSelected() {
+                const selectedEffects = this.getSelectedEffects();
+
+                if (selectedEffects.length === 0) {
+                    this.showAlert('请先选择要包含的特效', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/effects/include', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            effect_ids: selectedEffects
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(`成功包含 ${selectedEffects.length} 个特效`, 'success');
+                        this.searchEffects(); // 刷新列表
+                        this.loadExclusionStats(); // 更新统计
+                    } else {
+                        this.showAlert('包含特效失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('包含特效失败: ' + error.message, 'error');
+                }
+            }
+
+            getSelectedEffects() {
+                const checkboxes = document.querySelectorAll('.effect-checkbox:checked');
+                return Array.from(checkboxes).map(cb => cb.value);
+            }
+
+            async resetAllExclusions() {
+                if (!confirm('确定要重置所有排除设置吗？这将清除所有已排除的特效。')) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/effects/reset', {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('已重置所有排除设置', 'success');
+                        this.searchEffects(); // 刷新列表
+                        this.loadExclusionStats(); // 更新统计
+                        this.refreshSmartStats(); // 更新智能排除统计
+                    } else {
+                        this.showAlert('重置失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('重置失败: ' + error.message, 'error');
                 }
             }
         }
