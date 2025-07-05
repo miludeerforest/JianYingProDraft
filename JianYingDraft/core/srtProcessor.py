@@ -83,24 +83,52 @@ class SRTProcessor:
                 continue
             
             try:
-                # 第一行：序号
-                index = int(lines[0].strip())
-                
-                # 第二行：时间戳
-                time_line = lines[1].strip()
+                # 智能解析字幕块结构
+                index = None
+                time_line = None
+                text_lines = []
+
+                # 查找序号行和时间戳行
+                for i, line in enumerate(lines):
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    # 尝试解析序号
+                    if index is None and line.isdigit():
+                        index = int(line)
+                        continue
+
+                    # 尝试解析时间戳
+                    if time_line is None and self.SRT_TIME_PATTERN.match(line):
+                        time_line = line
+                        continue
+
+                    # 其余为文本内容
+                    if index is not None and time_line is not None:
+                        text_lines.append(line)
+
+                # 验证必要信息
+                if index is None:
+                    print(f"警告：字幕块缺少序号: {lines[0][:50]}...")
+                    continue
+
+                if time_line is None:
+                    print(f"警告：字幕块缺少时间戳: {' | '.join(lines[:3])}")
+                    continue
+
                 time_match = self.SRT_TIME_PATTERN.match(time_line)
-                
                 if not time_match:
-                    print(f"警告：无法解析时间戳: {time_line}")
+                    print(f"警告：无法解析时间戳格式: {time_line}")
                     continue
                 
                 # 解析开始和结束时间
                 start_time = self._time_to_microseconds(*time_match.groups()[:4])
                 end_time = self._time_to_microseconds(*time_match.groups()[4:8])
                 
-                # 第三行及以后：字幕文本
-                text = '\n'.join(lines[2:]).strip()
-                
+                # 组合字幕文本
+                text = '\n'.join(text_lines).strip()
+
                 # 清理文本
                 text = self._clean_subtitle_text(text)
                 
@@ -110,7 +138,7 @@ class SRTProcessor:
                     'end_time': end_time,
                     'duration': end_time - start_time,
                     'text': text,
-                    'original_text': '\n'.join(lines[2:]).strip()
+                    'original_text': '\n'.join(text_lines).strip()
                 }
                 
                 subtitles.append(subtitle)
@@ -1021,6 +1049,132 @@ class SRTProcessor:
                 continue
 
         print(f"  ✅ 选择最佳编码: {best_encoding} (分数: {best_score:.2f})")
+        return best_encoding
+
+    def _detect_thai_encoding_special(self, raw_data: bytes) -> str:
+        """
+        专门检测泰语编码
+
+        Args:
+            raw_data: 原始字节数据
+
+        Returns:
+            str: 泰语编码或None
+        """
+        print(f"  🇹🇭 专门检测泰语编码...")
+
+        # 首先检查是否包含泰语UTF-8字节模式
+        if self._has_thai_utf8_pattern(raw_data):
+            print(f"    🔍 检测到泰语UTF-8字节模式")
+            try:
+                decoded_text = raw_data.decode('utf-8')
+                thai_char_count = sum(1 for char in decoded_text if '\u0E00' <= char <= '\u0E7F')
+                if thai_char_count > 0:
+                    print(f"    ✅ 确认为UTF-8泰语文本")
+                    return 'utf-8'
+            except UnicodeDecodeError:
+                print(f"    ❌ UTF-8解码失败")
+
+        # 泰语字符的字节范围检测
+        thai_encodings = ['cp874', 'iso-8859-11', 'tis-620']
+
+        for encoding in thai_encodings:
+            try:
+                decoded_text = raw_data.decode(encoding)
+
+                # 检查是否包含泰语字符
+                thai_char_count = 0
+                for char in decoded_text:
+                    # 泰语Unicode范围: U+0E00-U+0E7F
+                    if '\u0E00' <= char <= '\u0E7F':
+                        thai_char_count += 1
+
+                # 如果泰语字符占比超过3%，认为是泰语文本
+                if len(decoded_text) > 0 and thai_char_count / len(decoded_text) > 0.03:
+                    print(f"    ✅ 检测到泰语编码: {encoding}")
+                    return encoding
+
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+
+        return None
+
+    def _has_thai_utf8_pattern(self, raw_data: bytes) -> bool:
+        """
+        检查是否包含泰语UTF-8字节模式
+
+        Args:
+            raw_data: 原始字节数据
+
+        Returns:
+            bool: 是否包含泰语UTF-8模式
+        """
+        # 泰语UTF-8字节模式: 0xE0 0xB8-0xBF 0x80-0xBF
+        i = 0
+        while i < len(raw_data) - 2:
+            if (raw_data[i] == 0xE0 and
+                0xB8 <= raw_data[i+1] <= 0xBF and
+                0x80 <= raw_data[i+2] <= 0xBF):
+                return True
+            i += 1
+        return False
+
+    def _test_encoding_with_hint(self, raw_data: bytes, hint_encoding: str) -> str:
+        """
+        结合检测提示进行编码测试
+
+        Args:
+            raw_data: 原始字节数据
+            hint_encoding: 检测提示的编码
+
+        Returns:
+            str: 最佳编码
+        """
+        # 优先测试提示的编码及其相关编码
+        priority_encodings = [hint_encoding]
+
+        # 根据提示编码添加相关编码
+        if 'utf' in hint_encoding.lower():
+            priority_encodings.extend(['utf-8', 'utf-8-sig'])
+        elif 'gb' in hint_encoding.lower() or 'chinese' in hint_encoding.lower():
+            priority_encodings.extend(['gbk', 'gb2312'])
+        elif 'big5' in hint_encoding.lower():
+            priority_encodings.extend(['big5'])
+        elif 'iso-8859-11' in hint_encoding.lower() or 'cp874' in hint_encoding.lower():
+            priority_encodings.extend(['cp874', 'iso-8859-11', 'tis-620'])
+
+        # 添加常用编码作为备选
+        priority_encodings.extend(['utf-8', 'latin1', 'cp1252'])
+
+        # 去重并保持顺序
+        seen = set()
+        unique_encodings = []
+        for enc in priority_encodings:
+            if enc not in seen:
+                seen.add(enc)
+                unique_encodings.append(enc)
+
+        best_encoding = 'utf-8'
+        best_score = 0
+
+        for encoding in unique_encodings:
+            try:
+                decoded_text = raw_data.decode(encoding)
+                score = self._calculate_text_quality_score(decoded_text)
+
+                print(f"    🔍 测试编码 {encoding}: 分数 {score:.2f}")
+
+                if score > best_score:
+                    best_score = score
+                    best_encoding = encoding
+
+                if score > 0.9:
+                    break
+
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+
+        print(f"  ✅ 选择编码: {best_encoding} (分数: {best_score:.2f})")
         return best_encoding
 
     def _detect_thai_encoding_special(self, raw_data: bytes) -> str:
