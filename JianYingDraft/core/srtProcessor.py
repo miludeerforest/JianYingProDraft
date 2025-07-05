@@ -910,7 +910,10 @@ class SRTProcessor:
                     print(f"  🔍 中等置信度，结合检测结果进行测试")
                     return self._test_encoding_with_hint(raw_data, detected_encoding)
                 else:
-                    # 低置信度，使用实际测试方法
+                    # 低置信度，先检查是否为泰语，再使用实际测试方法
+                    thai_encoding = self._detect_thai_encoding_special(raw_data)
+                    if thai_encoding:
+                        return thai_encoding
                     return self._test_encoding_by_trial(raw_data)
             else:
                 # 没有chardet，直接使用实际测试方法
@@ -1019,6 +1022,89 @@ class SRTProcessor:
 
         print(f"  ✅ 选择最佳编码: {best_encoding} (分数: {best_score:.2f})")
         return best_encoding
+
+    def _detect_thai_encoding_special(self, raw_data: bytes) -> str:
+        """
+        专门检测泰语编码问题，包括被错误编码的泰语
+
+        Args:
+            raw_data: 原始字节数据
+
+        Returns:
+            str: 检测到的泰语编码，如果不是泰语则返回None
+        """
+        print("  🇹🇭 专门检测泰语编码...")
+
+        # 泰语UTF-8字节模式
+        thai_utf8_patterns = [
+            b'\xe0\xb8',  # 泰语字符 U+0E00-U+0E3F
+            b'\xe0\xb9',  # 泰语字符 U+0E40-U+0E7F
+        ]
+
+        # 检查是否包含泰语UTF-8模式
+        has_thai_utf8 = any(pattern in raw_data for pattern in thai_utf8_patterns)
+
+        if has_thai_utf8:
+            print("    🔍 检测到泰语UTF-8字节模式")
+            try:
+                decoded = raw_data.decode('utf-8')
+                if any('\u0e00' <= char <= '\u0e7f' for char in decoded):
+                    print("    ✅ 确认为正确的泰语UTF-8编码")
+                    return 'utf-8'
+            except UnicodeDecodeError:
+                print("    ❌ UTF-8解码失败")
+
+        # 检查被错误编码的泰语（常见问题）
+        corrupted_patterns = [
+            # UTF-8泰语被错误解析为latin1的模式
+            b'\xc3\xa0\xc2\xb8',  # à¸ 模式
+            b'\xc3\xa0\xc2\xb9',  # à¹ 模式
+            # 其他可能的乱码模式
+            b'\xc3\xa0\xc2\xb8\xc2\x81',  # à¸ 模式
+            b'\xc3\xa0\xc2\xb8\xc2\x84',  # à¸ 模式
+        ]
+
+        for pattern in corrupted_patterns:
+            if pattern in raw_data:
+                print(f"    🔍 检测到泰语乱码模式: {pattern.hex()}")
+
+                # 尝试修复：假设原始是UTF-8，被错误解析为latin1
+                try:
+                    # 方法1：latin1解码 -> utf-8编码 -> utf-8解码
+                    temp_str = raw_data.decode('latin1')
+                    fixed_bytes = temp_str.encode('latin1')
+                    fixed_str = fixed_bytes.decode('utf-8')
+
+                    if any('\u0e00' <= char <= '\u0e7f' for char in fixed_str):
+                        print("    ✅ 成功修复泰语编码（方法1）")
+                        return 'utf-8-corrupted-latin1'
+                except:
+                    pass
+
+                # 方法2：尝试windows-1252解码修复
+                try:
+                    temp_str = raw_data.decode('windows-1252')
+                    fixed_bytes = temp_str.encode('windows-1252')
+                    fixed_str = fixed_bytes.decode('utf-8')
+
+                    if any('\u0e00' <= char <= '\u0e7f' for char in fixed_str):
+                        print("    ✅ 成功修复泰语编码（方法2）")
+                        return 'utf-8-corrupted-cp1252'
+                except:
+                    pass
+
+        # 尝试泰语专用编码
+        thai_encodings = ['cp874', 'tis-620', 'iso-8859-11']
+        for encoding in thai_encodings:
+            try:
+                decoded = raw_data.decode(encoding)
+                if any('\u0e00' <= char <= '\u0e7f' for char in decoded):
+                    print(f"    ✅ 检测到泰语编码: {encoding}")
+                    return encoding
+            except:
+                continue
+
+        return None
 
     def _test_encoding_with_hint(self, raw_data: bytes, hint_encoding: str) -> str:
         """
@@ -1212,6 +1298,10 @@ class SRTProcessor:
         self.encoding = self._detect_encoding(file_path)
         print(f"  📝 使用编码: {self.encoding}")
 
+        # 处理特殊的泰语编码修复情况
+        if self.encoding.startswith('utf-8-corrupted'):
+            return self._read_corrupted_thai_file(file_path, self.encoding)
+
         # 尝试用检测到的编码读取
         try:
             with open(file_path, 'r', encoding=self.encoding, errors='strict') as f:
@@ -1320,6 +1410,54 @@ class SRTProcessor:
                 cleaned_chars.append(char)
 
         return ''.join(cleaned_chars)
+
+    def _read_corrupted_thai_file(self, file_path: str, encoding_type: str) -> str:
+        """
+        读取被错误编码的泰语文件并修复
+
+        Args:
+            file_path: 文件路径
+            encoding_type: 编码类型（包含修复信息）
+
+        Returns:
+            str: 修复后的文件内容
+        """
+        print(f"  🔧 修复泰语编码: {encoding_type}")
+
+        try:
+            with open(file_path, 'rb') as f:
+                raw_data = f.read()
+
+            if encoding_type == 'utf-8-corrupted-latin1':
+                # 修复方法1：latin1 -> utf-8
+                temp_str = raw_data.decode('latin1')
+                fixed_bytes = temp_str.encode('latin1')
+                content = fixed_bytes.decode('utf-8')
+                print("  ✅ 泰语编码修复成功（latin1方法）")
+
+            elif encoding_type == 'utf-8-corrupted-cp1252':
+                # 修复方法2：windows-1252 -> utf-8
+                temp_str = raw_data.decode('windows-1252')
+                fixed_bytes = temp_str.encode('windows-1252')
+                content = fixed_bytes.decode('utf-8')
+                print("  ✅ 泰语编码修复成功（cp1252方法）")
+
+            else:
+                # 默认尝试UTF-8
+                content = raw_data.decode('utf-8', errors='replace')
+                print("  ⚠️  使用默认UTF-8解码")
+
+            # 验证修复结果
+            thai_char_count = sum(1 for char in content if '\u0e00' <= char <= '\u0e7f')
+            print(f"  📊 修复后泰语字符数量: {thai_char_count}")
+
+            return content
+
+        except Exception as e:
+            print(f"  ❌ 泰语编码修复失败: {e}")
+            # 回退到普通UTF-8读取
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                return f.read()
 
     def _binary_fallback_read(self, file_path: str) -> str:
         """
