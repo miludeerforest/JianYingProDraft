@@ -24,12 +24,14 @@ try:
     from JianYingDraft.core.configManager import ConfigManager
     from JianYingDraft.core.effectExclusionManager import EffectExclusionManager
     from JianYingDraft.core.standardAutoMix import StandardAutoMix
+    from JianYingDraft.core.metadataManager import MetadataManager
 except ImportError:
     try:
         # 尝试从当前目录的core导入
         from core.configManager import ConfigManager
         from core.effectExclusionManager import EffectExclusionManager
         from core.standardAutoMix import StandardAutoMix
+        from core.metadataManager import MetadataManager
     except ImportError as e:
         print(f"❌ 无法导入核心模块: {e}")
         print("请确保JianYingDraft/core目录存在并包含必要的Python文件")
@@ -42,6 +44,7 @@ class OptimizedWebInterface:
         """初始化Web界面"""
         self.config_manager = ConfigManager()
         self.exclusion_manager = EffectExclusionManager()
+        self.metadata_manager = MetadataManager()
         self.automix_status = {
             'running': False,
             'progress': '',
@@ -612,41 +615,47 @@ class OptimizedWebInterface:
         try:
             effects = []
 
-            # 模拟特效数据 - 实际应该从元数据文件加载
+            # 使用真实的元数据管理器获取特效数据
             if effect_type == 'all' or effect_type == 'video_effects':
-                # 模拟视频特效
-                for i in range(1, 21):  # 显示20个示例
-                    effect_name = f"视频特效_{i:03d}"
+                # 获取视频特效
+                video_effects = self.metadata_manager.get_available_effects()
+                for effect_meta in video_effects:
+                    effect_name = getattr(effect_meta, 'name', '未知特效')
                     if not search_term or search_term.lower() in effect_name.lower():
                         effects.append({
-                            'id': f'video_effect_{i}',
+                            'id': f'video_effect_{getattr(effect_meta, "effect_id", "")}',
                             'name': effect_name,
                             'type': '视频特效',
-                            'excluded': effect_name in self.exclusion_manager.excluded_effects
+                            'excluded': effect_name in self.exclusion_manager.excluded_effects,
+                            'is_vip': getattr(effect_meta, 'is_vip', False)
                         })
 
             if effect_type == 'all' or effect_type == 'filters':
-                # 模拟滤镜
-                for i in range(1, 21):
-                    filter_name = f"滤镜_{i:03d}"
+                # 获取滤镜
+                filters = self.metadata_manager.get_available_filters()
+                for filter_meta in filters:
+                    filter_name = getattr(filter_meta, 'name', '未知滤镜')
                     if not search_term or search_term.lower() in filter_name.lower():
                         effects.append({
-                            'id': f'filter_{i}',
+                            'id': f'filter_{getattr(filter_meta, "effect_id", "")}',
                             'name': filter_name,
                             'type': '滤镜',
-                            'excluded': filter_name in self.exclusion_manager.excluded_filters
+                            'excluded': filter_name in self.exclusion_manager.excluded_filters,
+                            'is_vip': getattr(filter_meta, 'is_vip', False)
                         })
 
             if effect_type == 'all' or effect_type == 'transitions':
-                # 模拟转场
-                for i in range(1, 21):
-                    transition_name = f"转场_{i:03d}"
+                # 获取转场
+                transitions = self.metadata_manager.get_available_transitions()
+                for transition_meta in transitions:
+                    transition_name = getattr(transition_meta, 'name', '未知转场')
                     if not search_term or search_term.lower() in transition_name.lower():
                         effects.append({
-                            'id': f'transition_{i}',
+                            'id': f'transition_{getattr(transition_meta, "effect_id", "")}',
                             'name': transition_name,
                             'type': '转场',
-                            'excluded': transition_name in self.exclusion_manager.excluded_transitions
+                            'excluded': transition_name in self.exclusion_manager.excluded_transitions,
+                            'is_vip': getattr(transition_meta, 'is_vip', False)
                         })
 
             return {'success': True, 'effects': effects}

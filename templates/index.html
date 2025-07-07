@@ -798,9 +798,11 @@
                     this.loadProductsForAutomix(section);
                 }
 
-                // 如果是特效排除页面，加载排除统计
+                // 如果是特效排除页面，加载排除统计并搜索特效
                 if (section === 'effects-exclusion') {
                     this.loadExclusionStats();
+                    // 自动执行一次搜索以显示所有特效
+                    setTimeout(() => this.searchEffects(), 100);
                 }
 
                 // 如果是滤镜管理页面，加载滤镜统计
