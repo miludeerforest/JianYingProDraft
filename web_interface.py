@@ -157,9 +157,9 @@ class OptimizedWebInterface:
             stats = {}
             
             # 获取各类型统计
-            video_effects = self.exclusion_manager.get_excluded_video_effects()
-            filters = self.exclusion_manager.get_excluded_filters()
-            transitions = self.exclusion_manager.get_excluded_transitions()
+            video_effects = self.exclusion_manager.excluded_effects
+            filters = self.exclusion_manager.excluded_filters
+            transitions = self.exclusion_manager.excluded_transitions
             
             stats['video_effects'] = {
                 'total': 912,
@@ -455,15 +455,15 @@ class OptimizedWebInterface:
 
             for effect_id in effect_ids:
                 if effect_id.startswith('video_effect_'):
-                    effect_name = f"视频特效_{effect_id.split('_')[-1]}"
+                    effect_name = f"视频特效_{effect_id.split('_')[-1]:03d}"
                     self.exclusion_manager.add_excluded_effect(effect_name)
                     excluded_count += 1
                 elif effect_id.startswith('filter_'):
-                    filter_name = f"滤镜_{effect_id.split('_')[-1]}"
+                    filter_name = f"滤镜_{effect_id.split('_')[-1]:03d}"
                     self.exclusion_manager.add_excluded_filter(filter_name)
                     excluded_count += 1
                 elif effect_id.startswith('transition_'):
-                    transition_name = f"转场_{effect_id.split('_')[-1]}"
+                    transition_name = f"转场_{effect_id.split('_')[-1]:03d}"
                     self.exclusion_manager.add_excluded_transition(transition_name)
                     excluded_count += 1
 
@@ -481,15 +481,15 @@ class OptimizedWebInterface:
 
             for effect_id in effect_ids:
                 if effect_id.startswith('video_effect_'):
-                    effect_name = f"视频特效_{effect_id.split('_')[-1]}"
+                    effect_name = f"视频特效_{effect_id.split('_')[-1]:03d}"
                     self.exclusion_manager.remove_excluded_effect(effect_name)
                     included_count += 1
                 elif effect_id.startswith('filter_'):
-                    filter_name = f"滤镜_{effect_id.split('_')[-1]}"
+                    filter_name = f"滤镜_{effect_id.split('_')[-1]:03d}"
                     self.exclusion_manager.remove_excluded_filter(filter_name)
                     included_count += 1
                 elif effect_id.startswith('transition_'):
-                    transition_name = f"转场_{effect_id.split('_')[-1]}"
+                    transition_name = f"转场_{effect_id.split('_')[-1]:03d}"
                     self.exclusion_manager.remove_excluded_transition(transition_name)
                     included_count += 1
 
@@ -532,7 +532,7 @@ class OptimizedWebInterface:
 
             for i in range(1, 21):  # 显示20个示例
                 filter_category = list(categories.keys())[i % len(categories)]
-                filter_name = f"{categories[filter_category]}滤镜_{i:03d}"
+                filter_name = f"滤镜_{i:03d}"
 
                 if category != 'all' and filter_category != category:
                     continue
@@ -581,7 +581,7 @@ class OptimizedWebInterface:
 
             for i in range(1, 21):  # 显示20个示例
                 t_type = list(types.keys())[i % len(types)]
-                transition_name = f"{types[t_type]}_{i:03d}"
+                transition_name = f"转场_{i:03d}"
 
                 if transition_type != 'all' and t_type != transition_type:
                     continue
@@ -615,6 +615,66 @@ class OptimizedWebInterface:
                 'success': success,
                 'message': f'转场设置已保存: 时长{min_duration}-{max_duration}s, 概率{probability}%, 最大连续{max_consecutive}个'
             }
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+
+    def smart_exclude_effects(self, exclude_type):
+        """智能排除特效"""
+        try:
+            excluded_count = 0
+            total_excluded = 0
+
+            if exclude_type == 'exaggerated_effects' or exclude_type == 'all':
+                # 模拟排除夸张特效
+                exaggerated_effects = [
+                    '视频特效_001', '视频特效_003', '视频特效_005',
+                    '视频特效_007', '视频特效_009'
+                ]
+                for effect in exaggerated_effects:
+                    if effect not in self.exclusion_manager.excluded_effects:
+                        self.exclusion_manager.add_excluded_effect(effect)
+                        excluded_count += 1
+                        total_excluded += 1
+
+            if exclude_type == 'strong_filters' or exclude_type == 'all':
+                # 模拟排除强烈滤镜
+                strong_filters = [
+                    '滤镜_002', '滤镜_004', '滤镜_006',
+                    '滤镜_008', '滤镜_010'
+                ]
+                for filter_name in strong_filters:
+                    if filter_name not in self.exclusion_manager.excluded_filters:
+                        self.exclusion_manager.add_excluded_filter(filter_name)
+                        excluded_count += 1
+                        total_excluded += 1
+
+            if exclude_type == 'fast_transitions' or exclude_type == 'all':
+                # 模拟排除快速转场
+                fast_transitions = [
+                    '转场_001', '转场_003', '转场_005',
+                    '转场_007', '转场_009'
+                ]
+                for transition in fast_transitions:
+                    if transition not in self.exclusion_manager.excluded_transitions:
+                        self.exclusion_manager.add_excluded_transition(transition)
+                        excluded_count += 1
+                        total_excluded += 1
+
+            # 清除缓存
+            self._cache['exclusions'] = None
+
+            if exclude_type == 'all':
+                return {
+                    'success': True,
+                    'total_excluded': total_excluded,
+                    'message': f'全面智能排除完成，共排除 {total_excluded} 个特效'
+                }
+            else:
+                return {
+                    'success': True,
+                    'excluded_count': excluded_count,
+                    'message': f'智能排除完成，共排除 {excluded_count} 个特效'
+                }
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
@@ -697,6 +757,18 @@ def start_batch_automix():
 
         # 启动批量混剪任务
         result = web_interface.start_batch_automix(product, count, min_duration, max_duration)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/effects/smart-exclude', methods=['POST'])
+def smart_exclude_effects():
+    """智能排除特效API"""
+    try:
+        data = request.get_json()
+        exclude_type = data.get('type', 'all')
+
+        result = web_interface.smart_exclude_effects(exclude_type)
         return jsonify(result)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})

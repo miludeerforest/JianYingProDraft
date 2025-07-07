@@ -1980,48 +1980,136 @@
 
             // 智能排除功能
             async excludeExaggeratedEffects() {
-                this.showAlert('正在排除夸张特效...', 'info');
-                // 这里可以调用后端API实现智能排除
-                setTimeout(() => {
-                    this.showAlert('夸张特效排除完成', 'success');
-                    this.refreshSmartStats();
-                }, 2000);
+                try {
+                    this.showAlert('正在排除夸张特效...', 'info');
+
+                    const response = await fetch('/api/effects/smart-exclude', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: 'exaggerated_effects'
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(`夸张特效排除完成，共排除 ${result.excluded_count} 个`, 'success');
+                        this.refreshSmartStats();
+                        this.loadExclusionStats();
+                    } else {
+                        this.showAlert('排除失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('排除失败: ' + error.message, 'error');
+                }
             }
 
             async excludeStrongFilters() {
-                this.showAlert('正在排除强烈滤镜...', 'info');
-                setTimeout(() => {
-                    this.showAlert('强烈滤镜排除完成', 'success');
-                    this.refreshSmartStats();
-                }, 2000);
+                try {
+                    this.showAlert('正在排除强烈滤镜...', 'info');
+
+                    const response = await fetch('/api/effects/smart-exclude', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: 'strong_filters'
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(`强烈滤镜排除完成，共排除 ${result.excluded_count} 个`, 'success');
+                        this.refreshSmartStats();
+                        this.loadExclusionStats();
+                    } else {
+                        this.showAlert('排除失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('排除失败: ' + error.message, 'error');
+                }
             }
 
             async excludeFastTransitions() {
-                this.showAlert('正在排除快速转场...', 'info');
-                setTimeout(() => {
-                    this.showAlert('快速转场排除完成', 'success');
-                    this.refreshSmartStats();
-                }, 2000);
+                try {
+                    this.showAlert('正在排除快速转场...', 'info');
+
+                    const response = await fetch('/api/effects/smart-exclude', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: 'fast_transitions'
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(`快速转场排除完成，共排除 ${result.excluded_count} 个`, 'success');
+                        this.refreshSmartStats();
+                        this.loadExclusionStats();
+                    } else {
+                        this.showAlert('排除失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('排除失败: ' + error.message, 'error');
+                }
             }
 
             async smartExcludeAll() {
-                this.showAlert('正在执行全面智能排除...', 'info');
-                setTimeout(() => {
-                    this.showAlert('全面智能排除完成', 'success');
-                    this.refreshSmartStats();
-                }, 3000);
+                try {
+                    this.showAlert('正在执行全面智能排除...', 'info');
+
+                    const response = await fetch('/api/effects/smart-exclude', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: 'all'
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(`全面智能排除完成，共排除 ${result.total_excluded} 个`, 'success');
+                        this.refreshSmartStats();
+                        this.loadExclusionStats();
+                    } else {
+                        this.showAlert('排除失败: ' + result.error, 'error');
+                    }
+                } catch (error) {
+                    this.showAlert('排除失败: ' + error.message, 'error');
+                }
             }
 
             async refreshSmartStats() {
-                // 模拟统计数据更新
-                this.setElementText('smart-video-excluded', Math.floor(Math.random() * 50));
-                this.setElementText('smart-filters-excluded', Math.floor(Math.random() * 30));
-                this.setElementText('smart-transitions-excluded', Math.floor(Math.random() * 20));
+                try {
+                    const response = await fetch('/api/exclusions');
+                    const stats = await response.json();
 
-                const total = parseInt(document.getElementById('smart-video-excluded').textContent) +
-                             parseInt(document.getElementById('smart-filters-excluded').textContent) +
-                             parseInt(document.getElementById('smart-transitions-excluded').textContent);
-                this.setElementText('smart-total-excluded', total);
+                    if (stats.success !== false) {
+                        const videoExcluded = stats.video_effects?.excluded || 0;
+                        const filtersExcluded = stats.filters?.excluded || 0;
+                        const transitionsExcluded = stats.transitions?.excluded || 0;
+                        const total = videoExcluded + filtersExcluded + transitionsExcluded;
+
+                        this.setElementText('smart-video-excluded', videoExcluded);
+                        this.setElementText('smart-filters-excluded', filtersExcluded);
+                        this.setElementText('smart-transitions-excluded', transitionsExcluded);
+                        this.setElementText('smart-total-excluded', total);
+                    }
+                } catch (error) {
+                    console.error('刷新智能排除统计失败:', error);
+                }
             }
 
             setForceExecutionMode() {
