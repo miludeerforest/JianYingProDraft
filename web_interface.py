@@ -302,32 +302,47 @@ class OptimizedWebInterface:
             # 在后台线程中执行混剪
             def run_automix():
                 try:
-                    # 这里可以调用实际的混剪逻辑
-                    # 模拟混剪过程
-                    import time
-                    import random
+                    # 调用真正的混剪逻辑
+                    from JianYingDraft.core.standardAutoMix import StandardAutoMix
+
+                    # 创建草稿名称
+                    import datetime
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    draft_name = f"{product}_单个混剪_{duration}s_{timestamp}"
 
                     self.automix_status['progress'] = f'正在为产品 {product} 生成 {duration}秒 混剪视频...'
-                    time.sleep(2)
 
-                    self.automix_status['progress'] = '正在处理视频片段...'
-                    time.sleep(3)
+                    # 创建StandardAutoMix实例
+                    automix = StandardAutoMix(draft_name)
 
-                    self.automix_status['progress'] = '正在添加特效和转场...'
-                    time.sleep(2)
+                    # 设置进度回调
+                    def progress_callback(message, progress):
+                        self.automix_status['progress'] = f'{message} ({progress:.1f}%)'
 
-                    self.automix_status['progress'] = '正在生成最终视频...'
-                    time.sleep(3)
+                    automix.progress_callback = progress_callback
 
-                    # 模拟成功完成
-                    self.automix_status['running'] = False
-                    self.automix_status['progress'] = '混剪完成'
-                    self.automix_status['result'] = {
-                        'output_path': f'output/{product}_automix_{duration}s.mp4',
-                        'duration': duration,
-                        'effects_count': random.randint(5, 15),
-                        'transitions_count': random.randint(3, 8)
-                    }
+                    # 执行混剪 (duration秒转换为微秒)
+                    target_duration = duration * 1000000  # 秒转微秒
+                    result = automix.auto_mix(target_duration=target_duration, product_model=product)
+
+                    if result.get('success', False):
+                        # 混剪成功
+                        self.automix_status['running'] = False
+                        self.automix_status['progress'] = '混剪完成'
+                        self.automix_status['result'] = {
+                            'draft_name': draft_name,
+                            'draft_path': result.get('draft_path', ''),
+                            'duration': duration,
+                            'video_count': result.get('video_count', 0),
+                            'effects_count': result.get('effects_count', 0),
+                            'transitions_count': result.get('transitions_count', 0),
+                            'filters_count': result.get('filters_count', 0)
+                        }
+                    else:
+                        # 混剪失败
+                        self.automix_status['running'] = False
+                        self.automix_status['error'] = result.get('error', '未知错误')
+                        self.automix_status['progress'] = '混剪失败'
 
                 except Exception as e:
                     self.automix_status['running'] = False
@@ -358,32 +373,78 @@ class OptimizedWebInterface:
             # 在后台线程中执行批量混剪
             def run_batch_automix():
                 try:
-                    import time
+                    from JianYingDraft.core.standardAutoMix import StandardAutoMix
+                    import datetime
                     import random
 
                     results = []
+                    successful_count = 0
+                    failed_count = 0
 
                     for i in range(count):
                         current_duration = random.randint(min_duration, max_duration)
                         self.automix_status['progress'] = f'正在生成第 {i+1}/{count} 个视频 ({current_duration}秒)...'
 
-                        # 模拟每个视频的生成过程
-                        time.sleep(random.uniform(2, 4))
+                        try:
+                            # 创建草稿名称
+                            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                            draft_name = f"{product}_批量_{i+1:02d}_{current_duration}s_{timestamp}"
 
-                        result = {
-                            'index': i + 1,
-                            'output_path': f'output/{product}_batch_{i+1}_{current_duration}s.mp4',
-                            'duration': current_duration,
-                            'effects_count': random.randint(5, 15),
-                            'transitions_count': random.randint(3, 8)
-                        }
-                        results.append(result)
+                            # 创建StandardAutoMix实例
+                            automix = StandardAutoMix(draft_name)
+
+                            # 设置进度回调
+                            def progress_callback(message, progress):
+                                self.automix_status['progress'] = f'第{i+1}/{count}个: {message} ({progress:.1f}%)'
+
+                            automix.progress_callback = progress_callback
+
+                            # 执行混剪
+                            target_duration = current_duration * 1000000  # 秒转微秒
+                            mix_result = automix.auto_mix(target_duration=target_duration, product_model=product)
+
+                            if mix_result.get('success', False):
+                                result = {
+                                    'index': i + 1,
+                                    'draft_name': draft_name,
+                                    'draft_path': mix_result.get('draft_path', ''),
+                                    'duration': current_duration,
+                                    'video_count': mix_result.get('video_count', 0),
+                                    'effects_count': mix_result.get('effects_count', 0),
+                                    'transitions_count': mix_result.get('transitions_count', 0),
+                                    'filters_count': mix_result.get('filters_count', 0),
+                                    'status': 'success'
+                                }
+                                successful_count += 1
+                            else:
+                                result = {
+                                    'index': i + 1,
+                                    'draft_name': draft_name,
+                                    'duration': current_duration,
+                                    'error': mix_result.get('error', '未知错误'),
+                                    'status': 'failed'
+                                }
+                                failed_count += 1
+
+                            results.append(result)
+
+                        except Exception as e:
+                            result = {
+                                'index': i + 1,
+                                'duration': current_duration,
+                                'error': str(e),
+                                'status': 'failed'
+                            }
+                            results.append(result)
+                            failed_count += 1
 
                     # 批量混剪完成
                     self.automix_status['running'] = False
-                    self.automix_status['progress'] = f'批量混剪完成 (共生成{count}个视频)'
+                    self.automix_status['progress'] = f'批量混剪完成: 成功{successful_count}个, 失败{failed_count}个'
                     self.automix_status['result'] = {
                         'total_count': count,
+                        'successful_count': successful_count,
+                        'failed_count': failed_count,
                         'results': results,
                         'total_duration': sum(r['duration'] for r in results)
                     }

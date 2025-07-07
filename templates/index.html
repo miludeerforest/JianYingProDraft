@@ -2278,11 +2278,38 @@
 
                             if (!status.running) {
                                 clearInterval(pollInterval);
-                                this.hideAutomixProgress();
+
                                 if (status.result) {
-                                    this.showAlert('混剪完成！', 'success');
+                                    // 显示详细的成功结果
+                                    const result = status.result;
+                                    const resultHtml = `
+                                        <div style="text-align: center; color: var(--accent-color); padding: 20px;">
+                                            <div style="font-size: 18px; margin-bottom: 15px;">✅ 混剪完成！</div>
+                                            <div style="text-align: left; margin-bottom: 15px; background: var(--bg-primary); padding: 15px; border-radius: 8px;">
+                                                <div><strong>草稿名称:</strong> ${result.draft_name || '未知'}</div>
+                                                <div><strong>草稿路径:</strong> ${result.draft_path || '未知'}</div>
+                                                <div><strong>视频时长:</strong> ${result.duration}秒</div>
+                                                <div><strong>视频片段:</strong> ${result.video_count || 0}个</div>
+                                                <div><strong>特效数量:</strong> ${result.effects_count || 0}个</div>
+                                                <div><strong>转场数量:</strong> ${result.transitions_count || 0}个</div>
+                                                <div><strong>滤镜数量:</strong> ${result.filters_count || 0}个</div>
+                                            </div>
+                                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">
+                                                草稿已保存到剪映项目目录，可在剪映中打开编辑
+                                            </div>
+                                            <button class="btn btn-primary" onclick="app.hideAutomixProgress()">确定</button>
+                                        </div>
+                                    `;
+
+                                    const progressDiv = document.getElementById('automix-progress');
+                                    if (progressDiv) {
+                                        progressDiv.innerHTML = resultHtml;
+                                    }
                                 } else if (status.error) {
+                                    this.hideAutomixProgress();
                                     this.showAlert('混剪失败: ' + status.error, 'error');
+                                } else {
+                                    this.hideAutomixProgress();
                                 }
                             }
                         } else if (type === 'batch') {
@@ -2290,11 +2317,81 @@
 
                             if (!status.running) {
                                 clearInterval(pollInterval);
-                                this.hideBatchProgress();
+
                                 if (status.result) {
-                                    this.showAlert('批量混剪完成！', 'success');
+                                    // 显示详细的批量结果
+                                    const result = status.result;
+                                    const successResults = result.results.filter(r => r.status === 'success');
+                                    const failedResults = result.results.filter(r => r.status === 'failed');
+
+                                    let resultHtml = `
+                                        <div style="text-align: center; color: var(--accent-color); padding: 20px;">
+                                            <div style="font-size: 18px; margin-bottom: 15px;">✅ 批量混剪完成！</div>
+                                            <div style="text-align: left; margin-bottom: 15px; background: var(--bg-primary); padding: 15px; border-radius: 8px;">
+                                                <div><strong>总数量:</strong> ${result.total_count}个</div>
+                                                <div><strong>成功:</strong> ${result.successful_count}个</div>
+                                                <div><strong>失败:</strong> ${result.failed_count}个</div>
+                                                <div><strong>总时长:</strong> ${result.total_duration}秒</div>
+                                            </div>
+                                    `;
+
+                                    if (successResults.length > 0) {
+                                        resultHtml += `
+                                            <div style="text-align: left; margin-bottom: 15px;">
+                                                <h4 style="color: var(--accent-color); margin-bottom: 10px;">✅ 成功的草稿:</h4>
+                                                <div style="max-height: 200px; overflow-y: auto; background: var(--bg-primary); padding: 10px; border-radius: 6px;">
+                                        `;
+
+                                        successResults.forEach(r => {
+                                            resultHtml += `
+                                                <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 4px;">
+                                                    <div><strong>${r.draft_name}</strong></div>
+                                                    <div style="font-size: 12px; color: var(--text-secondary);">
+                                                        时长: ${r.duration}s | 片段: ${r.video_count} | 特效: ${r.effects_count} | 转场: ${r.transitions_count}
+                                                    </div>
+                                                </div>
+                                            `;
+                                        });
+
+                                        resultHtml += `</div></div>`;
+                                    }
+
+                                    if (failedResults.length > 0) {
+                                        resultHtml += `
+                                            <div style="text-align: left; margin-bottom: 15px;">
+                                                <h4 style="color: var(--error-color); margin-bottom: 10px;">❌ 失败的任务:</h4>
+                                                <div style="max-height: 150px; overflow-y: auto; background: var(--bg-primary); padding: 10px; border-radius: 6px;">
+                                        `;
+
+                                        failedResults.forEach(r => {
+                                            resultHtml += `
+                                                <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-secondary); border-radius: 4px;">
+                                                    <div><strong>第${r.index}个 (${r.duration}s)</strong></div>
+                                                    <div style="font-size: 12px; color: var(--error-color);">错误: ${r.error}</div>
+                                                </div>
+                                            `;
+                                        });
+
+                                        resultHtml += `</div></div>`;
+                                    }
+
+                                    resultHtml += `
+                                            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">
+                                                成功的草稿已保存到剪映项目目录
+                                            </div>
+                                            <button class="btn btn-primary" onclick="app.hideBatchProgress()">确定</button>
+                                        </div>
+                                    `;
+
+                                    const progressDiv = document.getElementById('batch-progress');
+                                    if (progressDiv) {
+                                        progressDiv.innerHTML = resultHtml;
+                                    }
                                 } else if (status.error) {
+                                    this.hideBatchProgress();
                                     this.showAlert('批量混剪失败: ' + status.error, 'error');
+                                } else {
+                                    this.hideBatchProgress();
                                 }
                             }
                         }
