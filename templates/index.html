@@ -1528,9 +1528,6 @@
                                 💡 在这里设置转场的时长范围和应用概率。转场排除功能已整合到"智能排除"页面。
                             </p>
                         </div>
-                                </select>
-                            </div>
-                        </div>
 
                         <!-- 转场时长控制 -->
                         <div class="card" style="padding: 15px; margin-bottom: 20px;">
@@ -1569,16 +1566,9 @@
                         </div>
 
                         <!-- 操作按钮 -->
-                        <div style="margin: 20px 0;">
-                            <button class="btn btn-primary" onclick="app.searchTransitions()">🔍 搜索转场</button>
-                            <button class="btn btn-warning" onclick="app.excludeFastTransitions()">❌ 排除快速转场</button>
-                            <button class="btn btn-success" onclick="app.saveTransitionSettings()">💾 保存设置</button>
-                            <button class="btn btn-primary" onclick="app.refreshTransitionStats()">📊 刷新统计</button>
-                        </div>
-
-                        <!-- 转场列表 -->
-                        <div id="transitions-list" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px;">
-                            <p style="text-align: center; color: var(--text-secondary);">点击"搜索转场"查看可用转场</p>
+                        <div style="text-align: center; margin: 20px 0;">
+                            <button class="btn btn-success" onclick="app.saveTransitionSettings()">💾 保存转场设置</button>
+                            <button class="btn btn-primary" onclick="app.resetTransitionSettings()">🔄 重置为默认</button>
                         </div>
                     </div>
                 `;
