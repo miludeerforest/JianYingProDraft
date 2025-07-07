@@ -48,7 +48,14 @@ class OptimizedWebInterface:
             'error': None,
             'result': None
         }
-        
+
+        # 任务统计跟踪
+        self.task_statistics = {
+            'completed_today': 0,
+            'error_count_today': 0,
+            'last_reset_date': None
+        }
+
         # 缓存数据，减少重复计算
         self._cache = {
             'config': None,
@@ -58,7 +65,30 @@ class OptimizedWebInterface:
             'cache_time': 0
         }
         self._cache_timeout = 30  # 缓存30秒
-    
+
+        # 初始化今日统计
+        self._reset_daily_statistics_if_needed()
+
+    def _reset_daily_statistics_if_needed(self):
+        """如果是新的一天，重置统计数据"""
+        import datetime
+        today = datetime.date.today()
+
+        if self.task_statistics['last_reset_date'] != today:
+            self.task_statistics['completed_today'] = 0
+            self.task_statistics['error_count_today'] = 0
+            self.task_statistics['last_reset_date'] = today
+
+    def _increment_completed_tasks(self):
+        """增加完成任务计数"""
+        self._reset_daily_statistics_if_needed()
+        self.task_statistics['completed_today'] += 1
+
+    def _increment_error_count(self):
+        """增加错误计数"""
+        self._reset_daily_statistics_if_needed()
+        self.task_statistics['error_count_today'] += 1
+
     def _is_cache_valid(self):
         """检查缓存是否有效"""
         return time.time() - self._cache['cache_time'] < self._cache_timeout
@@ -339,16 +369,25 @@ class OptimizedWebInterface:
                             'transitions_count': statistics.get('applied_transitions', 0),
                             'filters_count': statistics.get('applied_filters', 0)
                         }
+
+                        # 更新完成任务统计
+                        self._increment_completed_tasks()
                     else:
                         # 混剪失败
                         self.automix_status['running'] = False
                         self.automix_status['error'] = result.get('error', '未知错误')
                         self.automix_status['progress'] = '混剪失败'
 
+                        # 更新错误统计
+                        self._increment_error_count()
+
                 except Exception as e:
                     self.automix_status['running'] = False
                     self.automix_status['error'] = str(e)
                     self.automix_status['progress'] = '混剪失败'
+
+                    # 更新错误统计
+                    self._increment_error_count()
 
             # 启动后台线程
             threading.Thread(target=run_automix, daemon=True).start()
@@ -452,10 +491,19 @@ class OptimizedWebInterface:
                         'total_duration': sum(r['duration'] for r in results)
                     }
 
+                    # 更新统计数据
+                    for _ in range(successful_count):
+                        self._increment_completed_tasks()
+                    for _ in range(failed_count):
+                        self._increment_error_count()
+
                 except Exception as e:
                     self.automix_status['running'] = False
                     self.automix_status['error'] = str(e)
                     self.automix_status['progress'] = '批量混剪失败'
+
+                    # 更新错误统计
+                    self._increment_error_count()
 
             # 启动后台线程
             threading.Thread(target=run_batch_automix, daemon=True).start()
@@ -763,11 +811,12 @@ class OptimizedWebInterface:
             if self.automix_status['running']:
                 active_tasks = 1
 
-            # 今日完成任务数（模拟数据，实际应该从日志或数据库获取）
-            completed_today = self._get_completed_tasks_today()
+            # 今日完成任务数（真实数据）
+            self._reset_daily_statistics_if_needed()
+            completed_today = self.task_statistics['completed_today']
 
-            # 错误次数（模拟数据）
-            error_count = self._get_error_count_today()
+            # 错误次数（真实数据）
+            error_count = self.task_statistics['error_count_today']
 
             # 当前操作状态
             current_operation = '空闲中'
@@ -819,18 +868,7 @@ class OptimizedWebInterface:
                 'error_count': 1
             }
 
-    def _get_completed_tasks_today(self):
-        """获取今日完成任务数（模拟实现）"""
-        # 实际实现应该从日志文件或数据库获取
-        # 这里返回一个基于时间的模拟值
-        import datetime
-        hour = datetime.datetime.now().hour
-        return max(0, hour - 8)  # 8点后每小时完成1个任务
 
-    def _get_error_count_today(self):
-        """获取今日错误次数（模拟实现）"""
-        # 实际实现应该从日志文件获取
-        return 0
 
     def _get_recent_logs(self):
         """获取最近的操作日志（模拟实现）"""
