@@ -326,17 +326,18 @@ class OptimizedWebInterface:
                     result = automix.auto_mix(target_duration=target_duration, product_model=product)
 
                     if result.get('success', False):
-                        # 混剪成功
+                        # 混剪成功，提取统计信息
+                        statistics = result.get('statistics', {})
                         self.automix_status['running'] = False
                         self.automix_status['progress'] = '混剪完成'
                         self.automix_status['result'] = {
                             'draft_name': draft_name,
                             'draft_path': result.get('draft_path', ''),
                             'duration': duration,
-                            'video_count': result.get('video_count', 0),
-                            'effects_count': result.get('effects_count', 0),
-                            'transitions_count': result.get('transitions_count', 0),
-                            'filters_count': result.get('filters_count', 0)
+                            'video_count': statistics.get('selected_materials', 0),
+                            'effects_count': statistics.get('applied_effects', 0),
+                            'transitions_count': statistics.get('applied_transitions', 0),
+                            'filters_count': statistics.get('applied_filters', 0)
                         }
                     else:
                         # 混剪失败
@@ -404,15 +405,17 @@ class OptimizedWebInterface:
                             mix_result = automix.auto_mix(target_duration=target_duration, product_model=product)
 
                             if mix_result.get('success', False):
+                                # 提取统计信息
+                                statistics = mix_result.get('statistics', {})
                                 result = {
                                     'index': i + 1,
                                     'draft_name': draft_name,
                                     'draft_path': mix_result.get('draft_path', ''),
                                     'duration': current_duration,
-                                    'video_count': mix_result.get('video_count', 0),
-                                    'effects_count': mix_result.get('effects_count', 0),
-                                    'transitions_count': mix_result.get('transitions_count', 0),
-                                    'filters_count': mix_result.get('filters_count', 0),
+                                    'video_count': statistics.get('selected_materials', 0),
+                                    'effects_count': statistics.get('applied_effects', 0),
+                                    'transitions_count': statistics.get('applied_transitions', 0),
+                                    'filters_count': statistics.get('applied_filters', 0),
                                     'status': 'success'
                                 }
                                 successful_count += 1
