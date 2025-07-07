@@ -595,24 +595,23 @@ class AutoMixDraft(Draft):
         self._Draft__add_media_to_content_tracks(media, start=start)
     
     def _process_subtitles(self, subtitle_file: Optional[str], total_duration: int):
-        """处理字幕"""
+        """处理字幕（简化版，不修改内容）"""
         try:
             if subtitle_file and os.path.exists(subtitle_file):
-                # 解析SRT文件
+                # 解析SRT文件（不修改内容）
                 subtitles = self.srt_processor.parse_srt_file(subtitle_file)
-                
-                # 修复格式
-                fixed_subtitles = self.srt_processor.fix_srt_format(subtitles)
-                
-                # 优化时长
-                optimized_subtitles = self.srt_processor.optimize_subtitle_timing(fixed_subtitles, total_duration)
-                
+
+                # 只做时间轴调整，不修改内容
+                processed_subtitles = self.srt_processor.optimize_subtitle_timing(subtitles, total_duration)
+
                 # 添加字幕到草稿
-                subtitle_count = self.srt_processor.add_subtitles_to_draft(self, optimized_subtitles)
+                subtitle_count = self.srt_processor.add_subtitles_to_draft(self, processed_subtitles)
                 self.mix_statistics['subtitle_count'] = subtitle_count
-            
+
         except Exception as e:
-            raise ValueError(f"处理字幕失败: {str(e)}")
+            print(f"⚠️ 字幕处理失败，跳过字幕: {str(e)}")
+            # 字幕处理失败不应该影响整个混剪过程
+            self.mix_statistics['subtitle_count'] = 0
     
     def _validate_and_save(self):
         """验证和保存草稿"""

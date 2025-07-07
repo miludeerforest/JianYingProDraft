@@ -39,26 +39,51 @@ class SRTProcessor:
     def parse_srt_file(self, srt_path: str) -> List[Dict[str, Any]]:
         """
         解析SRT文件，提取时间戳和文本
-        
+
         Args:
             srt_path: SRT文件路径
-            
+
         Returns:
             List[Dict[str, Any]]: 解析后的字幕列表
         """
         if not os.path.exists(srt_path):
             raise FileNotFoundError(f"SRT文件不存在: {srt_path}")
-        
-        # 智能检测和读取文件编码
-        content = self._read_file_with_encoding_detection(srt_path)
-        
-        # 自动修复SRT格式错误
-        content = self._auto_fix_srt_format(content)
 
-        # 解析SRT内容
+        # 简单读取文件，不进行编码检测和内容修改
+        content = self._simple_read_file(srt_path)
+
+        # 解析SRT内容（不修改内容）
         self.subtitles = self._parse_srt_content(content)
         return self.subtitles
-    
+
+    def _simple_read_file(self, file_path: str) -> str:
+        """
+        简单读取文件，不进行编码检测和内容修改
+
+        Args:
+            file_path: 文件路径
+
+        Returns:
+            str: 文件内容
+        """
+        # 尝试常见编码，按优先级顺序
+        encodings = ['utf-8', 'utf-8-sig', 'gbk', 'gb2312', 'big5', 'latin1']
+
+        for encoding in encodings:
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    content = f.read()
+                print(f"  ✅ 使用编码 {encoding} 读取成功")
+                return content
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+
+        # 如果所有编码都失败，使用latin1（不会失败）
+        with open(file_path, 'r', encoding='latin1') as f:
+            content = f.read()
+        print(f"  ⚠️ 使用备用编码 latin1 读取")
+        return content
+
     def _parse_srt_content(self, content: str) -> List[Dict[str, Any]]:
         """
         解析SRT内容
@@ -126,11 +151,8 @@ class SRTProcessor:
                 start_time = self._time_to_microseconds(*time_match.groups()[:4])
                 end_time = self._time_to_microseconds(*time_match.groups()[4:8])
                 
-                # 组合字幕文本
+                # 组合字幕文本，不进行任何内容修改
                 text = '\n'.join(text_lines).strip()
-
-                # 清理文本
-                text = self._clean_subtitle_text(text)
                 
                 subtitle = {
                     'index': index,
@@ -754,38 +776,40 @@ class SRTProcessor:
     
     def optimize_subtitle_timing(self, subtitles: List[Dict[str, Any]], video_duration: int) -> List[Dict[str, Any]]:
         """
-        优化字幕时间分配
-        
+        简化字幕时间轴处理：只做时长裁剪，不修改内容
+
         Args:
             subtitles: 字幕列表
             video_duration: 视频总时长（微秒）
-            
+
         Returns:
-            List[Dict[str, Any]]: 优化后的字幕列表
+            List[Dict[str, Any]]: 处理后的字幕列表
         """
         if not subtitles:
             return []
-        
-        optimized_subtitles = []
-        
+
+        processed_subtitles = []
+
         for subtitle in subtitles:
-            optimized_subtitle = subtitle.copy()
-            
-            # 确保字幕不超出视频时长
-            if optimized_subtitle['start_time'] >= video_duration:
+            # 如果字幕开始时间超出视频时长，直接跳过
+            if subtitle['start_time'] >= video_duration:
                 break
-            
-            if optimized_subtitle['end_time'] > video_duration:
-                optimized_subtitle['end_time'] = video_duration
-                optimized_subtitle['duration'] = optimized_subtitle['end_time'] - optimized_subtitle['start_time']
-                
-                # 如果调整后时长过短，跳过这个字幕
-                if optimized_subtitle['duration'] < 100000:  # 小于0.1秒
+
+            # 复制字幕数据，不修改原始内容
+            processed_subtitle = subtitle.copy()
+
+            # 如果字幕结束时间超出视频时长，直接裁剪到视频结束
+            if processed_subtitle['end_time'] > video_duration:
+                processed_subtitle['end_time'] = video_duration
+                processed_subtitle['duration'] = video_duration - processed_subtitle['start_time']
+
+                # 如果裁剪后时长太短（小于0.5秒），跳过这个字幕
+                if processed_subtitle['duration'] < 500000:
                     break
-            
-            optimized_subtitles.append(optimized_subtitle)
-        
-        return optimized_subtitles
+
+            processed_subtitles.append(processed_subtitle)
+
+        return processed_subtitles
     
     def create_subtitle_segments(self, subtitles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """

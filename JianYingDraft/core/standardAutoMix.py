@@ -651,20 +651,17 @@ class StandardAutoMix:
         print(f"  ✅ 添加音频轨道 {track_name}: 时长{duration/SEC:.1f}s, 音量{volume:.1%}")
 
     def _add_subtitles(self, subtitle_file: str, target_duration: int):
-        """添加字幕（包含格式自动修复）"""
+        """添加字幕（简化处理，不修改内容）"""
         if not subtitle_file or not os.path.exists(subtitle_file):
             return
 
         try:
-            # 先进行SRT格式自动修复
             print(f"  📝 准备导入字幕文件: {os.path.basename(subtitle_file)}")
 
-            # 使用SRT处理器进行格式检查和修复
-            fixed_subtitle_file = self._fix_and_prepare_srt(subtitle_file)
-
-            # 使用pyJianYingDraft标准API导入修复后的SRT字幕
+            # 直接使用原始字幕文件，不进行格式修复
+            # 使用pyJianYingDraft标准API导入SRT字幕
             self.script.import_srt(
-                fixed_subtitle_file,
+                subtitle_file,
                 track_name="subtitle",
                 text_style=Text_style(
                     size=5.0,
