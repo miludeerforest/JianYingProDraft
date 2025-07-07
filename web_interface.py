@@ -49,12 +49,11 @@ class OptimizedWebInterface:
             'result': None
         }
 
+        # 统计数据文件路径
+        self.statistics_file = os.path.join(os.path.dirname(__file__), 'data', 'task_statistics.json')
+
         # 任务统计跟踪
-        self.task_statistics = {
-            'completed_today': 0,
-            'error_count_today': 0,
-            'last_reset_date': None
-        }
+        self.task_statistics = self._load_statistics()
 
         # 缓存数据，减少重复计算
         self._cache = {
@@ -69,6 +68,57 @@ class OptimizedWebInterface:
         # 初始化今日统计
         self._reset_daily_statistics_if_needed()
 
+    def _load_statistics(self):
+        """从文件加载统计数据"""
+        try:
+            # 确保data目录存在
+            data_dir = os.path.dirname(self.statistics_file)
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir)
+
+            # 如果文件存在，加载数据
+            if os.path.exists(self.statistics_file):
+                with open(self.statistics_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # 转换日期字符串为date对象
+                    if data.get('last_reset_date'):
+                        import datetime
+                        data['last_reset_date'] = datetime.datetime.strptime(
+                            data['last_reset_date'], '%Y-%m-%d'
+                        ).date()
+                    return data
+        except Exception as e:
+            print(f"⚠️ 加载统计数据失败: {e}")
+
+        # 返回默认数据
+        return {
+            'completed_today': 0,
+            'error_count_today': 0,
+            'last_reset_date': None
+        }
+
+    def _save_statistics(self):
+        """保存统计数据到文件"""
+        try:
+            # 准备保存的数据
+            data = self.task_statistics.copy()
+
+            # 转换date对象为字符串
+            if data.get('last_reset_date'):
+                data['last_reset_date'] = data['last_reset_date'].strftime('%Y-%m-%d')
+
+            # 确保目录存在
+            data_dir = os.path.dirname(self.statistics_file)
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir)
+
+            # 保存到文件
+            with open(self.statistics_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+
+        except Exception as e:
+            print(f"⚠️ 保存统计数据失败: {e}")
+
     def _reset_daily_statistics_if_needed(self):
         """如果是新的一天，重置统计数据"""
         import datetime
@@ -78,16 +128,22 @@ class OptimizedWebInterface:
             self.task_statistics['completed_today'] = 0
             self.task_statistics['error_count_today'] = 0
             self.task_statistics['last_reset_date'] = today
+            # 保存重置后的数据
+            self._save_statistics()
 
     def _increment_completed_tasks(self):
         """增加完成任务计数"""
         self._reset_daily_statistics_if_needed()
         self.task_statistics['completed_today'] += 1
+        # 立即保存更新的数据
+        self._save_statistics()
 
     def _increment_error_count(self):
         """增加错误计数"""
         self._reset_daily_statistics_if_needed()
         self.task_statistics['error_count_today'] += 1
+        # 立即保存更新的数据
+        self._save_statistics()
 
     def _is_cache_valid(self):
         """检查缓存是否有效"""
