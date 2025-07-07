@@ -662,24 +662,52 @@ class OptimizedWebInterface:
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+    def _get_effect_name_by_id(self, effect_id):
+        """根据特效ID获取特效名称"""
+        try:
+            if effect_id.startswith('video_effect_'):
+                target_effect_id = effect_id.replace('video_effect_', '')
+                video_effects = self.metadata_manager.get_available_effects()
+                for effect_meta in video_effects:
+                    if getattr(effect_meta, 'effect_id', '') == target_effect_id:
+                        return getattr(effect_meta, 'name', '未知特效')
+
+            elif effect_id.startswith('filter_'):
+                target_effect_id = effect_id.replace('filter_', '')
+                filters = self.metadata_manager.get_available_filters()
+                for filter_meta in filters:
+                    if getattr(filter_meta, 'effect_id', '') == target_effect_id:
+                        return getattr(filter_meta, 'name', '未知滤镜')
+
+            elif effect_id.startswith('transition_'):
+                target_effect_id = effect_id.replace('transition_', '')
+                transitions = self.metadata_manager.get_available_transitions()
+                for transition_meta in transitions:
+                    if getattr(transition_meta, 'effect_id', '') == target_effect_id:
+                        return getattr(transition_meta, 'name', '未知转场')
+
+            return None
+        except Exception as e:
+            print(f"获取特效名称失败: {e}")
+            return None
+
     def exclude_effects(self, effect_ids):
         """排除特效"""
         try:
             excluded_count = 0
 
             for effect_id in effect_ids:
-                if effect_id.startswith('video_effect_'):
-                    effect_name = f"视频特效_{effect_id.split('_')[-1]:03d}"
-                    self.exclusion_manager.add_excluded_effect(effect_name)
-                    excluded_count += 1
-                elif effect_id.startswith('filter_'):
-                    filter_name = f"滤镜_{effect_id.split('_')[-1]:03d}"
-                    self.exclusion_manager.add_excluded_filter(filter_name)
-                    excluded_count += 1
-                elif effect_id.startswith('transition_'):
-                    transition_name = f"转场_{effect_id.split('_')[-1]:03d}"
-                    self.exclusion_manager.add_excluded_transition(transition_name)
-                    excluded_count += 1
+                effect_name = self._get_effect_name_by_id(effect_id)
+                if effect_name:
+                    if effect_id.startswith('video_effect_'):
+                        self.exclusion_manager.add_excluded_effect(effect_name)
+                        excluded_count += 1
+                    elif effect_id.startswith('filter_'):
+                        self.exclusion_manager.add_excluded_filter(effect_name)
+                        excluded_count += 1
+                    elif effect_id.startswith('transition_'):
+                        self.exclusion_manager.add_excluded_transition(effect_name)
+                        excluded_count += 1
 
             # 清除缓存
             self._cache['exclusions'] = None
@@ -694,18 +722,17 @@ class OptimizedWebInterface:
             included_count = 0
 
             for effect_id in effect_ids:
-                if effect_id.startswith('video_effect_'):
-                    effect_name = f"视频特效_{effect_id.split('_')[-1]:03d}"
-                    self.exclusion_manager.remove_excluded_effect(effect_name)
-                    included_count += 1
-                elif effect_id.startswith('filter_'):
-                    filter_name = f"滤镜_{effect_id.split('_')[-1]:03d}"
-                    self.exclusion_manager.remove_excluded_filter(filter_name)
-                    included_count += 1
-                elif effect_id.startswith('transition_'):
-                    transition_name = f"转场_{effect_id.split('_')[-1]:03d}"
-                    self.exclusion_manager.remove_excluded_transition(transition_name)
-                    included_count += 1
+                effect_name = self._get_effect_name_by_id(effect_id)
+                if effect_name:
+                    if effect_id.startswith('video_effect_'):
+                        self.exclusion_manager.remove_excluded_effect(effect_name)
+                        included_count += 1
+                    elif effect_id.startswith('filter_'):
+                        self.exclusion_manager.remove_excluded_filter(effect_name)
+                        included_count += 1
+                    elif effect_id.startswith('transition_'):
+                        self.exclusion_manager.remove_excluded_transition(effect_name)
+                        included_count += 1
 
             # 清除缓存
             self._cache['exclusions'] = None
