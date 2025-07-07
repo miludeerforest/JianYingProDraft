@@ -742,6 +742,120 @@ class OptimizedWebInterface:
         except Exception as e:
             return {'success': False, 'error': str(e)}
 
+    def get_system_status(self):
+        """获取系统状态"""
+        try:
+            import datetime
+
+            # 获取当前时间
+            current_time = datetime.datetime.now()
+
+            # 系统基本状态
+            system_status = {
+                'status': 'running',
+                'status_icon': '🟢',
+                'status_text': '正常运行',
+                'timestamp': current_time.strftime('%Y-%m-%d %H:%M:%S')
+            }
+
+            # 活跃任务数量
+            active_tasks = 0
+            if self.automix_status['running']:
+                active_tasks = 1
+
+            # 今日完成任务数（模拟数据，实际应该从日志或数据库获取）
+            completed_today = self._get_completed_tasks_today()
+
+            # 错误次数（模拟数据）
+            error_count = self._get_error_count_today()
+
+            # 当前操作状态
+            current_operation = '空闲中'
+            progress = 0
+            if self.automix_status['running']:
+                current_operation = self.automix_status.get('progress', '处理中...')
+                # 简单的进度估算
+                if '初始化' in current_operation:
+                    progress = 10
+                elif '扫描' in current_operation:
+                    progress = 20
+                elif '选择' in current_operation:
+                    progress = 30
+                elif '视频' in current_operation:
+                    progress = 50
+                elif '特效' in current_operation:
+                    progress = 70
+                elif '音频' in current_operation:
+                    progress = 80
+                elif '保存' in current_operation:
+                    progress = 90
+                elif '完成' in current_operation:
+                    progress = 100
+                else:
+                    progress = 50
+
+            return {
+                'success': True,
+                'system_status': system_status,
+                'active_tasks': active_tasks,
+                'completed_today': completed_today,
+                'error_count': error_count,
+                'current_operation': current_operation,
+                'progress': progress,
+                'logs': self._get_recent_logs()
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'system_status': {
+                    'status': 'error',
+                    'status_icon': '🔴',
+                    'status_text': '系统错误'
+                },
+                'active_tasks': 0,
+                'completed_today': 0,
+                'error_count': 1
+            }
+
+    def _get_completed_tasks_today(self):
+        """获取今日完成任务数（模拟实现）"""
+        # 实际实现应该从日志文件或数据库获取
+        # 这里返回一个基于时间的模拟值
+        import datetime
+        hour = datetime.datetime.now().hour
+        return max(0, hour - 8)  # 8点后每小时完成1个任务
+
+    def _get_error_count_today(self):
+        """获取今日错误次数（模拟实现）"""
+        # 实际实现应该从日志文件获取
+        return 0
+
+    def _get_recent_logs(self):
+        """获取最近的操作日志（模拟实现）"""
+        import datetime
+
+        logs = []
+        current_time = datetime.datetime.now()
+
+        # 添加当前任务日志
+        if self.automix_status['running']:
+            logs.append({
+                'time': current_time.strftime('%H:%M:%S'),
+                'type': 'info',
+                'message': self.automix_status.get('progress', '处理中...')
+            })
+
+        # 添加系统启动日志
+        logs.append({
+            'time': (current_time - datetime.timedelta(minutes=5)).strftime('%H:%M:%S'),
+            'type': 'success',
+            'message': '系统启动完成'
+        })
+
+        return logs[-10:]  # 返回最近10条日志
+
 # 创建Flask应用
 app = Flask(__name__)
 web_interface = OptimizedWebInterface()
@@ -777,6 +891,15 @@ def get_exclusions():
     """获取排除统计API"""
     stats = web_interface.get_exclusion_stats()
     return jsonify(stats)
+
+@app.route('/api/system/status')
+def get_system_status():
+    """获取系统状态API"""
+    try:
+        result = web_interface.get_system_status()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 @app.route('/api/products')
 def get_products():

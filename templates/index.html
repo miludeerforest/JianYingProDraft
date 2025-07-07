@@ -821,6 +821,14 @@
                     this.refreshTransitionStats();
                 }
 
+                // 如果是智能排除页面，启动系统监控
+                if (section === 'effects-smart') {
+                    this.startSystemMonitoring();
+                } else {
+                    // 离开智能排除页面时停止监控
+                    this.stopSystemMonitoring();
+                }
+
                 return sectionElement;
             }
 
@@ -2881,6 +2889,115 @@
                     }
                 } catch (error) {
                     this.showAlert('刷新统计失败: ' + error.message, 'error');
+                }
+            }
+
+            // 系统监控功能
+            async loadSystemStatus() {
+                try {
+                    const response = await fetch('/api/system/status');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.updateSystemStatusDisplay(data);
+                    } else {
+                        console.error('获取系统状态失败:', data.error);
+                    }
+                } catch (error) {
+                    console.error('获取系统状态失败:', error);
+                }
+            }
+
+            updateSystemStatusDisplay(data) {
+                // 更新系统状态
+                const statusElement = document.getElementById('system-status');
+                const statusTextElement = document.getElementById('system-status-text');
+                if (statusElement && statusTextElement) {
+                    statusElement.textContent = data.system_status.status_icon;
+                    statusTextElement.textContent = data.system_status.status_text;
+                }
+
+                // 更新活跃任务数
+                this.setElementText('active-tasks', data.active_tasks);
+
+                // 更新已完成任务数
+                this.setElementText('completed-tasks', data.completed_today);
+
+                // 更新错误次数
+                this.setElementText('error-count', data.error_count);
+
+                // 更新当前操作
+                this.setElementText('current-operation-text', data.current_operation);
+
+                // 更新进度条
+                const progressSection = document.getElementById('progress-section');
+                const progressBar = document.getElementById('monitor-progress-bar');
+                const progressText = document.getElementById('progress-text');
+
+                if (data.progress > 0 && data.active_tasks > 0) {
+                    if (progressSection) progressSection.style.display = 'block';
+                    if (progressBar) progressBar.style.width = data.progress + '%';
+                    if (progressText) progressText.textContent = data.progress + '%';
+                } else {
+                    if (progressSection) progressSection.style.display = 'none';
+                }
+
+                // 更新操作日志
+                this.updateOperationLogs(data.logs);
+            }
+
+            updateOperationLogs(logs) {
+                const logsContainer = document.getElementById('operation-logs');
+                if (!logsContainer) return;
+
+                if (logs.length === 0) {
+                    logsContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无操作日志</div>';
+                    return;
+                }
+
+                const logsHtml = logs.map(log => {
+                    const typeColor = {
+                        'info': 'var(--primary-color)',
+                        'success': 'var(--accent-color)',
+                        'warning': 'var(--warning-color)',
+                        'error': 'var(--error-color)'
+                    }[log.type] || 'var(--text-secondary)';
+
+                    const typeIcon = {
+                        'info': 'ℹ️',
+                        'success': '✅',
+                        'warning': '⚠️',
+                        'error': '❌'
+                    }[log.type] || '📝';
+
+                    return `
+                        <div style="display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="color: ${typeColor}; margin-right: 8px;">${typeIcon}</div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 14px;">${log.message}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${log.time}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                logsContainer.innerHTML = logsHtml;
+            }
+
+            startSystemMonitoring() {
+                // 立即加载一次
+                this.loadSystemStatus();
+
+                // 每5秒更新一次系统状态
+                this.systemMonitorInterval = setInterval(() => {
+                    this.loadSystemStatus();
+                }, 5000);
+            }
+
+            stopSystemMonitoring() {
+                if (this.systemMonitorInterval) {
+                    clearInterval(this.systemMonitorInterval);
+                    this.systemMonitorInterval = null;
                 }
             }
         }
