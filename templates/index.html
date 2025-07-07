@@ -821,11 +821,11 @@
                     this.refreshTransitionStats();
                 }
 
-                // 如果是智能排除页面，启动系统监控
-                if (section === 'effects-smart') {
+                // 如果是智能排除页面或状态监控页面，启动系统监控
+                if (section === 'effects-smart' || section === 'monitor') {
                     this.startSystemMonitoring();
                 } else {
-                    // 离开智能排除页面时停止监控
+                    // 离开监控页面时停止监控
                     this.stopSystemMonitoring();
                 }
 

@@ -70,32 +70,47 @@ class OptimizedWebInterface:
 
     def _load_statistics(self):
         """从文件加载统计数据"""
+        print(f"📂 开始加载统计数据: {self.statistics_file}")
         try:
             # 确保data目录存在
             data_dir = os.path.dirname(self.statistics_file)
             if not os.path.exists(data_dir):
+                print(f"📁 创建data目录: {data_dir}")
                 os.makedirs(data_dir)
 
             # 如果文件存在，加载数据
             if os.path.exists(self.statistics_file):
+                print(f"📄 统计文件存在，开始读取...")
                 with open(self.statistics_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
+                    print(f"📊 原始数据: {data}")
+
                     # 转换日期字符串为date对象
                     if data.get('last_reset_date'):
                         import datetime
+                        date_str = data['last_reset_date']
                         data['last_reset_date'] = datetime.datetime.strptime(
-                            data['last_reset_date'], '%Y-%m-%d'
+                            date_str, '%Y-%m-%d'
                         ).date()
+                        print(f"📅 日期转换: {date_str} → {data['last_reset_date']}")
+
+                    print(f"✅ 统计数据加载成功: {data}")
                     return data
+            else:
+                print(f"⚠️ 统计文件不存在: {self.statistics_file}")
         except Exception as e:
-            print(f"⚠️ 加载统计数据失败: {e}")
+            print(f"❌ 加载统计数据失败: {e}")
+            import traceback
+            traceback.print_exc()
 
         # 返回默认数据
-        return {
+        default_data = {
             'completed_today': 0,
             'error_count_today': 0,
             'last_reset_date': None
         }
+        print(f"🔄 使用默认数据: {default_data}")
+        return default_data
 
     def _save_statistics(self):
         """保存统计数据到文件"""
@@ -123,13 +138,24 @@ class OptimizedWebInterface:
         """如果是新的一天，重置统计数据"""
         import datetime
         today = datetime.date.today()
+        last_reset = self.task_statistics['last_reset_date']
 
-        if self.task_statistics['last_reset_date'] != today:
+        print(f"📅 检查日期重置: 今日={today}, 上次重置={last_reset}")
+
+        if last_reset != today:
+            print(f"🔄 需要重置统计数据: {last_reset} → {today}")
+            old_completed = self.task_statistics['completed_today']
+            old_errors = self.task_statistics['error_count_today']
+
             self.task_statistics['completed_today'] = 0
             self.task_statistics['error_count_today'] = 0
             self.task_statistics['last_reset_date'] = today
+
+            print(f"📊 统计重置: 完成任务 {old_completed}→0, 错误 {old_errors}→0")
             # 保存重置后的数据
             self._save_statistics()
+        else:
+            print(f"✅ 无需重置，日期相同: {today}")
 
     def _increment_completed_tasks(self):
         """增加完成任务计数"""
