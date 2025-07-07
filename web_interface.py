@@ -134,14 +134,20 @@ class OptimizedWebInterface:
     def _increment_completed_tasks(self):
         """增加完成任务计数"""
         self._reset_daily_statistics_if_needed()
+        old_count = self.task_statistics['completed_today']
         self.task_statistics['completed_today'] += 1
+        new_count = self.task_statistics['completed_today']
+        print(f"📈 完成任务计数: {old_count} → {new_count}")
         # 立即保存更新的数据
         self._save_statistics()
 
     def _increment_error_count(self):
         """增加错误计数"""
         self._reset_daily_statistics_if_needed()
+        old_count = self.task_statistics['error_count_today']
         self.task_statistics['error_count_today'] += 1
+        new_count = self.task_statistics['error_count_today']
+        print(f"📉 错误计数: {old_count} → {new_count}")
         # 立即保存更新的数据
         self._save_statistics()
 
@@ -548,10 +554,15 @@ class OptimizedWebInterface:
                     }
 
                     # 更新统计数据
-                    for _ in range(successful_count):
-                        self._increment_completed_tasks()
-                    for _ in range(failed_count):
-                        self._increment_error_count()
+                    print(f"📊 批量混剪完成，更新统计: 成功{successful_count}个, 失败{failed_count}个")
+                    try:
+                        for _ in range(successful_count):
+                            self._increment_completed_tasks()
+                        for _ in range(failed_count):
+                            self._increment_error_count()
+                        print(f"✅ 统计更新完成: 完成任务+{successful_count}, 错误+{failed_count}")
+                    except Exception as stats_error:
+                        print(f"❌ 统计更新失败: {stats_error}")
 
                 except Exception as e:
                     self.automix_status['running'] = False
@@ -992,6 +1003,24 @@ def get_system_status():
     try:
         result = web_interface.get_system_status()
         return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/test/increment', methods=['POST'])
+def test_increment():
+    """测试统计增量API"""
+    try:
+        data = request.get_json()
+        increment_type = data.get('type', 'completed')
+
+        if increment_type == 'completed':
+            web_interface._increment_completed_tasks()
+            return jsonify({'success': True, 'message': '完成任务计数+1'})
+        elif increment_type == 'error':
+            web_interface._increment_error_count()
+            return jsonify({'success': True, 'message': '错误计数+1'})
+        else:
+            return jsonify({'success': False, 'error': '无效的增量类型'})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
