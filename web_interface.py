@@ -49,7 +49,9 @@ class OptimizedWebInterface:
             'running': False,
             'progress': '',
             'error': None,
-            'result': None
+            'result': None,
+            'current_count': 0,
+            'total_count': 0
         }
 
         # 统计数据文件路径
@@ -419,6 +421,8 @@ class OptimizedWebInterface:
             self.automix_status['progress'] = '正在初始化混剪任务...'
             self.automix_status['error'] = None
             self.automix_status['result'] = None
+            self.automix_status['current_count'] = 0
+            self.automix_status['total_count'] = 1
 
             # 在后台线程中执行混剪
             def run_automix():
@@ -500,6 +504,8 @@ class OptimizedWebInterface:
             self.automix_status['progress'] = f'正在初始化批量混剪任务 (共{count}个)...'
             self.automix_status['error'] = None
             self.automix_status['result'] = None
+            self.automix_status['current_count'] = 0
+            self.automix_status['total_count'] = count
 
             # 在后台线程中执行批量混剪
             def run_batch_automix():
@@ -514,6 +520,7 @@ class OptimizedWebInterface:
 
                     for i in range(count):
                         current_duration = random.randint(min_duration, max_duration)
+                        self.automix_status['current_count'] = i
                         self.automix_status['progress'] = f'正在生成第 {i+1}/{count} 个视频 ({current_duration}秒)...'
 
                         try:
@@ -561,6 +568,9 @@ class OptimizedWebInterface:
 
                             results.append(result)
 
+                            # 更新完成计数
+                            self.automix_status['current_count'] = i + 1
+
                         except Exception as e:
                             result = {
                                 'index': i + 1,
@@ -570,6 +580,9 @@ class OptimizedWebInterface:
                             }
                             results.append(result)
                             failed_count += 1
+
+                            # 更新完成计数
+                            self.automix_status['current_count'] = i + 1
 
                     # 批量混剪完成
                     self.automix_status['running'] = False
@@ -1277,7 +1290,7 @@ def main():
     print("✅ 项目结构检查通过")
     print()
     print("🚀 启动Web服务器...")
-    print("📱 浏览器访问: http://localhost:5000")
+    print("📱 浏览器访问: http://localhost:5001")
     print("⚙️  功能: 重构版界面，性能优化，一级二级菜单")
     print("🎨 特色: 现代化设计，响应式布局，模块化架构")
     print("🛡️  支持: 轻微特效参数，防审核技术，智能排除")
@@ -1295,12 +1308,12 @@ def main():
     # 自动打开浏览器
     def open_browser():
         time.sleep(1.5)
-        webbrowser.open('http://localhost:5000')
+        webbrowser.open('http://localhost:5001')
     
     threading.Thread(target=open_browser, daemon=True).start()
     
     try:
-        app.run(host='0.0.0.0', port=5000, debug=False)
+        app.run(host='127.0.0.1', port=5001, debug=False)
     except KeyboardInterrupt:
         print("\n👋 感谢使用剪映自动混剪工具！")
 

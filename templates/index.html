@@ -6,20 +6,59 @@
     <title>🎬 剪映自动混剪工具 v2.1.0</title>
     <style>
         :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --accent-color: #4CAF50;
-            --warning-color: #ff9800;
-            --error-color: #f44336;
-            --text-primary: #333;
-            --text-secondary: #666;
-            --bg-primary: #f5f7fa;
+            /* 现代化色彩系统 */
+            --primary-color: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary-color: #8b5cf6;
+            --secondary-light: #a78bfa;
+            --accent-color: #10b981;
+            --accent-light: #34d399;
+            --warning-color: #f59e0b;
+            --warning-light: #fbbf24;
+            --error-color: #ef4444;
+            --error-light: #f87171;
+            --success-color: #10b981;
+            --info-color: #3b82f6;
+
+            /* 文字颜色 */
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --text-inverse: #ffffff;
+
+            /* 背景颜色 */
+            --bg-primary: #f9fafb;
             --bg-secondary: #ffffff;
-            --border-color: #e0e6ed;
-            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --bg-tertiary: #f3f4f6;
+            --bg-dark: #111827;
+            --bg-overlay: rgba(0, 0, 0, 0.5);
+
+            /* 边框和阴影 */
+            --border-color: #e5e7eb;
+            --border-light: #f3f4f6;
+            --border-dark: #d1d5db;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+            /* 布局尺寸 */
             --sidebar-width: 280px;
-            --header-height: 60px;
+            --header-height: 64px;
+            --border-radius: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 16px;
+
+            /* 动画和过渡 */
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.15s ease-out;
+            --transition-slow: all 0.5s ease-in-out;
+
+            /* 渐变色 */
+            --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            --gradient-accent: linear-gradient(135deg, var(--accent-color), var(--success-color));
+            --gradient-warm: linear-gradient(135deg, #fbbf24, #f59e0b);
         }
 
         * {
@@ -29,51 +68,82 @@
         }
 
         body {
-            font-family: 'Microsoft YaHei', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
             overflow-x: hidden;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* 页面加载器 */
+        /* 现代化页面加载器 */
         .page-loader {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--gradient-primary);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
-            transition: opacity 0.5s ease;
+            transition: var(--transition-slow);
+            backdrop-filter: blur(10px);
         }
 
         .page-loader.hidden {
             opacity: 0;
             pointer-events: none;
+            transform: scale(0.95);
         }
 
         .loader-content {
             text-align: center;
-            color: white;
+            color: var(--text-inverse);
+            animation: fadeInUp 0.6s ease-out;
         }
 
         .loader-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top: 3px solid white;
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid var(--text-inverse);
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            margin: 0 auto 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .loader-content h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .loader-content p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin: 0;
         }
 
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* 主布局 */
@@ -82,7 +152,7 @@
             height: 100vh;
         }
 
-        /* 侧边栏 */
+        /* 现代化侧边栏 */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--bg-secondary);
@@ -94,6 +164,7 @@
             z-index: 1000;
             transform: translateX(0);
             transition: var(--transition);
+            box-shadow: var(--shadow-lg);
         }
 
         .sidebar.collapsed {
@@ -101,109 +172,205 @@
         }
 
         .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--gradient-primary);
+            color: var(--text-inverse);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.1;
         }
 
         .sidebar-header h1 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 5px;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            position: relative;
+            z-index: 1;
+            letter-spacing: -0.5px;
         }
 
         .sidebar-header .version {
-            font-size: 12px;
+            font-size: 13px;
             opacity: 0.9;
+            position: relative;
+            z-index: 1;
+            font-weight: 500;
         }
 
         .sidebar-nav {
             flex: 1;
             overflow-y: auto;
-            padding: 10px 0;
+            padding: 16px 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-color) transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 2px;
         }
 
         .nav-item {
-            margin: 2px 10px;
+            margin: 3px 12px;
         }
 
         .nav-link {
             display: flex;
             align-items: center;
-            padding: 12px 15px;
+            padding: 14px 16px;
             color: var(--text-primary);
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             transition: var(--transition);
             cursor: pointer;
             user-select: none;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: var(--primary-color);
+            border-radius: 0 2px 2px 0;
+            transition: var(--transition);
         }
 
         .nav-link:hover {
-            background: var(--bg-primary);
+            background: var(--bg-tertiary);
             color: var(--primary-color);
+            transform: translateX(2px);
+        }
+
+        .nav-link:hover::before {
+            height: 20px;
         }
 
         .nav-link.active {
             background: var(--primary-color);
-            color: white;
+            color: var(--text-inverse);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-link.active::before {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .nav-link .icon {
-            margin-right: 10px;
-            font-size: 16px;
-            width: 20px;
+            margin-right: 12px;
+            font-size: 18px;
+            width: 22px;
             text-align: center;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover .icon {
+            transform: scale(1.1);
         }
 
         .nav-link .text {
             flex: 1;
             font-size: 14px;
+            font-weight: 500;
         }
 
         .nav-link .arrow {
             font-size: 12px;
             transition: var(--transition);
+            opacity: 0.7;
         }
 
         .nav-link.expanded .arrow {
             transform: rotate(90deg);
+            opacity: 1;
         }
 
-        /* 二级菜单 */
+        /* 现代化二级菜单 */
         .sub-nav {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease;
-            background: var(--bg-primary);
-            margin: 2px 10px;
-            border-radius: 8px;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--bg-tertiary);
+            margin: 4px 12px 8px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-light);
         }
 
         .sub-nav.expanded {
-            max-height: 300px;
+            max-height: 400px;
+            box-shadow: var(--shadow-sm);
         }
 
         .sub-nav-link {
-            display: block;
-            padding: 10px 20px 10px 45px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px 12px 40px;
             color: var(--text-secondary);
             text-decoration: none;
             font-size: 13px;
             transition: var(--transition);
-            border-radius: 6px;
-            margin: 2px 5px;
+            border-radius: var(--border-radius);
+            margin: 4px 8px;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .sub-nav-link::before {
+            content: '•';
+            position: absolute;
+            left: 24px;
+            color: var(--text-tertiary);
+            font-size: 16px;
+            transition: var(--transition);
         }
 
         .sub-nav-link:hover {
-            background: white;
+            background: var(--bg-secondary);
             color: var(--primary-color);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sub-nav-link:hover::before {
+            color: var(--primary-color);
+            transform: scale(1.2);
         }
 
         .sub-nav-link.active {
-            background: var(--primary-color);
-            color: white;
+            background: var(--primary-light);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow);
+        }
+
+        .sub-nav-link.active::before {
+            color: var(--text-inverse);
+            content: '▶';
+            font-size: 12px;
         }
 
         /* 主内容区域 */
@@ -288,35 +455,65 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 卡片样式 */
+        /* 现代化卡片样式 */
         .card {
             background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: var(--border-radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card:hover::before {
+            opacity: 1;
         }
 
         .card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-light);
         }
 
         .card-title {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 700;
             color: var(--text-primary);
             display: flex;
             align-items: center;
+            letter-spacing: -0.25px;
         }
 
         .card-title .icon {
-            margin-right: 8px;
+            margin-right: 12px;
+            font-size: 20px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         /* 响应式设计 */
@@ -408,85 +605,175 @@
             color: var(--text-secondary);
         }
 
-        /* 表单样式 */
+        /* 现代化表单样式 */
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
+            margin-bottom: 8px;
+            font-weight: 600;
             color: var(--text-primary);
             font-size: 14px;
+            letter-spacing: 0.25px;
         }
 
         .form-input, .form-select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 14px 16px;
             border: 2px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             font-size: 14px;
             background: var(--bg-secondary);
             transition: var(--transition);
+            font-family: inherit;
         }
 
         .form-input:focus, .form-select:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
         }
 
-        .btn {
-            padding: 10px 20px;
+        .form-input:hover, .form-select:hover {
+            border-color: var(--border-dark);
+        }
+
+        /* 范围滑块样式 */
+        .form-input[type="range"] {
+            padding: 0;
+            height: 6px;
+            background: var(--border-color);
             border: none;
-            border-radius: 8px;
+            border-radius: 3px;
+            appearance: none;
+        }
+
+        .form-input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .form-input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .form-input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: var(--shadow);
+        }
+
+        /* 现代化按钮样式 */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--border-radius);
             font-size: 14px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            user-select: none;
+            letter-spacing: 0.25px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background: var(--primary-color);
-            color: white;
+            background: var(--gradient-primary);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow);
         }
 
         .btn-primary:hover {
-            background: var(--secondary-color);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
 
         .btn-success {
-            background: var(--accent-color);
-            color: white;
+            background: var(--gradient-accent);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow);
         }
 
         .btn-success:hover {
-            background: #45a049;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
 
         .btn-warning {
-            background: var(--warning-color);
-            color: white;
+            background: var(--gradient-warm);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow);
         }
 
         .btn-warning:hover {
-            background: #f57c00;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-error {
+            background: linear-gradient(135deg, var(--error-color), var(--error-light));
+            color: var(--text-inverse);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-error:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* 按钮尺寸变体 */
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .btn-lg {
+            padding: 16px 32px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <!-- 页面加载器 -->
+    <!-- 现代化页面加载器 -->
     <div class="page-loader" id="pageLoader">
         <div class="loader-content">
             <div class="loader-spinner"></div>
-            <div>正在加载剪映自动混剪工具...</div>
+            <h3>剪映自动混剪工具</h3>
+            <p>正在加载现代化界面...</p>
         </div>
     </div>
 
@@ -496,7 +783,7 @@
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <h1>🎬 剪映混剪工具</h1>
-                <div class="version">v2.1.0 - 轻微特效优化版</div>
+                <div class="version">v2.1.0 - 现代化界面版</div>
             </div>
             
             <div class="sidebar-nav">
@@ -675,36 +962,150 @@
     </div>
 
     <script>
-        // 基础应用类
+        // 优化版应用类 - 性能重构
         class AutoMixApp {
             constructor() {
                 this.currentSection = 'overview';
+                this.sectionCache = new Map(); // 页面内容缓存
+                this.domCache = new Map(); // DOM元素缓存
+                this.systemMonitorInterval = null;
+                this.statusPollInterval = null;
                 this.init();
             }
 
             init() {
                 this.bindEvents();
                 this.hideLoader();
+                this.initPerformanceOptimizations();
+            }
+
+            // 性能优化初始化
+            initPerformanceOptimizations() {
+                // 预缓存常用DOM元素
+                this.cacheCommonElements();
+
+                // 使用防抖处理搜索
+                this.debouncedSearch = this.debounce(this.performSearch.bind(this), 300);
+
+                // 优化轮询频率
+                this.optimizePollingIntervals();
+            }
+
+            // 缓存常用DOM元素
+            cacheCommonElements() {
+                const commonElements = [
+                    'sidebar', 'mainContent', 'contentArea', 'breadcrumb',
+                    'menuToggle', 'pageLoader'
+                ];
+
+                commonElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        this.domCache.set(id, element);
+                    }
+                });
+            }
+
+            // 获取缓存的DOM元素
+            getCachedElement(id) {
+                if (this.domCache.has(id)) {
+                    return this.domCache.get(id);
+                }
+                const element = document.getElementById(id);
+                if (element) {
+                    this.domCache.set(id, element);
+                }
+                return element;
+            }
+
+            // 防抖函数
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // 优化轮询间隔
+            optimizePollingIntervals() {
+                // 系统监控降低到10秒一次
+                this.systemMonitorDelay = 10000;
+                // 混剪状态降低到3秒一次
+                this.statusPollDelay = 3000;
             }
 
             bindEvents() {
-                // 菜单点击事件
-                document.addEventListener('click', (e) => {
-                    if (e.target.closest('.nav-link')) {
-                        this.handleNavClick(e.target.closest('.nav-link'));
-                    }
-                    if (e.target.closest('.sub-nav-link')) {
-                        this.handleSubNavClick(e.target.closest('.sub-nav-link'));
-                    }
-                    if (e.target.closest('.quick-action-btn')) {
-                        this.handleQuickAction(e.target.closest('.quick-action-btn'));
-                    }
-                });
+                // 使用事件委托优化性能
+                document.addEventListener('click', this.handleGlobalClick.bind(this));
 
                 // 移动端菜单切换
-                document.getElementById('menuToggle').addEventListener('click', () => {
-                    this.toggleSidebar();
-                });
+                const menuToggle = this.getCachedElement('menuToggle');
+                if (menuToggle) {
+                    menuToggle.addEventListener('click', () => {
+                        this.toggleSidebar();
+                    });
+                }
+
+                // 添加键盘快捷键支持
+                document.addEventListener('keydown', this.handleKeyboardShortcuts.bind(this));
+
+                // 窗口大小变化时优化响应
+                window.addEventListener('resize', this.debounce(this.handleResize.bind(this), 250));
+            }
+
+            // 全局点击事件处理（事件委托）
+            handleGlobalClick(e) {
+                const navLink = e.target.closest('.nav-link');
+                const subNavLink = e.target.closest('.sub-nav-link');
+                const quickActionBtn = e.target.closest('.quick-action-btn');
+
+                if (navLink) {
+                    e.preventDefault();
+                    this.handleNavClick(navLink);
+                } else if (subNavLink) {
+                    e.preventDefault();
+                    this.handleSubNavClick(subNavLink);
+                } else if (quickActionBtn) {
+                    e.preventDefault();
+                    this.handleQuickAction(quickActionBtn);
+                }
+            }
+
+            // 键盘快捷键处理
+            handleKeyboardShortcuts(e) {
+                // Ctrl+1-5 快速切换主菜单
+                if (e.ctrlKey && e.key >= '1' && e.key <= '5') {
+                    e.preventDefault();
+                    const sections = ['overview', 'config-basic', 'smart-exclusion', 'automix-single', 'help'];
+                    const sectionIndex = parseInt(e.key) - 1;
+                    if (sections[sectionIndex]) {
+                        this.switchSection(sections[sectionIndex]);
+                    }
+                }
+
+                // ESC 关闭侧边栏（移动端）
+                if (e.key === 'Escape') {
+                    const sidebar = this.getCachedElement('sidebar');
+                    if (sidebar && sidebar.classList.contains('mobile-open')) {
+                        this.toggleSidebar();
+                    }
+                }
+            }
+
+            // 窗口大小变化处理
+            handleResize() {
+                // 在大屏幕上自动关闭移动端菜单
+                if (window.innerWidth > 768) {
+                    const sidebar = this.getCachedElement('sidebar');
+                    if (sidebar) {
+                        sidebar.classList.remove('mobile-open');
+                    }
+                }
             }
 
             handleNavClick(navLink) {
@@ -763,63 +1164,120 @@
             }
 
             switchSection(section) {
-                // 隐藏所有内容区域
-                document.querySelectorAll('.content-section').forEach(sec => {
+                // 防止重复切换到同一页面
+                if (this.currentSection === section) {
+                    return;
+                }
+
+                // 清理当前页面的定时器和事件监听器
+                this.cleanupCurrentSection();
+
+                // 使用缓存的DOM查询
+                const contentSections = document.querySelectorAll('.content-section');
+                contentSections.forEach(sec => {
                     sec.classList.remove('active');
                 });
 
-                // 显示目标区域
+                // 显示目标区域（懒加载）
                 let targetSection = document.getElementById(`section-${section}`);
                 if (!targetSection) {
                     // 如果区域不存在，动态创建
                     targetSection = this.createSection(section);
                 }
-                targetSection.classList.add('active');
+
+                // 使用requestAnimationFrame优化动画性能
+                requestAnimationFrame(() => {
+                    targetSection.classList.add('active');
+                });
 
                 this.currentSection = section;
                 this.updateBreadcrumb(section);
             }
 
-            createSection(section) {
-                const contentArea = document.getElementById('contentArea');
-                const sectionElement = document.createElement('section');
-                sectionElement.className = 'content-section';
-                sectionElement.id = `section-${section}`;
-                sectionElement.innerHTML = this.getSectionContent(section);
-                contentArea.appendChild(sectionElement);
-
-                // 如果是配置相关页面，加载配置数据
-                if (section.startsWith('config-')) {
-                    this.loadConfigData(section);
-                }
-
-                // 如果是混剪相关页面，加载产品列表
-                if (section.startsWith('automix-')) {
-                    this.loadProductsForAutomix(section);
-                }
-
-                // 如果是滤镜管理页面，加载滤镜统计
-                if (section === 'filters') {
-                    this.refreshFilterStats();
-                }
-
-                // 如果是转场管理页面，加载转场统计
-                if (section === 'transitions') {
-                    this.refreshTransitionStats();
-                }
-
-                // 如果是智能排除页面，启动系统监控并加载特效管理功能
-                if (section === 'smart-exclusion') {
-                    this.startSystemMonitoring();
-                    this.loadExclusionStats();
-                    // 自动执行一次搜索以显示所有特效
-                    setTimeout(() => this.searchEffects(), 100);
-                } else {
-                    // 离开智能排除页面时停止监控
+            // 清理当前页面的资源
+            cleanupCurrentSection() {
+                // 停止系统监控（如果不在智能排除页面）
+                if (this.currentSection !== 'smart-exclusion') {
                     this.stopSystemMonitoring();
                 }
 
+                // 清理状态轮询
+                if (this.statusPollInterval) {
+                    clearInterval(this.statusPollInterval);
+                    this.statusPollInterval = null;
+                }
+            }
+
+            createSection(section) {
+                // 检查缓存
+                if (this.sectionCache.has(section)) {
+                    const cachedContent = this.sectionCache.get(section);
+                    const contentArea = this.getCachedElement('contentArea');
+                    const sectionElement = document.createElement('section');
+                    sectionElement.className = 'content-section';
+                    sectionElement.id = `section-${section}`;
+                    sectionElement.innerHTML = cachedContent;
+                    contentArea.appendChild(sectionElement);
+
+                    // 异步加载数据
+                    this.loadSectionData(section);
+                    return sectionElement;
+                }
+
+                // 生成新内容
+                const contentArea = this.getCachedElement('contentArea');
+                const sectionElement = document.createElement('section');
+                sectionElement.className = 'content-section';
+                sectionElement.id = `section-${section}`;
+
+                const content = this.getSectionContent(section);
+                sectionElement.innerHTML = content;
+
+                // 缓存内容
+                this.sectionCache.set(section, content);
+
+                contentArea.appendChild(sectionElement);
+
+                // 异步加载数据
+                this.loadSectionData(section);
+
                 return sectionElement;
+            }
+
+            // 异步加载页面数据
+            async loadSectionData(section) {
+                try {
+                    // 如果是配置相关页面，加载配置数据
+                    if (section.startsWith('config-')) {
+                        await this.loadConfigData(section);
+                    }
+
+                    // 如果是混剪相关页面，加载产品列表
+                    if (section.startsWith('automix-')) {
+                        await this.loadProductsForAutomix(section);
+                    }
+
+                    // 如果是滤镜管理页面，加载滤镜统计
+                    if (section === 'filters') {
+                        await this.refreshFilterStats();
+                    }
+
+                    // 如果是转场管理页面，加载转场统计
+                    if (section === 'transitions') {
+                        await this.refreshTransitionStats();
+                    }
+
+                    // 如果是智能排除页面，启动系统监控并加载特效管理功能
+                    if (section === 'smart-exclusion') {
+                        this.startSystemMonitoring();
+                        await this.loadExclusionStats();
+                        // 延迟执行搜索以避免阻塞UI
+                        setTimeout(() => this.searchEffects(), 200);
+                    }
+                } catch (error) {
+                    console.error(`加载页面数据失败 (${section}):`, error);
+                    this.showAlert('页面数据加载失败，请刷新重试', 'error');
+                }
             }
 
             getSectionTitle(section) {
@@ -911,8 +1369,83 @@
 
             hideLoader() {
                 setTimeout(() => {
-                    document.getElementById('pageLoader').classList.add('hidden');
+                    const loader = this.getCachedElement('pageLoader');
+                    if (loader) {
+                        loader.classList.add('hidden');
+                    }
                 }, 1000);
+            }
+
+            // 性能优化的搜索方法
+            performSearch() {
+                const currentSection = this.currentSection;
+                if (currentSection === 'smart-exclusion') {
+                    this.searchEffects();
+                } else if (currentSection === 'filters') {
+                    this.searchFilters();
+                } else if (currentSection === 'transitions') {
+                    this.searchTransitions();
+                }
+            }
+
+            // 批量DOM更新优化
+            batchDOMUpdate(updates) {
+                // 使用DocumentFragment减少重排
+                const fragment = document.createDocumentFragment();
+
+                updates.forEach(update => {
+                    if (update.type === 'text') {
+                        const element = this.getCachedElement(update.id);
+                        if (element) {
+                            element.textContent = update.value;
+                        }
+                    } else if (update.type === 'html') {
+                        const element = this.getCachedElement(update.id);
+                        if (element) {
+                            element.innerHTML = update.value;
+                        }
+                    }
+                });
+            }
+
+            // 优化的元素查找和设置
+            setElementText(id, text) {
+                const element = this.getCachedElement(id);
+                if (element && element.textContent !== text) {
+                    element.textContent = text;
+                }
+            }
+
+            setElementHTML(id, html) {
+                const element = this.getCachedElement(id);
+                if (element && element.innerHTML !== html) {
+                    element.innerHTML = html;
+                }
+            }
+
+            getInputValue(id) {
+                const element = this.getCachedElement(id);
+                return element ? element.value : '';
+            }
+
+            setInputValue(id, value) {
+                const element = this.getCachedElement(id);
+                if (element && element.value !== value) {
+                    element.value = value;
+                }
+            }
+
+            // 清理资源
+            cleanup() {
+                // 清理所有定时器
+                this.stopSystemMonitoring();
+                if (this.statusPollInterval) {
+                    clearInterval(this.statusPollInterval);
+                }
+
+                // 清理缓存
+                this.sectionCache.clear();
+                this.domCache.clear();
             }
 
             // 配置页面内容生成方法
@@ -2175,17 +2708,35 @@
             }
 
             async pollAutomixStatus(type) {
-                const pollInterval = setInterval(async () => {
+                // 防止重复轮询
+                if (this.statusPollInterval) {
+                    clearInterval(this.statusPollInterval);
+                }
+
+                this.statusPollInterval = setInterval(async () => {
+                    // 只在页面可见且当前在相关页面时轮询
+                    if (document.hidden ||
+                        (!this.currentSection.includes('automix') && this.currentSection !== 'overview')) {
+                        return;
+                    }
+
                     try {
                         const response = await fetch('/api/status');
                         const status = await response.json();
 
                         if (type === 'single') {
                             this.setElementText('progress-text', status.progress || '处理中...');
-                            // 这里可以根据实际状态更新进度条
+
+                            // 解析进度百分比并更新进度条
+                            const progressMatch = (status.progress || '').match(/\((\d+\.?\d*)%\)/);
+                            if (progressMatch) {
+                                const percentage = parseFloat(progressMatch[1]);
+                                this.updateProgressBar('progress-bar', percentage);
+                            }
 
                             if (!status.running) {
-                                clearInterval(pollInterval);
+                                clearInterval(this.statusPollInterval);
+                                this.statusPollInterval = null;
 
                                 if (status.result) {
                                     // 显示详细的成功结果
@@ -2221,10 +2772,19 @@
                                 }
                             }
                         } else if (type === 'batch') {
+                            // 更新批量进度文本
                             this.setElementText('batch-progress-text', status.progress || '批量处理中...');
 
+                            // 更新进度计数和进度条
+                            if (status.current_count !== undefined && status.total_count !== undefined) {
+                                this.setElementText('batch-progress-count', `${status.current_count}/${status.total_count}`);
+                                const percentage = status.total_count > 0 ? (status.current_count / status.total_count) * 100 : 0;
+                                this.updateProgressBar('batch-progress-bar', percentage);
+                            }
+
                             if (!status.running) {
-                                clearInterval(pollInterval);
+                                clearInterval(this.statusPollInterval);
+                                this.statusPollInterval = null;
 
                                 if (status.result) {
                                     // 显示详细的批量结果
@@ -2885,13 +3445,21 @@
             }
 
             startSystemMonitoring() {
+                // 防止重复启动
+                if (this.systemMonitorInterval) {
+                    return;
+                }
+
                 // 立即加载一次
                 this.loadSystemStatus();
 
-                // 每5秒更新一次系统状态
+                // 使用优化后的间隔时间（10秒）
                 this.systemMonitorInterval = setInterval(() => {
-                    this.loadSystemStatus();
-                }, 5000);
+                    // 只在页面可见时更新
+                    if (!document.hidden) {
+                        this.loadSystemStatus();
+                    }
+                }, this.systemMonitorDelay);
             }
 
             stopSystemMonitoring() {
@@ -2900,6 +3468,8 @@
                     this.systemMonitorInterval = null;
                 }
             }
+
+
         }
 
         // 初始化应用
