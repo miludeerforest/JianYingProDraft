@@ -289,6 +289,63 @@ class EffectExclusionManager:
 
         return excluded_count
 
+    def auto_exclude_special_symbol_effects(self) -> Dict[str, int]:
+        """
+        自动排除包含特殊符号的特效（如罗马数字）
+
+        Returns:
+            Dict[str, int]: 排除统计信息
+        """
+        # 定义特殊符号模式
+        special_symbols = [
+            ' I', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII', ' IX', ' X',
+            'Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ', 'Ⅵ', 'Ⅶ', 'Ⅷ', 'Ⅸ', 'Ⅹ',
+            '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'
+        ]
+
+        excluded_count = {'effects': 0, 'filters': 0, 'transitions': 0}
+
+        # 排除包含特殊符号的视频特效
+        all_effects = self.metadata_manager.get_available_effects()
+        for effect in all_effects:
+            should_exclude = False
+            for symbol in special_symbols:
+                if symbol in effect.name:
+                    should_exclude = True
+                    break
+
+            if should_exclude and effect.name not in self.excluded_effects:
+                self.add_excluded_effect(effect.name)
+                excluded_count['effects'] += 1
+
+        # 排除包含特殊符号的滤镜
+        all_filters = self.metadata_manager.get_available_filters()
+        for filter_meta in all_filters:
+            should_exclude = False
+            for symbol in special_symbols:
+                if symbol in filter_meta.name:
+                    should_exclude = True
+                    break
+
+            if should_exclude and filter_meta.name not in self.excluded_filters:
+                self.add_excluded_filter(filter_meta.name)
+                excluded_count['filters'] += 1
+
+        # 排除包含特殊符号的转场
+        all_transitions = self.metadata_manager.get_available_transitions()
+        for transition in all_transitions:
+            should_exclude = False
+            for symbol in special_symbols:
+                if symbol in transition.name:
+                    should_exclude = True
+                    break
+
+            if should_exclude and transition.name not in self.excluded_transitions:
+                self.add_excluded_transition(transition.name)
+                excluded_count['transitions'] += 1
+
+        return excluded_count
+
     def get_exaggerated_effects_preview(self) -> Dict[str, List[str]]:
         """
         预览将被排除的夸张特效（不实际排除）

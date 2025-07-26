@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面 - 剪映自动混剪工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .test-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .test-title {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .test-info {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .status-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        .status-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-value {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">🎬 剪映自动混剪工具 - 测试页面</h1>
+        
+        <div class="test-info">
+            <p>这是一个简化的测试页面，用于验证基本功能是否正常工作。</p>
+            <p>如果您看到这个页面，说明Web服务器运行正常。</p>
+        </div>
+
+        <div class="test-buttons">
+            <a href="/" class="btn btn-primary">返回主页面</a>
+            <button class="btn btn-secondary" onclick="testAPI()">测试API</button>
+            <button class="btn btn-secondary" onclick="testIncrement()">测试计数</button>
+            <button class="btn btn-secondary" onclick="testMockAutomix()">测试混剪统计</button>
+        </div>
+
+        <div class="status-info">
+            <h3 style="margin-bottom: 15px; color: #333;">📊 系统状态</h3>
+            <div class="status-item">
+                <span class="status-label">服务器状态:</span>
+                <span class="status-value" id="server-status">检查中...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">已完成任务:</span>
+                <span class="status-value" id="completed-count">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">错误次数:</span>
+                <span class="status-value" id="error-count">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">最后更新:</span>
+                <span class="status-value" id="last-update">从未</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 测试API连接
+        async function testAPI() {
+            try {
+                const response = await fetch('/api/system/status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('server-status').textContent = '✅ 正常';
+                    document.getElementById('completed-count').textContent = data.completed_today || 0;
+                    document.getElementById('error-count').textContent = data.error_count || 0;
+                    document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                    alert('API测试成功！');
+                } else {
+                    throw new Error(data.error || '未知错误');
+                }
+            } catch (error) {
+                document.getElementById('server-status').textContent = '❌ 错误';
+                alert('API测试失败: ' + error.message);
+            }
+        }
+
+        // 测试计数增加
+        async function testIncrement() {
+            try {
+                const response = await fetch('/api/test/increment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ type: 'completed' })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('计数测试成功: ' + data.message);
+                    testAPI(); // 刷新状态
+                } else {
+                    throw new Error(data.error || '未知错误');
+                }
+            } catch (error) {
+                alert('计数测试失败: ' + error.message);
+            }
+        }
+
+        // 测试混剪统计显示
+        async function testMockAutomix() {
+            try {
+                const response = await fetch('/api/test/mock-automix', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('混剪统计测试成功！请返回主页面查看智能混剪生成页面的统计显示。');
+                } else {
+                    throw new Error(data.error || '未知错误');
+                }
+            } catch (error) {
+                alert('混剪统计测试失败: ' + error.message);
+            }
+        }
+
+        // 页面加载时自动测试API
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(testAPI, 1000);
+        });
+    </script>
+</body>
+</html>

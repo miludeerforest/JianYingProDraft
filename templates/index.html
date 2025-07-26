@@ -135,6 +135,21 @@
             100% { transform: rotate(360deg); }
         }
 
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -833,9 +848,8 @@
                         <span class="arrow">▶</span>
                     </a>
                     <div class="sub-nav">
-                        <a class="sub-nav-link" data-section="automix-single">单个混剪</a>
-                        <a class="sub-nav-link" data-section="automix-batch">批量生成</a>
-                        <a class="sub-nav-link" data-section="automix-products">产品选择</a>
+                        <a class="sub-nav-link" data-section="automix-unified">开始混剪</a>
+                        <a class="sub-nav-link" data-section="automix-products">产品管理</a>
                     </div>
                 </div>
 
@@ -938,18 +952,18 @@
                                     <div class="desc">一键排除夸张特效</div>
                                 </div>
                             </button>
-                            <button class="quick-action-btn" data-action="automix-single">
+                            <button class="quick-action-btn" data-action="automix-unified">
                                 <span class="icon">🎬</span>
                                 <div>
                                     <div class="title">开始混剪</div>
-                                    <div class="desc">生成单个混剪视频</div>
+                                    <div class="desc">智能混剪，支持单个或批量生成</div>
                                 </div>
                             </button>
-                            <button class="quick-action-btn" data-action="automix-batch">
-                                <span class="icon">📊</span>
+                            <button class="quick-action-btn" data-action="automix-products">
+                                <span class="icon">📦</span>
                                 <div>
-                                    <div class="title">批量生成</div>
-                                    <div class="desc">一次生成多个版本</div>
+                                    <div class="title">产品管理</div>
+                                    <div class="desc">管理素材库中的产品</div>
                                 </div>
                             </button>
                         </div>
@@ -1081,7 +1095,7 @@
                 // Ctrl+1-5 快速切换主菜单
                 if (e.ctrlKey && e.key >= '1' && e.key <= '5') {
                     e.preventDefault();
-                    const sections = ['overview', 'config-basic', 'smart-exclusion', 'automix-single', 'help'];
+                    const sections = ['overview', 'config-basic', 'smart-exclusion', 'automix-unified', 'help'];
                     const sectionIndex = parseInt(e.key) - 1;
                     if (sections[sectionIndex]) {
                         this.switchSection(sections[sectionIndex]);
@@ -1255,6 +1269,12 @@
                     // 如果是混剪相关页面，加载产品列表
                     if (section.startsWith('automix-')) {
                         await this.loadProductsForAutomix(section);
+                        // 如果是统一混剪页面，初始化模式并检查状态
+                        if (section === 'automix-unified') {
+                            setTimeout(() => this.updateMixMode(), 100);
+                            // 检查是否有已完成的混剪结果
+                            setTimeout(() => this.checkAutomixStatus(), 200);
+                        }
                     }
 
                     // 如果是滤镜管理页面，加载滤镜统计
@@ -1291,9 +1311,8 @@
                     'filters': '滤镜参数设置',
                     'transitions': '转场参数设置',
                     'smart-exclusion': '智能排除系统',
-                    'automix-single': '单个混剪',
-                    'automix-batch': '批量生成',
-                    'automix-products': '产品选择',
+                    'automix-unified': '智能混剪',
+                    'automix-products': '产品管理',
                     'help': '帮助文档'
                 };
                 return titles[section] || section;
@@ -1317,10 +1336,8 @@
                         return this.getTransitionsContent();
                     case 'smart-exclusion':
                         return this.getSmartExclusionContent();
-                    case 'automix-single':
-                        return this.getSingleAutomixContent();
-                    case 'automix-batch':
-                        return this.getBatchAutomixContent();
+                    case 'automix-unified':
+                        return this.getUnifiedAutomixContent();
                     case 'automix-products':
                         return this.getAutomixProductsContent();
                     case 'help':
@@ -1368,12 +1385,37 @@
             }
 
             hideLoader() {
-                setTimeout(() => {
-                    const loader = this.getCachedElement('pageLoader');
-                    if (loader) {
-                        loader.classList.add('hidden');
-                    }
-                }, 1000);
+                try {
+                    console.log('开始隐藏加载器...');
+                    setTimeout(() => {
+                        try {
+                            const loader = this.getCachedElement('pageLoader') || document.getElementById('pageLoader');
+                            console.log('找到加载器元素:', loader);
+                            if (loader) {
+                                loader.classList.add('hidden');
+                                console.log('加载器已隐藏');
+
+                                // 确保主内容可见
+                                const appContainer = document.querySelector('.app-container');
+                                if (appContainer) {
+                                    appContainer.style.display = 'flex';
+                                    console.log('主应用容器已显示');
+                                }
+                            } else {
+                                console.error('未找到页面加载器元素');
+                            }
+                        } catch (error) {
+                            console.error('隐藏加载器时出错:', error);
+                            // 强制隐藏加载器
+                            const loader = document.getElementById('pageLoader');
+                            if (loader) {
+                                loader.style.display = 'none';
+                            }
+                        }
+                    }, 500); // 减少延迟时间
+                } catch (error) {
+                    console.error('hideLoader方法出错:', error);
+                }
             }
 
             // 性能优化的搜索方法
@@ -1633,40 +1675,128 @@
                 `;
             }
 
-            getSingleAutomixContent() {
+            getUnifiedAutomixContent() {
                 return `
                     <div class="card">
                         <div class="card-header">
                             <h2 class="card-title">
                                 <span class="icon">🎬</span>
-                                单个混剪生成
+                                智能混剪生成
                             </h2>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-top: 8px;">
+                                <span id="mode-indicator">🎯 单个混剪模式</span>
+                            </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+
+                        <!-- 基础设置 -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                             <div class="form-group">
                                 <label class="form-label">📁 选择产品:</label>
-                                <select class="form-select" id="selected_product">
+                                <select class="form-select" id="unified_product">
                                     <option value="">请选择产品...</option>
                                 </select>
                             </div>
                             <div class="form-group">
+                                <label class="form-label">📦 生成数量:</label>
+                                <input type="number" class="form-input" id="unified_count" min="1" max="100" value="1"
+                                       onchange="app.updateMixMode()" oninput="app.updateMixMode()">
+                            </div>
+                            <div class="form-group" id="single-duration-group">
                                 <label class="form-label">⏱️ 目标时长(秒):</label>
-                                <input type="number" class="form-input" id="target_duration" min="10" max="300" value="35">
+                                <input type="number" class="form-input" id="unified_duration" min="10" max="300" value="35">
                             </div>
                         </div>
+
+                        <!-- 批量模式的时长范围设置 -->
+                        <div id="batch-duration-group" style="display: none; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">⏱️ 时长范围(秒):</label>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="number" class="form-input" id="unified_min_duration" min="10" max="300" value="30" style="width: 120px;">
+                                    <span style="color: var(--text-secondary);">至</span>
+                                    <input type="number" class="form-input" id="unified_max_duration" min="10" max="300" value="40" style="width: 120px;">
+                                    <span style="color: var(--text-tertiary); font-size: 13px;">每个视频的时长将在此范围内随机选择</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div style="text-align: center;">
-                            <button class="btn btn-primary" onclick="app.startSingleAutomix()" style="font-size: 16px; padding: 15px 30px;">
-                                🎬 开始生成混剪视频
+                            <button class="btn btn-primary" onclick="app.startUnifiedAutomix()" style="font-size: 16px; padding: 15px 30px;">
+                                <span id="start-button-text">🎬 开始生成混剪视频</span>
                             </button>
                         </div>
-                        <div id="automix-progress" style="margin-top: 20px; display: none;">
+
+                        <!-- 混剪统计面板 -->
+                        <div id="automix-stats-panel" style="margin-top: 20px; display: none;">
+                            <div class="card" style="padding: 15px;">
+                                <h4 style="color: var(--primary-color); margin-bottom: 15px;">📊 混剪统计信息</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                    <div style="text-align: center; padding: 12px; background: var(--bg-primary); border-radius: 6px;">
+                                        <div style="font-size: 20px; color: var(--primary-color); margin-bottom: 3px;" id="stats-total-materials">0</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">总素材数</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 12px; background: var(--bg-primary); border-radius: 6px;">
+                                        <div style="font-size: 20px; color: var(--accent-color); margin-bottom: 3px;" id="stats-selected-materials">0</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">选择素材</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 12px; background: var(--bg-primary); border-radius: 6px;">
+                                        <div style="font-size: 20px; color: var(--warning-color); margin-bottom: 3px;" id="stats-applied-filters">0</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">应用滤镜</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 12px; background: var(--bg-primary); border-radius: 6px;">
+                                        <div style="font-size: 20px; color: var(--error-color); margin-bottom: 3px;" id="stats-applied-effects">0</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">应用特效</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 12px; background: var(--bg-primary); border-radius: 6px;">
+                                        <div style="font-size: 20px; color: var(--primary-color); margin-bottom: 3px;" id="stats-applied-transitions">0</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">应用转场</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 12px; background: var(--bg-primary); border-radius: 6px;">
+                                        <div style="font-size: 20px; color: var(--accent-color); margin-bottom: 3px;" id="stats-audio-tracks">0</div>
+                                        <div style="font-size: 11px; color: var(--text-secondary);">音频轨道</div>
+                                    </div>
+                                </div>
+
+                                <!-- 覆盖率统计 -->
+                                <div style="background: var(--bg-secondary); padding: 12px; border-radius: 6px; margin-bottom: 10px;">
+                                    <h5 style="color: var(--text-primary); margin-bottom: 8px; font-size: 13px;">📈 覆盖率统计</h5>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 12px;">
+                                        <div>
+                                            <span style="color: var(--text-secondary);">滤镜覆盖率:</span>
+                                            <span id="stats-filter-coverage" style="color: var(--warning-color); font-weight: bold;">0%</span>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--text-secondary);">特效覆盖率:</span>
+                                            <span id="stats-effect-coverage" style="color: var(--error-color); font-weight: bold;">0%</span>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--text-secondary);">转场覆盖率:</span>
+                                            <span id="stats-transition-coverage" style="color: var(--primary-color); font-weight: bold;">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 产品信息 -->
+                                <div style="background: var(--bg-secondary); padding: 10px; border-radius: 6px; font-size: 12px;">
+                                    <span style="color: var(--text-secondary);">🎯 产品型号:</span>
+                                    <span id="stats-product-model" style="color: var(--primary-color); font-weight: bold;">未选择</span>
+                                    <span style="margin-left: 15px; color: var(--text-secondary);">⏱️ 视频时长:</span>
+                                    <span id="stats-video-duration" style="color: var(--accent-color); font-weight: bold;">0.0s</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="unified-progress" style="margin-top: 20px; display: none;">
                             <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px;">
-                                <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                                    <div class="loader-spinner" style="width: 20px; height: 20px; margin-right: 10px;"></div>
-                                    <span id="progress-text">正在生成中...</span>
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <div style="display: flex; align-items: center;">
+                                        <div class="loader-spinner" style="width: 20px; height: 20px; margin-right: 10px;"></div>
+                                        <span id="unified-progress-text">正在生成中...</span>
+                                    </div>
+                                    <span id="unified-progress-count" style="font-weight: bold; color: var(--primary-color);">1/1</span>
                                 </div>
                                 <div style="background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden;">
-                                    <div id="progress-bar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                                    <div id="unified-progress-bar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
                                 </div>
                             </div>
                         </div>
@@ -1674,54 +1804,7 @@
                 `;
             }
 
-            getBatchAutomixContent() {
-                return `
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <span class="icon">📊</span>
-                                批量生成混剪
-                            </h2>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-                            <div class="form-group">
-                                <label class="form-label">📁 选择产品:</label>
-                                <select class="form-select" id="batch_selected_product">
-                                    <option value="">请选择产品...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">📦 生成数量:</label>
-                                <input type="number" class="form-input" id="batch_count_input" min="1" max="50" value="5">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">⏱️ 时长范围:</label>
-                                <div style="display: flex; gap: 5px;">
-                                    <input type="number" class="form-input" id="batch_min_duration" min="10" max="300" value="30" style="width: 48%;">
-                                    <span style="align-self: center;">-</span>
-                                    <input type="number" class="form-input" id="batch_max_duration" min="10" max="300" value="40" style="width: 48%;">
-                                </div>
-                            </div>
-                        </div>
-                        <div style="text-align: center;">
-                            <button class="btn btn-primary" onclick="app.startBatchAutomix()" style="font-size: 16px; padding: 15px 30px;">
-                                📊 开始批量生成
-                            </button>
-                        </div>
-                        <div id="batch-progress" style="margin-top: 20px; display: none;">
-                            <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                                    <span id="batch-progress-text">正在批量生成中...</span>
-                                    <span id="batch-progress-count">0/5</span>
-                                </div>
-                                <div style="background: var(--border-color); height: 6px; border-radius: 3px; overflow: hidden;">
-                                    <div id="batch-progress-bar" style="background: var(--accent-color); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
+
 
             getAdvancedConfigContent() {
                 return `
@@ -1789,6 +1872,65 @@
                                 💡 智能排除系统可以根据预设规则自动排除夸张、不合适的特效，保持视频的专业性和观感。
                             </p>
                         </div>
+
+                        <!-- 系统监控面板 -->
+                        <div style="margin-bottom: 20px;">
+                            <div class="card" style="padding: 15px;">
+                                <h4 style="color: var(--primary-color); margin-bottom: 15px;">📊 系统监控面板</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                    <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 5px;">
+                                            <span id="system-status" style="font-size: 20px; margin-right: 8px;">🟢</span>
+                                            <span id="system-status-text" style="font-size: 14px; color: var(--text-secondary);">系统正常</span>
+                                        </div>
+                                        <div style="font-size: 12px; color: var(--text-tertiary);">系统状态</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                        <div style="font-size: 24px; color: var(--warning-color); margin-bottom: 5px;" id="active-tasks">0</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">活跃任务数</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                        <div style="font-size: 24px; color: var(--accent-color); margin-bottom: 5px;" id="completed-tasks">0</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">今日完成任务</div>
+                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="completed-tasks-change">+0</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 15px; background: var(--bg-primary); border-radius: 8px;">
+                                        <div style="font-size: 24px; color: var(--error-color); margin-bottom: 5px;" id="error-count">0</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">错误次数</div>
+                                    </div>
+                                </div>
+
+                                <!-- 当前操作状态 -->
+                                <div style="background: var(--bg-secondary); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="margin-right: 8px;">🔄</span>
+                                            <span style="font-size: 14px; color: var(--text-primary);">当前操作:</span>
+                                            <span id="current-operation-text" style="margin-left: 8px; color: var(--primary-color);">空闲中</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- 进度条 -->
+                                    <div id="progress-section" style="margin-top: 10px; display: none;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                            <span style="font-size: 12px; color: var(--text-secondary);">进度</span>
+                                            <span id="progress-text" style="font-size: 12px; color: var(--primary-color);">0%</span>
+                                        </div>
+                                        <div style="background: var(--border-color); height: 4px; border-radius: 2px; overflow: hidden;">
+                                            <div id="monitor-progress-bar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 操作日志 -->
+                                <div>
+                                    <h5 style="color: var(--text-primary); margin-bottom: 10px; font-size: 14px;">📝 操作日志</h5>
+                                    <div id="operation-logs" style="max-height: 150px; overflow-y: auto; background: var(--bg-secondary); padding: 10px; border-radius: 6px; font-size: 13px;">
+                                        <div style="text-align: center; color: var(--text-secondary); padding: 20px;">暂无操作日志</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="card" style="padding: 15px;">
                                 <h4 style="color: var(--primary-color); margin-bottom: 15px;">🎭 夸张特效排除</h4>
@@ -1842,18 +1984,22 @@
                                     <div style="text-align: center;">
                                         <div style="font-size: 18px; color: var(--primary-color);" id="smart-video-excluded">0</div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">视频特效已排除</div>
+                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-video-change">+0</div>
                                     </div>
                                     <div style="text-align: center;">
                                         <div style="font-size: 18px; color: var(--accent-color);" id="smart-filters-excluded">0</div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">滤镜已排除</div>
+                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-filters-change">+0</div>
                                     </div>
                                     <div style="text-align: center;">
                                         <div style="font-size: 18px; color: var(--warning-color);" id="smart-transitions-excluded">0</div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">转场已排除</div>
+                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-transitions-change">+0</div>
                                     </div>
                                     <div style="text-align: center;">
                                         <div style="font-size: 18px; color: var(--error-color);" id="smart-total-excluded">0</div>
                                         <div style="font-size: 12px; color: var(--text-secondary);">总计已排除</div>
+                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-total-change">+0</div>
                                     </div>
                                 </div>
                                 <div style="text-align: center; margin-top: 15px;">
@@ -2543,13 +2689,104 @@
                         const transitionsExcluded = stats.transitions?.excluded || 0;
                         const total = videoExcluded + filtersExcluded + transitionsExcluded;
 
-                        this.setElementText('smart-video-excluded', videoExcluded);
-                        this.setElementText('smart-filters-excluded', filtersExcluded);
-                        this.setElementText('smart-transitions-excluded', transitionsExcluded);
-                        this.setElementText('smart-total-excluded', total);
+                        // 更新智能排除统计（带变化显示）
+                        this.updateSmartStatWithChange('smart-video-excluded', 'smart-video-change', videoExcluded);
+                        this.updateSmartStatWithChange('smart-filters-excluded', 'smart-filters-change', filtersExcluded);
+                        this.updateSmartStatWithChange('smart-transitions-excluded', 'smart-transitions-change', transitionsExcluded);
+                        this.updateSmartStatWithChange('smart-total-excluded', 'smart-total-change', total);
+
+                        // 更新详细特效管理统计
+                        const videoTotal = stats.video_effects?.total || 912;
+                        const filtersTotal = stats.filters?.total || 468;
+                        const transitionsTotal = stats.transitions?.total || 362;
+
+                        this.setElementText('video-effects-excluded', `已排除: ${videoExcluded}`);
+                        this.setElementText('filters-excluded', `已排除: ${filtersExcluded}`);
+                        this.setElementText('transitions-excluded', `已排除: ${transitionsExcluded}`);
+
+                        // 显示可用数量和排除比例
+                        const videoAvailable = videoTotal - videoExcluded;
+                        const filtersAvailable = filtersTotal - filtersExcluded;
+                        const transitionsAvailable = transitionsTotal - transitionsExcluded;
+
+                        const videoExcludedPercent = ((videoExcluded / videoTotal) * 100).toFixed(1);
+                        const filtersExcludedPercent = ((filtersExcluded / filtersTotal) * 100).toFixed(1);
+                        const transitionsExcludedPercent = ((transitionsExcluded / transitionsTotal) * 100).toFixed(1);
+
+                        // 更新详细统计显示
+                        const videoExcludedElement = document.getElementById('video-effects-excluded');
+                        const filtersExcludedElement = document.getElementById('filters-excluded');
+                        const transitionsExcludedElement = document.getElementById('transitions-excluded');
+
+                        if (videoExcludedElement) {
+                            videoExcludedElement.innerHTML = `已排除: ${videoExcluded} (${videoExcludedPercent}%)`;
+                        }
+                        if (filtersExcludedElement) {
+                            filtersExcludedElement.innerHTML = `已排除: ${filtersExcluded} (${filtersExcludedPercent}%)`;
+                        }
+                        if (transitionsExcludedElement) {
+                            transitionsExcludedElement.innerHTML = `已排除: ${transitionsExcluded} (${transitionsExcludedPercent}%)`;
+                        }
+
+                        this.showAlert(`统计已更新: 总计排除 ${total} 个特效`, 'success');
                     }
                 } catch (error) {
                     console.error('刷新智能排除统计失败:', error);
+                    this.showAlert('刷新统计失败: ' + error.message, 'error');
+                }
+            }
+
+            updateSmartStatWithChange(statElementId, changeElementId, newValue) {
+                const statElement = document.getElementById(statElementId);
+                const changeElement = document.getElementById(changeElementId);
+
+                if (statElement) {
+                    const oldValue = parseInt(statElement.textContent) || 0;
+                    statElement.textContent = newValue;
+
+                    if (changeElement) {
+                        if (newValue > oldValue) {
+                            const change = newValue - oldValue;
+                            changeElement.textContent = `+${change}`;
+                            changeElement.style.color = 'var(--warning-color)';
+                            changeElement.style.fontWeight = 'bold';
+
+                            // 添加闪烁效果
+                            changeElement.style.animation = 'pulse 1.5s ease-in-out';
+                            setTimeout(() => {
+                                if (changeElement) {
+                                    changeElement.style.animation = '';
+                                    changeElement.style.fontWeight = 'normal';
+                                    // 3秒后恢复为总计显示
+                                    setTimeout(() => {
+                                        if (changeElement) {
+                                            changeElement.textContent = `总计: ${newValue}`;
+                                            changeElement.style.color = 'var(--text-tertiary)';
+                                        }
+                                    }, 3000);
+                                }
+                            }, 1500);
+                        } else if (newValue < oldValue) {
+                            // 减少的情况（重置或移除排除）
+                            const change = oldValue - newValue;
+                            changeElement.textContent = `-${change}`;
+                            changeElement.style.color = 'var(--accent-color)';
+                            changeElement.style.fontWeight = 'bold';
+
+                            setTimeout(() => {
+                                if (changeElement) {
+                                    changeElement.textContent = `总计: ${newValue}`;
+                                    changeElement.style.color = 'var(--text-tertiary)';
+                                    changeElement.style.fontWeight = 'normal';
+                                }
+                            }, 3000);
+                        } else {
+                            // 无变化
+                            changeElement.textContent = `总计: ${newValue}`;
+                            changeElement.style.color = 'var(--text-tertiary)';
+                            changeElement.style.fontWeight = 'normal';
+                        }
+                    }
                 }
             }
 
@@ -2887,7 +3124,19 @@
                         return;
                     }
 
-                    // 更新单个混剪的产品选择下拉框
+                    // 更新统一混剪的产品选择下拉框
+                    const unifiedSelect = document.getElementById('unified_product');
+                    if (unifiedSelect) {
+                        unifiedSelect.innerHTML = '<option value="">请选择产品...</option>';
+                        result.products.forEach(product => {
+                            const option = document.createElement('option');
+                            option.value = product.name;
+                            option.textContent = product.name;
+                            unifiedSelect.appendChild(option);
+                        });
+                    }
+
+                    // 兼容旧版本：更新单个混剪的产品选择下拉框（如果存在）
                     const singleSelect = document.getElementById('selected_product');
                     if (singleSelect) {
                         singleSelect.innerHTML = '<option value="">请选择产品...</option>';
@@ -2899,7 +3148,7 @@
                         });
                     }
 
-                    // 更新批量混剪的产品选择下拉框
+                    // 兼容旧版本：更新批量混剪的产品选择下拉框（如果存在）
                     const batchSelect = document.getElementById('batch_selected_product');
                     if (batchSelect) {
                         batchSelect.innerHTML = '<option value="">请选择产品...</option>';
@@ -3380,8 +3629,57 @@
                 // 更新活跃任务数
                 this.setElementText('active-tasks', data.active_tasks);
 
-                // 更新已完成任务数
-                this.setElementText('completed-tasks', data.completed_today);
+                // 更新已完成任务数（带变化显示）
+                const completedTasksElement = document.getElementById('completed-tasks');
+                const completedTasksChangeElement = document.getElementById('completed-tasks-change');
+                if (completedTasksElement) {
+                    const newValue = data.completed_today;
+                    completedTasksElement.textContent = newValue;
+
+                    // 处理任务计数变化信息
+                    if (completedTasksChangeElement && data.task_change) {
+                        const taskChange = data.task_change;
+                        const currentTime = Date.now() / 1000;
+
+                        // 如果变化信息是最近5秒内的，显示变化
+                        if (taskChange.timestamp && (currentTime - taskChange.timestamp) < 5) {
+                            const oldCount = taskChange.old_count || 0;
+                            const newCount = taskChange.new_count || 0;
+
+                            if (newCount > oldCount) {
+                                completedTasksChangeElement.textContent = `${oldCount} → ${newCount}`;
+                                completedTasksChangeElement.style.color = 'var(--accent-color)';
+                                completedTasksChangeElement.style.fontWeight = 'bold';
+
+                                // 添加闪烁效果
+                                completedTasksChangeElement.style.animation = 'pulse 1.5s ease-in-out';
+                                setTimeout(() => {
+                                    if (completedTasksChangeElement) {
+                                        completedTasksChangeElement.style.animation = '';
+                                        completedTasksChangeElement.style.fontWeight = 'normal';
+                                        // 3秒后恢复为简单显示
+                                        setTimeout(() => {
+                                            if (completedTasksChangeElement) {
+                                                completedTasksChangeElement.textContent = `总计: ${newCount}`;
+                                                completedTasksChangeElement.style.color = 'var(--text-tertiary)';
+                                            }
+                                        }, 3000);
+                                    }
+                                }, 1500);
+                            }
+                        } else {
+                            // 显示总计
+                            completedTasksChangeElement.textContent = `总计: ${newValue}`;
+                            completedTasksChangeElement.style.color = 'var(--text-tertiary)';
+                            completedTasksChangeElement.style.fontWeight = 'normal';
+                        }
+                    } else if (completedTasksChangeElement) {
+                        // 没有变化信息时的默认显示
+                        completedTasksChangeElement.textContent = `总计: ${newValue}`;
+                        completedTasksChangeElement.style.color = 'var(--text-tertiary)';
+                        completedTasksChangeElement.style.fontWeight = 'normal';
+                    }
+                }
 
                 // 更新错误次数
                 this.setElementText('error-count', data.error_count);
@@ -3469,13 +3767,297 @@
                 }
             }
 
+            // 统一混剪相关方法
+            updateMixMode() {
+                const count = parseInt(this.getInputValue('unified_count')) || 1;
+                const modeIndicator = document.getElementById('mode-indicator');
+                const startButtonText = document.getElementById('start-button-text');
+                const singleDurationGroup = document.getElementById('single-duration-group');
+                const batchDurationGroup = document.getElementById('batch-duration-group');
+                const progressCount = document.getElementById('unified-progress-count');
 
+                if (count === 1) {
+                    // 单个混剪模式
+                    if (modeIndicator) modeIndicator.innerHTML = '🎯 单个混剪模式';
+                    if (startButtonText) startButtonText.innerHTML = '🎬 开始生成混剪视频';
+                    if (singleDurationGroup) singleDurationGroup.style.display = 'block';
+                    if (batchDurationGroup) batchDurationGroup.style.display = 'none';
+                    if (progressCount) progressCount.textContent = '1/1';
+                } else {
+                    // 批量生成模式
+                    if (modeIndicator) modeIndicator.innerHTML = `📊 批量生成模式 (${count}个视频)`;
+                    if (startButtonText) startButtonText.innerHTML = `📊 开始批量生成 ${count} 个视频`;
+                    if (singleDurationGroup) singleDurationGroup.style.display = 'none';
+                    if (batchDurationGroup) batchDurationGroup.style.display = 'block';
+                    if (progressCount) progressCount.textContent = `0/${count}`;
+                }
+            }
+
+            async startUnifiedAutomix() {
+                const product = this.getInputValue('unified_product');
+                const count = parseInt(this.getInputValue('unified_count')) || 1;
+
+                if (!product) {
+                    this.showAlert('请先选择产品', 'warning');
+                    return;
+                }
+
+                try {
+                    let response;
+                    if (count === 1) {
+                        // 单个混剪
+                        const duration = parseInt(this.getInputValue('unified_duration')) || 35;
+                        response = await fetch('/api/automix/single', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                product: product,
+                                duration: duration
+                            })
+                        });
+                    } else {
+                        // 批量生成
+                        const minDuration = parseInt(this.getInputValue('unified_min_duration')) || 30;
+                        const maxDuration = parseInt(this.getInputValue('unified_max_duration')) || 40;
+                        response = await fetch('/api/automix/batch', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                product: product,
+                                count: count,
+                                min_duration: minDuration,
+                                max_duration: maxDuration
+                            })
+                        });
+                    }
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert(result.message, 'success');
+                        this.showUnifiedProgress();
+                        this.startUnifiedProgressPolling();
+                    } else {
+                        this.showAlert(result.error || '启动失败', 'error');
+                    }
+                } catch (error) {
+                    console.error('启动混剪失败:', error);
+                    this.showAlert('启动混剪失败: ' + error.message, 'error');
+                }
+            }
+
+            showUnifiedProgress() {
+                const progressDiv = document.getElementById('unified-progress');
+                if (progressDiv) {
+                    progressDiv.style.display = 'block';
+                }
+            }
+
+            hideUnifiedProgress() {
+                const progressDiv = document.getElementById('unified-progress');
+                if (progressDiv) {
+                    progressDiv.style.display = 'none';
+                }
+            }
+
+            startUnifiedProgressPolling() {
+                // 清除现有的轮询
+                if (this.statusPollInterval) {
+                    clearInterval(this.statusPollInterval);
+                }
+
+                // 使用优化后的轮询间隔（3秒）
+                this.statusPollInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch('/api/status');
+                        const status = await response.json();
+                        this.updateUnifiedProgress(status);
+
+                        // 如果任务完成，停止轮询
+                        if (!status.running) {
+                            clearInterval(this.statusPollInterval);
+                            this.statusPollInterval = null;
+
+                            setTimeout(() => {
+                                this.hideUnifiedProgress();
+                            }, 3000); // 3秒后隐藏进度条
+                        }
+                    } catch (error) {
+                        console.error('获取状态失败:', error);
+                    }
+                }, this.statusPollDelay);
+            }
+
+            updateUnifiedProgress(status) {
+                const progressText = document.getElementById('unified-progress-text');
+                const progressBar = document.getElementById('unified-progress-bar');
+                const progressCount = document.getElementById('unified-progress-count');
+
+                if (progressText) {
+                    progressText.textContent = status.progress || '处理中...';
+                }
+
+                if (progressCount && status.total_count) {
+                    progressCount.textContent = `${status.current_count || 0}/${status.total_count}`;
+                }
+
+                if (progressBar) {
+                    let progress = 0;
+                    if (status.total_count && status.total_count > 0) {
+                        progress = ((status.current_count || 0) / status.total_count) * 100;
+                    }
+                    progressBar.style.width = `${progress}%`;
+                }
+
+                // 更新混剪统计信息
+                this.updateAutomixStats(status);
+
+                // 如果有错误，显示错误信息
+                if (status.error) {
+                    this.showAlert('混剪失败: ' + status.error, 'error');
+                }
+            }
+
+            updateAutomixStats(status) {
+                console.log('更新混剪统计:', status);
+
+                // 显示统计面板（如果有结果数据或正在运行）
+                const statsPanel = document.getElementById('automix-stats-panel');
+                if (statsPanel && (status.running || status.result)) {
+                    statsPanel.style.display = 'block';
+                    console.log('显示统计面板');
+                } else if (statsPanel) {
+                    // 如果没有数据，隐藏统计面板
+                    statsPanel.style.display = 'none';
+                }
+
+                // 如果有结果数据，更新统计信息
+                if (status.result && status.result.statistics) {
+                    const stats = status.result.statistics;
+                    console.log('找到统计数据:', stats);
+
+                    // 更新基础统计
+                    this.setElementText('stats-total-materials', stats.total_materials || 0);
+                    this.setElementText('stats-selected-materials', stats.selected_materials || 0);
+                    this.setElementText('stats-applied-filters', stats.applied_filters || 0);
+                    this.setElementText('stats-applied-effects', stats.applied_effects || 0);
+                    this.setElementText('stats-applied-transitions', stats.applied_transitions || 0);
+                    this.setElementText('stats-audio-tracks', stats.audio_tracks || 0);
+
+                    // 更新产品信息
+                    this.setElementText('stats-product-model', stats.product_model || '未知');
+
+                    // 更新视频时长
+                    if (status.result.duration) {
+                        let duration;
+                        if (stats.batch_mode) {
+                            // 批量模式：显示总时长
+                            duration = (status.result.duration / 1000000).toFixed(1);
+                            this.setElementText('stats-video-duration', `${duration}s (总计)`);
+                        } else {
+                            // 单个模式：显示单个视频时长
+                            duration = (status.result.duration / 1000000).toFixed(1);
+                            this.setElementText('stats-video-duration', `${duration}s`);
+                        }
+                    }
+
+                    // 计算和更新覆盖率
+                    const videoCount = stats.selected_materials || 0;
+                    const filterCount = stats.applied_filters || 0;
+                    const effectCount = stats.applied_effects || 0;
+                    const transitionCount = stats.applied_transitions || 0;
+
+                    let filterCoverage, effectCoverage, transitionCoverage;
+
+                    if (stats.batch_mode) {
+                        // 批量模式：基于成功视频数量计算平均覆盖率
+                        const successCount = stats.successful_count || 1;
+                        filterCoverage = successCount > 0 ? ((filterCount / (successCount * 8)) * 100).toFixed(1) : 0;
+                        effectCoverage = successCount > 0 ? ((effectCount / (successCount * 8)) * 100).toFixed(1) : 0;
+                        transitionCoverage = successCount > 0 ? ((transitionCount / (successCount * 7)) * 100).toFixed(1) : 0;
+                    } else {
+                        // 单个模式：原有计算方式
+                        filterCoverage = videoCount > 0 ? ((filterCount / videoCount) * 100).toFixed(1) : 0;
+                        effectCoverage = videoCount > 0 ? ((effectCount / videoCount) * 100).toFixed(1) : 0;
+                        transitionCoverage = videoCount > 1 ? ((transitionCount / (videoCount - 1)) * 100).toFixed(1) : 0;
+                    }
+
+                    this.setElementText('stats-filter-coverage', `${filterCoverage}%`);
+                    this.setElementText('stats-effect-coverage', `${effectCoverage}%`);
+                    this.setElementText('stats-transition-coverage', `${transitionCoverage}%`);
+                }
+
+                // 如果完成，显示结果
+                if (status.result && !status.running) {
+                    if (status.result.total_count && status.result.total_count > 1) {
+                        // 批量生成结果
+                        this.showAlert(`批量生成完成！成功: ${status.result.successful_count}个，失败: ${status.result.failed_count}个`, 'success');
+                    } else {
+                        // 单个混剪结果
+                        this.showAlert(`混剪完成！草稿: ${status.result.draft_name}`, 'success');
+                    }
+                }
+            }
+
+            async checkAutomixStatus() {
+                try {
+                    const response = await fetch('/api/status');
+                    const status = await response.json();
+                    console.log('检查混剪状态:', status);
+
+                    // 如果有结果数据，更新统计显示
+                    if (status.result) {
+                        this.updateAutomixStats(status);
+                    }
+                } catch (error) {
+                    console.error('检查混剪状态失败:', error);
+                }
+            }
         }
 
         // 初始化应用
         document.addEventListener('DOMContentLoaded', () => {
-            window.app = new AutoMixApp();
+            try {
+                console.log('DOM加载完成，开始初始化应用...');
+                window.app = new AutoMixApp();
+                console.log('应用初始化完成');
+            } catch (error) {
+                console.error('应用初始化失败:', error);
+                // 强制隐藏加载器
+                const loader = document.getElementById('pageLoader');
+                if (loader) {
+                    loader.style.display = 'none';
+                }
+                // 显示错误信息
+                document.body.innerHTML += `
+                    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                                background: #f44336; color: white; padding: 20px; border-radius: 8px; z-index: 10000;">
+                        <h3>应用加载失败</h3>
+                        <p>错误信息: ${error.message}</p>
+                        <p>请刷新页面重试</p>
+                    </div>
+                `;
+            }
         });
+
+        // 备用加载器隐藏机制 - 如果3秒后仍未隐藏，强制隐藏
+        setTimeout(() => {
+            const loader = document.getElementById('pageLoader');
+            if (loader && !loader.classList.contains('hidden')) {
+                console.warn('备用机制：强制隐藏加载器');
+                loader.style.display = 'none';
+
+                // 确保主内容可见
+                const appContainer = document.querySelector('.app-container');
+                if (appContainer) {
+                    appContainer.style.display = 'flex';
+                }
+            }
+        }, 3000);
     </script>
 </body>
 </html>
