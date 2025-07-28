@@ -39,7 +39,7 @@ except ImportError:
 
 class OptimizedWebInterface:
     """优化版Web界面类"""
-    
+
     def __init__(self):
         """初始化Web界面"""
         self.config_manager = ConfigManager()
@@ -193,41 +193,41 @@ class OptimizedWebInterface:
     def _is_cache_valid(self):
         """检查缓存是否有效"""
         return time.time() - self._cache['cache_time'] < self._cache_timeout
-    
+
     def _update_cache_time(self):
         """更新缓存时间"""
         self._cache['cache_time'] = time.time()
-    
+
     def get_config_info(self):
         """获取配置信息（带缓存）"""
         if self._cache['config'] and self._is_cache_valid():
             return self._cache['config']
-        
+
         try:
             config = {}
-            
+
             # 基础路径配置
             config['material_path'] = self.config_manager.get_material_path()
             config['draft_output_path'] = self.config_manager.get_draft_output_path()
-            
+
             # 视频参数
             min_dur, max_dur = self.config_manager.get_video_duration_range()
             config['video_duration_min'] = min_dur // 1000000
             config['video_duration_max'] = max_dur // 1000000
             config['video_scale_factor'] = self.config_manager.get_video_scale_factor()
-            
+
             # 音频设置
             config['narration_volume'] = self.config_manager.get_narration_volume()
             config['background_volume'] = self.config_manager.get_background_volume()
-            
+
             # 滤镜强度
             min_intensity, max_intensity = self.config_manager.get_filter_intensity_range()
             config['filter_intensity_min'] = min_intensity
             config['filter_intensity_max'] = max_intensity
-            
+
             # 批量生成
             config['batch_count'] = self.config_manager.get_batch_count()
-            
+
             # 防审核配置
             config['pexels_overlay_enabled'] = self.config_manager.is_pexels_overlay_enabled()
             config['pexels_overlay_opacity'] = self.config_manager.get_pexels_overlay_opacity()
@@ -274,56 +274,56 @@ class OptimizedWebInterface:
             # 缓存结果
             self._cache['config'] = config
             self._update_cache_time()
-            
+
             return config
         except Exception as e:
             return {'error': str(e)}
-    
+
     def get_exclusion_stats(self):
         """获取排除统计信息（带缓存）"""
         if self._cache['exclusions'] and self._is_cache_valid():
             return self._cache['exclusions']
-        
+
         try:
             stats = {}
-            
+
             # 获取各类型统计
             video_effects = self.exclusion_manager.excluded_effects
             filters = self.exclusion_manager.excluded_filters
             transitions = self.exclusion_manager.excluded_transitions
-            
+
             stats['video_effects'] = {
                 'total': 912,
                 'excluded': len(video_effects),
                 'available': 912 - len(video_effects)
             }
-            
+
             stats['filters'] = {
                 'total': 468,
                 'excluded': len(filters),
                 'available': 468 - len(filters)
             }
-            
+
             stats['transitions'] = {
                 'total': 362,
                 'excluded': len(transitions),
                 'available': 362 - len(transitions)
             }
-            
+
             # 缓存结果
             self._cache['exclusions'] = stats
             self._update_cache_time()
-            
+
             return stats
         except Exception as e:
             return {'error': str(e)}
-    
+
     def update_config(self, config_data):
         """更新配置"""
         try:
             success = True
             errors = []
-            
+
             # 更新各项配置
             for key, value in config_data.items():
                 try:
@@ -370,19 +370,19 @@ class OptimizedWebInterface:
                         success &= self.config_manager.set_max_frame_drops_per_segment(int(value))
                 except Exception as e:
                     errors.append(f"{key}: {str(e)}")
-            
+
             # 清除配置缓存
             self._cache['config'] = None
-            
+
             return {'success': success, 'errors': errors}
         except Exception as e:
             return {'success': False, 'errors': [str(e)]}
-    
+
     def get_available_products(self):
         """获取可用产品列表（带缓存）"""
         if self._cache['products'] and self._is_cache_valid():
             return self._cache['products']
-        
+
         try:
             material_path = self.config_manager.get_material_path()
             if not os.path.exists(material_path):
@@ -401,19 +401,19 @@ class OptimizedWebInterface:
                                 break
                         if has_videos:
                             break
-                    
+
                     if has_videos:
                         products.append({
                             'name': item,
                             'path': item_path
                         })
-            
+
             result = {'success': True, 'products': products}
-            
+
             # 缓存结果
             self._cache['products'] = result
             self._update_cache_time()
-            
+
             return result
         except Exception as e:
             return {'success': False, 'error': str(e)}
@@ -848,6 +848,41 @@ class OptimizedWebInterface:
             return {'success': True, 'message': '已重置所有排除设置'}
         except Exception as e:
             return {'success': False, 'error': str(e)}
+
+    def test_pexels_api_key(self, api_key):
+        """测试Pexels API密钥"""
+        try:
+            from JianYingDraft.core.pexelsManager import PexelsManager
+
+            # 创建Pexels管理器实例
+            pexels_manager = PexelsManager(api_key)
+
+            # 测试API密钥
+            is_valid = pexels_manager.test_api_key()
+
+            if is_valid:
+                # 如果测试成功，保存API密钥到配置
+                self.config_manager.set_pexels_api_key(api_key)
+                return {
+                    'success': True,
+                    'message': 'Pexels API密钥验证成功，已保存到配置中'
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': 'API密钥无效，请检查密钥是否正确'
+                }
+
+        except ImportError:
+            return {
+                'success': False,
+                'error': '无法导入Pexels管理器，请检查项目配置'
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'测试API密钥时发生错误: {str(e)}'
+            }
 
     def search_filters(self, search_term, category):
         """搜索滤镜"""
@@ -1423,12 +1458,27 @@ def save_transition_settings():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
+@app.route('/api/test-pexels-api', methods=['POST'])
+def test_pexels_api():
+    """测试Pexels API密钥"""
+    try:
+        data = request.get_json()
+        api_key = data.get('api_key', '')
+
+        if not api_key:
+            return jsonify({'success': False, 'error': 'API密钥不能为空'})
+
+        result = web_interface.test_pexels_api_key(api_key)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 def main():
     """主函数"""
     print("🌐 剪映自动混剪工具 - 重构版Web界面")
     print("=" * 50)
     print("🔍 检查依赖包...")
-    
+
     try:
         import flask
         print("✅ 依赖包检查通过")
@@ -1436,9 +1486,9 @@ def main():
         print(f"❌ 缺少依赖包: {e}")
         print("请运行: pip install flask")
         return
-    
+
     print("📁 检查项目结构...")
-    
+
     # 检查必要的目录和文件
     required_paths = [
         'JianYingDraft/core',
@@ -1446,12 +1496,12 @@ def main():
         'JianYingDraft/core/configManager.py',
         'JianYingDraft/core/effectExclusionManager.py'
     ]
-    
+
     for path in required_paths:
         if not os.path.exists(path):
             print(f"❌ 缺少必要文件: {path}")
             return
-    
+
     print("✅ 项目结构检查通过")
     print()
     print("🚀 启动Web服务器...")
@@ -1469,14 +1519,14 @@ def main():
     print()
     print("⌨️  按 Ctrl+C 停止服务器")
     print("-" * 50)
-    
+
     # 自动打开浏览器
     def open_browser():
         time.sleep(1.5)
         webbrowser.open('http://localhost:5001')
-    
+
     threading.Thread(target=open_browser, daemon=True).start()
-    
+
     # 尝试不同的端口
     ports_to_try = [5001, 5002, 5003, 8080, 8081]
     server_started = False

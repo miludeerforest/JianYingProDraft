@@ -536,19 +536,19 @@
             .sidebar {
                 transform: translateX(-100%);
             }
-            
+
             .sidebar.mobile-open {
                 transform: translateX(0);
             }
-            
+
             .main-content {
                 margin-left: 0;
             }
-            
+
             .menu-toggle {
                 display: block;
             }
-            
+
             .content-area {
                 padding: 15px;
             }
@@ -800,7 +800,7 @@
                 <h1>🎬 剪映混剪工具</h1>
                 <div class="version">v2.1.0 - 现代化界面版</div>
             </div>
-            
+
             <div class="sidebar-nav">
                 <!-- 一级菜单：概览 -->
                 <div class="nav-item">
@@ -820,25 +820,12 @@
                     <div class="sub-nav">
                         <a class="sub-nav-link" data-section="config-basic">基础配置</a>
                         <a class="sub-nav-link" data-section="config-anti-detect">防审核设置</a>
-                        <a class="sub-nav-link" data-section="config-effects">特效参数</a>
-                        <a class="sub-nav-link" data-section="config-advanced">高级选项</a>
-                    </div>
-                </div>
-
-                <!-- 一级菜单：素材管理 -->
-                <div class="nav-item">
-                    <a class="nav-link" data-section="materials" data-has-submenu="true">
-                        <span class="icon">🎨</span>
-                        <span class="text">素材管理</span>
-                        <span class="arrow">▶</span>
-                    </a>
-                    <div class="sub-nav">
-                        <a class="sub-nav-link" data-section="video-effects">视频特效</a>
-                        <a class="sub-nav-link" data-section="filters">滤镜管理</a>
-                        <a class="sub-nav-link" data-section="transitions">转场管理</a>
+                        <a class="sub-nav-link" data-section="materials">滤镜特效转场参数设置</a>
                         <a class="sub-nav-link" data-section="smart-exclusion">智能排除</a>
                     </div>
                 </div>
+
+
 
                 <!-- 一级菜单：混剪操作 -->
                 <div class="nav-item">
@@ -1095,7 +1082,7 @@
                 // Ctrl+1-5 快速切换主菜单
                 if (e.ctrlKey && e.key >= '1' && e.key <= '5') {
                     e.preventDefault();
-                    const sections = ['overview', 'config-basic', 'smart-exclusion', 'automix-unified', 'help'];
+                    const sections = ['overview', 'config-basic', 'automix-unified', 'help'];
                     const sectionIndex = parseInt(e.key) - 1;
                     if (sections[sectionIndex]) {
                         this.switchSection(sections[sectionIndex]);
@@ -1287,6 +1274,14 @@
                         await this.refreshTransitionStats();
                     }
 
+                    // 如果是滤镜特效转场参数设置页面，加载默认配置
+                    if (section === 'materials') {
+                        // 延迟加载配置以确保DOM已渲染
+                        setTimeout(() => {
+                            this.loadVideoEffectConfig();
+                        }, 100);
+                    }
+
                     // 如果是智能排除页面，启动系统监控并加载特效管理功能
                     if (section === 'smart-exclusion') {
                         this.startSystemMonitoring();
@@ -1305,8 +1300,7 @@
                     'overview': '概览',
                     'config-basic': '基础配置',
                     'config-anti-detect': '防审核设置',
-                    'config-effects': '特效参数',
-                    'config-advanced': '高级选项',
+                    'materials': '滤镜特效转场参数设置',
                     'video-effects': '视频特效参数',
                     'filters': '滤镜参数设置',
                     'transitions': '转场参数设置',
@@ -1324,10 +1318,8 @@
                         return this.getBasicConfigContent();
                     case 'config-anti-detect':
                         return this.getAntiDetectConfigContent();
-                    case 'config-effects':
-                        return this.getEffectsConfigContent();
-                    case 'config-advanced':
-                        return this.getAdvancedConfigContent();
+                    case 'materials':
+                        return this.getMaterialsContent();
                     case 'video-effects':
                         return this.getVideoEffectsContent();
                     case 'filters':
@@ -1380,7 +1372,7 @@
             toggleSidebar() {
                 const sidebar = document.getElementById('sidebar');
                 const mainContent = document.getElementById('mainContent');
-                
+
                 sidebar.classList.toggle('mobile-open');
             }
 
@@ -1423,6 +1415,23 @@
                 const currentSection = this.currentSection;
                 if (currentSection === 'smart-exclusion') {
                     this.searchEffects();
+                } else if (currentSection === 'materials') {
+                    // 在滤镜特效转场参数设置页面，根据当前活跃的标签页执行相应搜索
+                    const activeTab = document.querySelector('.tab-button.active');
+                    if (activeTab) {
+                        const tabName = activeTab.getAttribute('data-tab');
+                        switch(tabName) {
+                            case 'video-effects':
+                                // 可以添加视频特效搜索功能
+                                break;
+                            case 'filters':
+                                this.searchFilters();
+                                break;
+                            case 'transitions':
+                                this.searchTransitions();
+                                break;
+                        }
+                    }
                 } else if (currentSection === 'filters') {
                     this.searchFilters();
                 } else if (currentSection === 'transitions') {
@@ -1533,7 +1542,25 @@
                                 <label class="form-label">📦 批量生成数量:</label>
                                 <input type="number" class="form-input" id="batch_count" min="1" max="100" value="5">
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">⏱️ 修剪开始时长(秒):</label>
+                                <input type="number" class="form-input" id="trim_start_duration" min="0" max="10" step="0.5" value="0">
+                            </div>
                         </div>
+
+                        <!-- 基础配置说明 -->
+                        <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 10px;">💡 基础配置说明</h4>
+                            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">
+                                <li>素材库路径: 存放视频素材的文件夹路径</li>
+                                <li>草稿输出路径: 生成的剪映草稿文件保存位置</li>
+                                <li>视频时长: 控制生成视频的最小和最大时长</li>
+                                <li>音量调节: 分别控制解说音量和背景音乐音量</li>
+                                <li>批量生成数量: 一次性生成多个草稿的数量</li>
+                                <li>修剪开始时长: 跳过视频开头指定秒数，避免重复内容</li>
+                            </ul>
+                        </div>
+
                         <div style="text-align: center; margin-top: 20px;">
                             <button class="btn btn-primary" onclick="app.loadBasicConfig()">🔄 刷新配置</button>
                             <button class="btn btn-success" onclick="app.saveBasicConfig()">💾 保存配置</button>
@@ -1605,6 +1632,52 @@
                                 <input type="number" class="form-input" id="max_frame_drops_per_segment" min="1" max="10" step="1" value="3">
                             </div>
                         </div>
+
+                        <!-- Pexels防审核配置 -->
+                        <div class="card" style="padding: 15px; margin: 20px 0;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 15px;">🔑 Pexels防审核配置</h4>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label class="form-label">API密钥:</label>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="password" class="form-input" id="pexels_api_key"
+                                           placeholder="输入Pexels API密钥"
+                                           value="rwDQTKgarldHRe2MUQGbtUB95E59p7csmYSSIis1qRxOqVpHjAOadPTD"
+                                           style="flex: 1;">
+                                    <button class="btn btn-secondary" onclick="app.toggleApiKeyVisibility()" id="toggle-api-key">👁️</button>
+                                    <button class="btn btn-primary" onclick="app.testPexelsApi()">🧪 测试</button>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                    💡 获取API密钥：访问 <a href="https://www.pexels.com/api/" target="_blank" style="color: var(--primary-color);">https://www.pexels.com/api/</a> 注册并申请
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div class="form-group">
+                                    <label class="form-label">🖼️ Pexels叠加:</label>
+                                    <select class="form-select" id="pexels_overlay_enabled">
+                                        <option value="true">启用</option>
+                                        <option value="false">禁用</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">👻 叠加透明度(%):</label>
+                                    <input type="number" class="form-input" id="pexels_overlay_opacity" min="0" max="100" step="5" value="5">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 防审核配置说明 -->
+                        <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 10px;">💡 防审核配置说明</h4>
+                            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">
+                                <li>镜像翻转: 随机翻转视频画面，避免重复检测</li>
+                                <li>模糊背景: 对背景进行模糊处理，突出前景内容</li>
+                                <li>抽帧技术: 随机删除部分帧，改变视频指纹</li>
+                                <li>Pexels API密钥: 用于获取免费视频素材的API访问密钥</li>
+                                <li>Pexels叠加: 添加免费素材叠加层，用于防审核</li>
+                                <li>叠加透明度: 控制叠加层的可见度，建议5-30%</li>
+                            </ul>
+                        </div>
+
                         <div style="text-align: center; margin-top: 20px;">
                             <button class="btn btn-primary" onclick="app.loadAntiDetectConfig()">🔄 刷新配置</button>
                             <button class="btn btn-success" onclick="app.saveAntiDetectConfig()">💾 保存配置</button>
@@ -1806,55 +1879,7 @@
 
 
 
-            getAdvancedConfigContent() {
-                return `
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">
-                                <span class="icon">🔧</span>
-                                高级选项配置
-                            </h2>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="form-group">
-                                <label class="form-label">🎭 使用VIP特效:</label>
-                                <select class="form-select" id="use_vip_effects">
-                                    <option value="true">启用</option>
-                                    <option value="false">禁用</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">🖼️ Pexels叠加:</label>
-                                <select class="form-select" id="pexels_overlay_enabled">
-                                    <option value="true">启用</option>
-                                    <option value="false">禁用</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">👻 叠加透明度(%):</label>
-                                <input type="number" class="form-input" id="pexels_overlay_opacity" min="0" max="100" step="5" value="30">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">⏱️ 修剪开始时长(秒):</label>
-                                <input type="number" class="form-input" id="trim_start_duration" min="0" max="10" step="0.5" value="0">
-                            </div>
-                        </div>
-                        <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <h4 style="color: var(--primary-color); margin-bottom: 10px;">💡 高级选项说明</h4>
-                            <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">
-                                <li>VIP特效: 启用后可使用付费特效库</li>
-                                <li>Pexels叠加: 添加免费素材叠加层</li>
-                                <li>叠加透明度: 控制叠加层的可见度</li>
-                                <li>修剪开始时长: 跳过视频开头部分</li>
-                            </ul>
-                        </div>
-                        <div style="text-align: center; margin-top: 20px;">
-                            <button class="btn btn-primary" onclick="app.loadAdvancedConfig()">🔄 刷新配置</button>
-                            <button class="btn btn-success" onclick="app.saveAdvancedConfig()">💾 保存配置</button>
-                        </div>
-                    </div>
-                `;
-            }
+
 
 
 
@@ -1977,37 +2002,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div style="margin-top: 20px;">
-                            <div class="card" style="padding: 15px;">
-                                <h4 style="color: var(--primary-color); margin-bottom: 15px;">📊 排除统计</h4>
-                                <div id="smart-exclusion-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 18px; color: var(--primary-color);" id="smart-video-excluded">0</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">视频特效已排除</div>
-                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-video-change">+0</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 18px; color: var(--accent-color);" id="smart-filters-excluded">0</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">滤镜已排除</div>
-                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-filters-change">+0</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 18px; color: var(--warning-color);" id="smart-transitions-excluded">0</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">转场已排除</div>
-                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-transitions-change">+0</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 18px; color: var(--error-color);" id="smart-total-excluded">0</div>
-                                        <div style="font-size: 12px; color: var(--text-secondary);">总计已排除</div>
-                                        <div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px;" id="smart-total-change">+0</div>
-                                    </div>
-                                </div>
-                                <div style="text-align: center; margin-top: 15px;">
-                                    <button class="btn btn-primary" onclick="app.refreshSmartStats()">🔄 刷新统计</button>
-                                    <button class="btn btn-success" onclick="app.resetAllExclusions()">🔄 重置所有排除</button>
-                                </div>
-                            </div>
-                        </div>
+
 
                         <!-- 详细特效管理 -->
                         <div style="margin-top: 20px;">
@@ -2061,6 +2056,7 @@
                                     <button class="btn btn-warning" onclick="app.excludeSelected()">❌ 排除选中</button>
                                     <button class="btn btn-success" onclick="app.includeSelected()">✅ 包含选中</button>
                                     <button class="btn btn-primary" onclick="app.loadExclusionStats()">📊 刷新统计</button>
+                                    <button class="btn btn-success" onclick="app.resetAllExclusions()">🔄 重置所有排除</button>
                                 </div>
 
                                 <!-- 特效列表 -->
@@ -2069,6 +2065,236 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                `;
+            }
+
+            getMaterialsContent() {
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span class="icon">🎨</span>
+                                滤镜特效转场参数设置
+                            </h2>
+                        </div>
+
+                        <div style="background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="color: var(--text-secondary); margin: 0;">
+                                💡 在这里统一管理视频特效、滤镜和转场的参数设置。使用标签页切换不同类型的参数配置。
+                            </p>
+                        </div>
+
+                        <!-- 标签页导航 -->
+                        <div class="tab-nav" style="display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 20px;">
+                            <button class="tab-button active" onclick="app.switchMaterialTab('video-effects')" data-tab="video-effects">
+                                🎬 特效
+                            </button>
+                            <button class="tab-button" onclick="app.switchMaterialTab('filters')" data-tab="filters">
+                                🎭 滤镜
+                            </button>
+                            <button class="tab-button" onclick="app.switchMaterialTab('transitions')" data-tab="transitions">
+                                🔄 转场
+                            </button>
+                        </div>
+
+                        <!-- 标签页内容 -->
+                        <div id="material-tab-content">
+                            <!-- 默认显示视频特效内容 -->
+                            <div id="video-effects-tab" class="tab-content active">
+                                ${this.getVideoEffectsTabContent()}
+                            </div>
+                            <div id="filters-tab" class="tab-content" style="display: none;">
+                                ${this.getFiltersTabContent()}
+                            </div>
+                            <div id="transitions-tab" class="tab-content" style="display: none;">
+                                ${this.getTransitionsTabContent()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <style>
+                        .tab-nav {
+                            background: var(--bg-secondary);
+                            border-radius: 8px 8px 0 0;
+                            padding: 0;
+                            overflow: hidden;
+                        }
+                        .tab-button {
+                            background: transparent;
+                            border: none;
+                            padding: 15px 20px;
+                            cursor: pointer;
+                            color: var(--text-secondary);
+                            font-size: 14px;
+                            font-weight: 500;
+                            transition: var(--transition);
+                            border-bottom: 3px solid transparent;
+                            flex: 1;
+                            text-align: center;
+                        }
+                        .tab-button:hover {
+                            background: var(--bg-primary);
+                            color: var(--text-primary);
+                        }
+                        .tab-button.active {
+                            background: var(--bg-primary);
+                            color: var(--primary-color);
+                            border-bottom-color: var(--primary-color);
+                            font-weight: 600;
+                        }
+                        .tab-content {
+                            animation: fadeIn 0.3s ease-in-out;
+                        }
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(10px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                    </style>
+                `;
+            }
+
+            // 标签页内容函数
+            getVideoEffectsTabContent() {
+                return `
+                    <!-- 视频特效强度控制 -->
+                    <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="color: var(--primary-color); margin-bottom: 15px;">🎬 视频特效强度控制</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">最小强度 (%):</label>
+                                <input type="range" class="form-input" id="video-effect-min-intensity" min="10" max="80" value="20"
+                                       oninput="document.getElementById('video-effect-min-value').textContent = this.value + '%'">
+                                <span id="video-effect-min-value" style="color: var(--primary-color); font-weight: bold;">20%</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">最大强度 (%):</label>
+                                <input type="range" class="form-input" id="video-effect-max-intensity" min="10" max="80" value="40"
+                                       oninput="document.getElementById('video-effect-max-value').textContent = this.value + '%'">
+                                <span id="video-effect-max-value" style="color: var(--primary-color); font-weight: bold;">40%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 视频特效应用概率 -->
+                    <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="color: var(--accent-color); margin-bottom: 15px;">📊 视频特效应用概率</h4>
+                        <div class="form-group">
+                            <label class="form-label">特效应用概率 (%):</label>
+                            <input type="range" class="form-input" id="video-effect-probability" min="0" max="100" value="60"
+                                   oninput="document.getElementById('video-effect-prob-value').textContent = this.value + '%'">
+                            <span id="video-effect-prob-value" style="color: var(--accent-color); font-weight: bold;">60%</span>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                设置为0%表示不使用视频特效，100%表示每个片段都使用特效
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIP特效设置 -->
+                    <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="color: var(--warning-color); margin-bottom: 15px;">🎭 VIP特效设置</h4>
+                        <div class="form-group">
+                            <label class="form-label">使用VIP特效:</label>
+                            <select class="form-select" id="use_vip_effects">
+                                <option value="true">启用</option>
+                                <option value="false">禁用</option>
+                            </select>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                启用后可使用付费特效库，提供更丰富的视觉效果
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="btn btn-success" onclick="app.saveVideoEffectSettings()">💾 保存特效设置</button>
+                        <button class="btn btn-primary" onclick="app.resetVideoEffectSettings()">🔄 重置为默认</button>
+                    </div>
+                `;
+            }
+
+            getFiltersTabContent() {
+                return `
+                    <!-- 滤镜强度控制 -->
+                    <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="color: var(--primary-color); margin-bottom: 15px;">🎭 滤镜强度控制</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">最小强度 (%):</label>
+                                <input type="range" class="form-input" id="filter-min-intensity" min="10" max="80" value="30"
+                                       oninput="document.getElementById('filter-min-value').textContent = this.value + '%'">
+                                <span id="filter-min-value" style="color: var(--primary-color); font-weight: bold;">30%</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">最大强度 (%):</label>
+                                <input type="range" class="form-input" id="filter-max-intensity" min="10" max="80" value="50"
+                                       oninput="document.getElementById('filter-max-value').textContent = this.value + '%'">
+                                <span id="filter-max-value" style="color: var(--primary-color); font-weight: bold;">50%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 滤镜应用概率 -->
+                    <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="color: var(--accent-color); margin-bottom: 15px;">📊 滤镜应用概率</h4>
+                        <div class="form-group">
+                            <label class="form-label">滤镜应用概率 (%):</label>
+                            <input type="range" class="form-input" id="filter-probability" min="0" max="100" value="80"
+                                   oninput="document.getElementById('filter-prob-value').textContent = this.value + '%'">
+                            <span id="filter-prob-value" style="color: var(--accent-color); font-weight: bold;">80%</span>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                设置为0%表示不使用滤镜，100%表示每个片段都使用滤镜
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="btn btn-success" onclick="app.saveFilterSettings()">💾 保存滤镜设置</button>
+                        <button class="btn btn-primary" onclick="app.resetFilterSettings()">🔄 重置为默认</button>
+                    </div>
+                `;
+            }
+
+            getTransitionsTabContent() {
+                return `
+                    <!-- 转场时长控制 -->
+                    <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="color: var(--primary-color); margin-bottom: 15px;">🔄 转场时长控制</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">最小时长 (秒):</label>
+                                <input type="range" class="form-input" id="transition-min-duration" min="0.1" max="2.0" step="0.1" value="0.5"
+                                       oninput="document.getElementById('transition-min-value').textContent = this.value + 's'">
+                                <span id="transition-min-value" style="color: var(--primary-color); font-weight: bold;">0.5s</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">最大时长 (秒):</label>
+                                <input type="range" class="form-input" id="transition-max-duration" min="0.1" max="2.0" step="0.1" value="1.0"
+                                       oninput="document.getElementById('transition-max-value').textContent = this.value + 's'">
+                                <span id="transition-max-value" style="color: var(--primary-color); font-weight: bold;">1.0s</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 转场应用概率 -->
+                    <div class="card" style="padding: 15px; margin-bottom: 20px;">
+                        <h4 style="color: var(--accent-color); margin-bottom: 15px;">📊 转场应用概率</h4>
+                        <div class="form-group">
+                            <label class="form-label">转场应用概率 (%):</label>
+                            <input type="range" class="form-input" id="transition-probability" min="0" max="100" value="70"
+                                   oninput="document.getElementById('transition-prob-value').textContent = this.value + '%'">
+                            <span id="transition-prob-value" style="color: var(--accent-color); font-weight: bold;">70%</span>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                设置为0%表示不使用转场，100%表示每个片段间都使用转场
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="btn btn-success" onclick="app.saveTransitionSettings()">💾 保存转场设置</button>
+                        <button class="btn btn-primary" onclick="app.resetTransitionSettings()">🔄 重置为默认</button>
                     </div>
                 `;
             }
@@ -2296,19 +2522,10 @@
                             <div class="card" style="padding: 15px;">
                                 <h4 style="color: var(--accent-color); margin-bottom: 15px;">⚙️ 配置说明</h4>
                                 <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">
-                                    <li>基础配置：路径、时长、音量设置</li>
-                                    <li>防审核：镜像、模糊、抽帧技术</li>
-                                    <li>特效参数：轻微效果范围控制</li>
-                                    <li>高级选项：VIP特效、叠加设置</li>
-                                </ul>
-                            </div>
-                            <div class="card" style="padding: 15px;">
-                                <h4 style="color: var(--warning-color); margin-bottom: 15px;">🎨 特效管理</h4>
-                                <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">
-                                    <li>特效排除：手动搜索排除特效</li>
-                                    <li>智能排除：一键排除夸张特效</li>
-                                    <li>滤镜管理：管理468种滤镜</li>
-                                    <li>转场设置：管理362种转场</li>
+                                    <li>基础配置：路径、时长、音量设置、修剪开始时长</li>
+                                    <li>防审核：镜像、模糊、抽帧技术、Pexels API和叠加设置</li>
+                                    <li>滤镜特效转场参数设置：统一管理视频特效、滤镜、转场参数和VIP特效</li>
+                                    <li>智能排除：一键排除夸张特效和不合适的滤镜</li>
                                 </ul>
                             </div>
                             <div class="card" style="padding: 15px;">
@@ -2442,6 +2659,7 @@
                     config.narration_volume = parseFloat(this.getInputValue('narration_volume')) / 100;
                     config.background_volume = parseFloat(this.getInputValue('background_volume')) / 100;
                     config.batch_count = parseInt(this.getInputValue('batch_count'));
+                    config.trim_start_duration = parseFloat(this.getInputValue('trim_start_duration'));
                 } else if (type === 'anti-detect') {
                     config.flip_probability = parseFloat(this.getInputValue('flip_probability'));
                     config.blur_background_enabled = this.getInputValue('blur_background_enabled') === 'true';
@@ -2453,9 +2671,14 @@
                     config.frame_drop_probability = parseFloat(this.getInputValue('frame_drop_probability'));
                     config.frame_drop_interval = parseFloat(this.getInputValue('frame_drop_interval'));
                     config.max_frame_drops_per_segment = parseInt(this.getInputValue('max_frame_drops_per_segment'));
+                    config.pexels_api_key = this.getInputValue('pexels_api_key');
+                    config.pexels_overlay_enabled = this.getInputValue('pexels_overlay_enabled') === 'true';
+                    config.pexels_overlay_opacity = parseInt(this.getInputValue('pexels_overlay_opacity'));
                 } else if (type === 'effects') {
                     config.filter_intensity_min = parseInt(this.getInputValue('filter_intensity_min'));
                     config.filter_intensity_max = parseInt(this.getInputValue('filter_intensity_max'));
+                } else if (type === 'materials') {
+                    config.use_vip_effects = this.getInputValue('use_vip_effects') === 'true';
                 }
 
                 return config;
@@ -2584,7 +2807,6 @@
 
                     if (result.success) {
                         this.showAlert(`夸张特效排除完成，共排除 ${result.excluded_count} 个`, 'success');
-                        this.refreshSmartStats();
                         this.loadExclusionStats();
                     } else {
                         this.showAlert('排除失败: ' + result.error, 'error');
@@ -2612,7 +2834,6 @@
 
                     if (result.success) {
                         this.showAlert(`强烈滤镜排除完成，共排除 ${result.excluded_count} 个`, 'success');
-                        this.refreshSmartStats();
                         this.loadExclusionStats();
                     } else {
                         this.showAlert('排除失败: ' + result.error, 'error');
@@ -2640,7 +2861,6 @@
 
                     if (result.success) {
                         this.showAlert(`快速转场排除完成，共排除 ${result.excluded_count} 个`, 'success');
-                        this.refreshSmartStats();
                         this.loadExclusionStats();
                     } else {
                         this.showAlert('排除失败: ' + result.error, 'error');
@@ -2668,7 +2888,6 @@
 
                     if (result.success) {
                         this.showAlert(`全面智能排除完成，共排除 ${result.total_excluded} 个`, 'success');
-                        this.refreshSmartStats();
                         this.loadExclusionStats();
                     } else {
                         this.showAlert('排除失败: ' + result.error, 'error');
@@ -2689,26 +2908,12 @@
                         const transitionsExcluded = stats.transitions?.excluded || 0;
                         const total = videoExcluded + filtersExcluded + transitionsExcluded;
 
-                        // 更新智能排除统计（带变化显示）
-                        this.updateSmartStatWithChange('smart-video-excluded', 'smart-video-change', videoExcluded);
-                        this.updateSmartStatWithChange('smart-filters-excluded', 'smart-filters-change', filtersExcluded);
-                        this.updateSmartStatWithChange('smart-transitions-excluded', 'smart-transitions-change', transitionsExcluded);
-                        this.updateSmartStatWithChange('smart-total-excluded', 'smart-total-change', total);
-
                         // 更新详细特效管理统计
                         const videoTotal = stats.video_effects?.total || 912;
                         const filtersTotal = stats.filters?.total || 468;
                         const transitionsTotal = stats.transitions?.total || 362;
 
-                        this.setElementText('video-effects-excluded', `已排除: ${videoExcluded}`);
-                        this.setElementText('filters-excluded', `已排除: ${filtersExcluded}`);
-                        this.setElementText('transitions-excluded', `已排除: ${transitionsExcluded}`);
-
                         // 显示可用数量和排除比例
-                        const videoAvailable = videoTotal - videoExcluded;
-                        const filtersAvailable = filtersTotal - filtersExcluded;
-                        const transitionsAvailable = transitionsTotal - transitionsExcluded;
-
                         const videoExcludedPercent = ((videoExcluded / videoTotal) * 100).toFixed(1);
                         const filtersExcludedPercent = ((filtersExcluded / filtersTotal) * 100).toFixed(1);
                         const transitionsExcludedPercent = ((transitionsExcluded / transitionsTotal) * 100).toFixed(1);
@@ -2731,62 +2936,97 @@
                         this.showAlert(`统计已更新: 总计排除 ${total} 个特效`, 'success');
                     }
                 } catch (error) {
-                    console.error('刷新智能排除统计失败:', error);
+                    console.error('刷新统计失败:', error);
                     this.showAlert('刷新统计失败: ' + error.message, 'error');
                 }
             }
 
-            updateSmartStatWithChange(statElementId, changeElementId, newValue) {
-                const statElement = document.getElementById(statElementId);
-                const changeElement = document.getElementById(changeElementId);
 
-                if (statElement) {
-                    const oldValue = parseInt(statElement.textContent) || 0;
-                    statElement.textContent = newValue;
 
-                    if (changeElement) {
-                        if (newValue > oldValue) {
-                            const change = newValue - oldValue;
-                            changeElement.textContent = `+${change}`;
-                            changeElement.style.color = 'var(--warning-color)';
-                            changeElement.style.fontWeight = 'bold';
+            // 滤镜特效转场参数设置标签页切换功能
+            switchMaterialTab(tabName) {
+                // 移除所有标签按钮的active类
+                const tabButtons = document.querySelectorAll('.tab-button');
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
 
-                            // 添加闪烁效果
-                            changeElement.style.animation = 'pulse 1.5s ease-in-out';
-                            setTimeout(() => {
-                                if (changeElement) {
-                                    changeElement.style.animation = '';
-                                    changeElement.style.fontWeight = 'normal';
-                                    // 3秒后恢复为总计显示
-                                    setTimeout(() => {
-                                        if (changeElement) {
-                                            changeElement.textContent = `总计: ${newValue}`;
-                                            changeElement.style.color = 'var(--text-tertiary)';
-                                        }
-                                    }, 3000);
-                                }
-                            }, 1500);
-                        } else if (newValue < oldValue) {
-                            // 减少的情况（重置或移除排除）
-                            const change = oldValue - newValue;
-                            changeElement.textContent = `-${change}`;
-                            changeElement.style.color = 'var(--accent-color)';
-                            changeElement.style.fontWeight = 'bold';
+                // 隐藏所有标签内容
+                const tabContents = document.querySelectorAll('.tab-content');
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
+                });
 
-                            setTimeout(() => {
-                                if (changeElement) {
-                                    changeElement.textContent = `总计: ${newValue}`;
-                                    changeElement.style.color = 'var(--text-tertiary)';
-                                    changeElement.style.fontWeight = 'normal';
-                                }
-                            }, 3000);
-                        } else {
-                            // 无变化
-                            changeElement.textContent = `总计: ${newValue}`;
-                            changeElement.style.color = 'var(--text-tertiary)';
-                            changeElement.style.fontWeight = 'normal';
-                        }
+                // 激活当前标签按钮
+                const activeButton = document.querySelector(`[data-tab="${tabName}"]`);
+                if (activeButton) {
+                    activeButton.classList.add('active');
+                }
+
+                // 显示当前标签内容
+                const activeContent = document.getElementById(`${tabName}-tab`);
+                if (activeContent) {
+                    activeContent.style.display = 'block';
+                }
+
+                // 根据标签类型加载相应的配置
+                switch(tabName) {
+                    case 'video-effects':
+                        this.loadVideoEffectConfig();
+                        break;
+                    case 'filters':
+                        this.loadFilterConfig();
+                        break;
+                    case 'transitions':
+                        this.loadTransitionConfig();
+                        break;
+                }
+            }
+
+            // Pexels API相关功能
+            toggleApiKeyVisibility() {
+                const apiKeyInput = document.getElementById('pexels_api_key');
+                const toggleButton = document.getElementById('toggle-api-key');
+
+                if (apiKeyInput.type === 'password') {
+                    apiKeyInput.type = 'text';
+                    toggleButton.textContent = '🙈';
+                } else {
+                    apiKeyInput.type = 'password';
+                    toggleButton.textContent = '👁️';
+                }
+            }
+
+            async testPexelsApi() {
+                const apiKey = this.getInputValue('pexels_api_key');
+
+                if (!apiKey || apiKey.trim() === '') {
+                    this.showAlert('请先输入Pexels API密钥', 'error');
+                    return;
+                }
+
+                try {
+                    this.showAlert('正在测试API密钥...', 'info');
+
+                    const response = await fetch('/api/test-pexels-api', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            api_key: apiKey
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('✅ Pexels API密钥验证成功！', 'success');
+                    } else {
+                        this.showAlert('❌ API密钥验证失败: ' + (result.error || '未知错误'), 'error');
                     }
+                } catch (error) {
+                    this.showAlert('❌ 测试失败: ' + error.message, 'error');
                 }
             }
 
@@ -3346,7 +3586,6 @@
                         this.showAlert('已重置所有排除设置', 'success');
                         this.searchEffects(); // 刷新列表
                         this.loadExclusionStats(); // 更新统计
-                        this.refreshSmartStats(); // 更新智能排除统计
                     } else {
                         this.showAlert('重置失败: ' + result.error, 'error');
                     }
